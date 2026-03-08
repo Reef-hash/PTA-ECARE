@@ -89,12 +89,12 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
     return (
         <div className="min-h-screen bg-gray-100 overflow-x-hidden">
             {/* Mobile Header */}
-            <div className="lg:hidden bg-dark-900 text-white p-4 flex items-center justify-between">
-                <button onClick={() => setSidebarOpen(true)} className="p-2">
+            <div className="lg:hidden bg-dark-900 text-white p-3 flex items-center gap-2">
+                <button onClick={() => setSidebarOpen(true)} className="p-1 flex-shrink-0">
                     <Menu className="w-6 h-6" />
                 </button>
-                <h1 className="text-lg font-bold truncate">E-CARE - {isTechnician ? 'TECHNICIAN PANEL' : 'ADMIN PANEL'}</h1>
-                <LanguageSwitcher className="text-white sm:hidden" />
+                <h1 className="text-sm font-bold truncate flex-1 min-w-0">E-CARE - {isTechnician ? 'TECHNICIAN' : 'ADMIN'}</h1>
+                <LanguageSwitcher className="text-white flex-shrink-0 !px-1 !py-1 !text-xs" />
             </div>
 
             {/* Sidebar Overlay */}
@@ -313,25 +313,25 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
             {/* Main Content */}
             <main className="lg:ml-64 transition-all duration-300">
                 {/* Header */}
-                <header className="mx-2 sm:mx-6 mt-4 px-3 sm:px-8 py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
+                <header className="mx-2 sm:mx-6 mt-4 px-2 sm:px-8 py-3 sm:py-4 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                         <button
                             onClick={() => navigate(-1)}
-                            className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
+                            className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors flex-shrink-0"
                             title={t('common.back') || 'Back'}
                         >
                             <ArrowLeft className="w-5 h-5" />
                         </button>
                         {breadcrumb && (
-                            <p className="text-sm text-gray-500">
+                            <p className="text-xs sm:text-sm text-gray-500 truncate">
                                 <span className="text-gray-400">Pages</span>
-                                <span className="mx-2 text-gray-400">/</span>
+                                <span className="mx-1 sm:mx-2 text-gray-400">/</span>
                                 <span className="font-medium text-gray-700">{breadcrumb}</span>
                             </p>
                         )}
                     </div>
 
-                    <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+                    <div className="flex items-center gap-1 sm:gap-4 flex-shrink-0">
                         <LanguageSwitcher className="hidden sm:flex" />
                         <NotificationBell />
 

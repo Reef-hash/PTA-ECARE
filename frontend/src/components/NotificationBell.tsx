@@ -390,7 +390,7 @@ export default function NotificationBell() {
             </button>
 
             {isOpen && (
-                <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden z-50 animate-fade-in">
+                <div className="fixed inset-x-2 top-auto sm:absolute sm:inset-x-auto sm:top-full sm:right-0 mt-2 sm:w-80 bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden z-50 animate-fade-in">
                     <div className="p-3 border-b border-gray-100 flex items-center justify-between bg-gray-50">
                         <h3 className="font-semibold text-gray-700 text-sm">{t('common.notifications')}</h3>
                         <div className="flex items-center gap-3">
