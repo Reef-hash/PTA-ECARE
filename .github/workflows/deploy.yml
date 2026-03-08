@@ -11,6 +11,76 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Pre-flight: show runner info
+        run: |
+          echo "Runner: $(uname -a || hostname)"
+          docker --version || true
+          docker compose version || true
+
+      - name: Create backend .env from secrets
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_EXPIRES_IN: ${{ secrets.JWT_EXPIRES_IN }}
+          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -f backend/.env ]; then
+            echo "backend/.env exists, skipping creation"
+          else
+            cat > backend/.env <<EOF
+PORT=${PORT:-3000}
+FRONTEND_URL=${FRONTEND_URL:-https://zszonetechnology.top}
+JWT_SECRET=${JWT_SECRET:-ecare_jwt_secret_key_2024_change_in_production}
+JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
+DB_HOST=${DB_HOST:-localhost}
+DB_USER=${DB_USER:-root}
+DB_PASSWORD=${DB_PASSWORD:-}
+DB_NAME=${DB_NAME:-ecare_db}
+DB_PORT=${DB_PORT:-3306}
+SUPABASE_URL=${SUPABASE_URL:-https://srshalxtikpylcfztlmz.supabase.co}
+SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-}
+SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
+EOF
+            echo "backend/.env created"
+          fi
+
+      - name: Stop existing containers
+        run: |
+          cd ${{ github.workspace }}
+          docker compose down || true
+
+      - name: Build and start containers
+        run: |
+          cd ${{ github.workspace }}
+          docker compose up -d --build
+
+      - name: Verify deployment
+        run: |
+          echo "Waiting for services to start..."
+          sleep 10
+          curl -f http://localhost:3000/api/health || (echo "Backend health check failed" && exit 1)
+          curl -f http://localhost/ || (echo "Frontend check failed" && exit 1)
+          echo "Deployment complete!"
+name: CI/CD Deploy E-Care
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Stop existing containers
         run: |
           cd ${{ github.workspace }}
