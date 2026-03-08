@@ -34,20 +34,20 @@ jobs:
           if [ -f backend/.env ]; then
             echo "backend/.env exists, skipping creation"
           else
-            cat > backend/.env <<EOF
-PORT=${PORT:-3000}
-FRONTEND_URL=${FRONTEND_URL:-https://zszonetechnology.top}
-JWT_SECRET=${JWT_SECRET:-ecare_jwt_secret_key_2024_change_in_production}
-JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
-DB_HOST=${DB_HOST:-localhost}
-DB_USER=${DB_USER:-root}
-DB_PASSWORD=${DB_PASSWORD:-}
-DB_NAME=${DB_NAME:-ecare_db}
-DB_PORT=${DB_PORT:-3306}
-SUPABASE_URL=${SUPABASE_URL:-https://srshalxtikpylcfztlmz.supabase.co}
-SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-}
-SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
-EOF
+            {
+              echo "PORT=${PORT:-3000}"
+              echo "FRONTEND_URL=${FRONTEND_URL:-https://zszonetechnology.top}"
+              echo "JWT_SECRET=${JWT_SECRET:-ecare_jwt_secret_key_2024_change_in_production}"
+              echo "JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}"
+              echo "DB_HOST=${DB_HOST:-localhost}"
+              echo "DB_USER=${DB_USER:-root}"
+              echo "DB_PASSWORD=${DB_PASSWORD:-}"
+              echo "DB_NAME=${DB_NAME:-ecare_db}"
+              echo "DB_PORT=${DB_PORT:-3306}"
+              echo "SUPABASE_URL=${SUPABASE_URL:-https://srshalxtikpylcfztlmz.supabase.co}"
+              echo "SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-}"
+              echo "SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}"
+            } > backend/.env
             echo "backend/.env created"
           fi
 
