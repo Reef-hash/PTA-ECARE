@@ -475,6 +475,26 @@ export default function NotificationBell() {
                             </div>
                         )}
                     </div>
+
+                    {/* View All button */}
+                    <div className="p-2 border-t border-gray-100 bg-gray-50">
+                        <button
+                            onClick={() => {
+                                setIsOpen(false);
+                                const path = window.location.pathname;
+                                if (path.startsWith('/users')) {
+                                    navigate('/users/notifications');
+                                } else if (path.startsWith('/admin/technician')) {
+                                    navigate('/admin/technician/notifications');
+                                } else {
+                                    navigate('/admin/notifications');
+                                }
+                            }}
+                            className="w-full text-center text-sm text-indigo-600 hover:text-indigo-800 font-medium py-1.5 rounded hover:bg-indigo-50 transition-colors"
+                        >
+                            {t('common.view_all')}
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

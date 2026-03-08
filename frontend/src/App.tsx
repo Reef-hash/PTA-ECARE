@@ -44,6 +44,9 @@ import TechDashboard from './pages/technician/TechDashboard';
 import TechComplaints from './pages/technician/TechComplaints';
 import TechComplaintDetail from './pages/technician/TechComplaintDetail';
 
+// Shared pages
+import NotificationsPage from './pages/NotificationsPage';
+
 // Loading component
 function LoadingScreen() {
     return (
@@ -137,6 +140,14 @@ function App() {
                 element={
                     <ProtectedRoute allowedRoles={['user']}>
                         <UserProfile />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/users/notifications"
+                element={
+                    <ProtectedRoute allowedRoles={['user']}>
+                        <NotificationsPage />
                     </ProtectedRoute>
                 }
             />
@@ -315,6 +326,14 @@ function App() {
                     </ProtectedRoute>
                 }
             />
+            <Route
+                path="/admin/notifications"
+                element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                        <NotificationsPage />
+                    </ProtectedRoute>
+                }
+            />
 
             {/* Technician Routes */}
             <Route path="/admin/technician" element={<AdminLogin />} />
@@ -339,6 +358,14 @@ function App() {
                 element={
                     <ProtectedRoute allowedRoles={['technician']}>
                         <TechComplaints />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/admin/technician/notifications"
+                element={
+                    <ProtectedRoute allowedRoles={['technician']}>
+                        <NotificationsPage />
                     </ProtectedRoute>
                 }
             />
