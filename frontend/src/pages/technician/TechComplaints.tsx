@@ -252,7 +252,39 @@ export default function TechComplaints() {
                     </div>
                 ) : (
                     <>
-                        <div className="overflow-x-auto">
+                        {/* Mobile Card View */}
+                        <div className="md:hidden space-y-3">
+                            {complaints.map((complaint, index) => (
+                                <Link
+                                    key={complaint.id}
+                                    to={`/admin/technician/complaint/${complaint.id}`}
+                                    className="block border border-gray-100 rounded-lg p-3 hover:bg-gray-50 transition-colors"
+                                >
+                                    <div className="flex items-start justify-between gap-2 mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs text-gray-400 font-medium">#{(pagination.page - 1) * pagination.limit + index + 1}</span>
+                                            <span className="font-medium text-green-600 text-sm">{complaint.report_number}</span>
+                                        </div>
+                                        {getStatusBadge(complaint.status)}
+                                    </div>
+                                    <div className="space-y-1 text-sm">
+                                        <p className="text-gray-800 font-medium">{complaint.users?.full_name || '-'}</p>
+                                        <p className="text-xs text-gray-500">ID/IC: {complaint.users?.ic_number || (t('common.no_ic_info') || 'Tiada Maklumat IC')}</p>
+                                        <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-500">
+                                            <span>{complaint.subcategory}</span>
+                                            <span>·</span>
+                                            <span>{complaint.brand_name}</span>
+                                        </div>
+                                    </div>
+                                    <div className="mt-2">
+                                        {getStatusMessage(complaint)}
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+
+                        {/* Desktop Table View */}
+                        <div className="hidden md:block overflow-x-auto">
                             <table className="w-full">
                                 <thead>
                                     <tr className="table-header">
