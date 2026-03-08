@@ -256,22 +256,22 @@ export default function TechComplaints() {
                             <table className="w-full">
                                 <thead>
                                     <tr className="table-header">
-                                        <th className="text-center px-4 py-3 w-12 whitespace-nowrap">No.</th>
-                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_users.report_no') || 'Report No'}</th>
-                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_users.customer') || 'Customer'}</th>
-                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_master.subcategory')}</th>
-                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_master.brand')}</th>
+                                        <th className="hidden sm:table-cell text-center px-4 py-3 w-12 whitespace-nowrap">No.</th>
+                                        <th className="hidden sm:table-cell text-left px-4 py-3 whitespace-nowrap">{t('admin_users.report_no') || 'Report No'}</th>
+                                        <th className="hidden md:table-cell text-left px-4 py-3 whitespace-nowrap">{t('admin_users.customer') || 'Customer'}</th>
+                                        <th className="hidden lg:table-cell text-left px-4 py-3 whitespace-nowrap">{t('admin_master.subcategory')}</th>
+                                        <th className="hidden lg:table-cell text-left px-4 py-3 whitespace-nowrap">{t('admin_master.brand')}</th>
                                         <th className="text-left px-4 py-3 whitespace-nowrap">{t('common_actions.status')}</th>
-                                        <th className="text-center px-4 py-3 whitespace-nowrap">{t('common_actions.action')}</th>
+                                        <th className="hidden sm:table-cell text-center px-4 py-3 whitespace-nowrap">{t('common_actions.action')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {complaints.map((complaint, index) => (
                                         <tr key={complaint.id} className="table-row">
-                                            <td className="px-4 py-3 text-center text-gray-500 font-medium whitespace-nowrap">
+                                            <td className="hidden sm:table-cell px-4 py-3 text-center text-gray-500 font-medium whitespace-nowrap">
                                                 {(pagination.page - 1) * pagination.limit + index + 1}
                                             </td>
-                                            <td className="px-4 py-3 whitespace-nowrap">
+                                            <td className="hidden sm:table-cell px-4 py-3 whitespace-nowrap">
                                                 <Link
                                                     to={`/admin/technician/complaint/${complaint.id}`}
                                                     className="font-medium text-green-600 hover:text-green-700 hover:underline"
@@ -279,7 +279,7 @@ export default function TechComplaints() {
                                                     {complaint.report_number}
                                                 </Link>
                                             </td>
-                                            <td className="px-4 py-3 whitespace-nowrap">
+                                            <td className="hidden md:table-cell px-4 py-3 whitespace-nowrap">
                                                 <div>
                                                     <p className="font-medium text-gray-800">{complaint.users?.full_name || '-'}</p>
                                                     <p className="text-xs text-gray-500">
@@ -287,17 +287,23 @@ export default function TechComplaints() {
                                                     </p>
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.subcategory}</td>
-                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.brand_name}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap">
+                                            <td className="hidden lg:table-cell px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.subcategory}</td>
+                                            <td className="hidden lg:table-cell px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.brand_name}</td>
+                                            <td className="px-3 sm:px-4 py-3">
                                                 <div>
                                                     {getStatusBadge(complaint.status)}
+                                                    <Link
+                                                        to={`/admin/technician/complaint/${complaint.id}`}
+                                                        className="sm:hidden text-xs font-medium text-green-600 hover:underline mt-1 inline-block"
+                                                    >
+                                                        {complaint.report_number}
+                                                    </Link>
                                                     <div className="mt-2">
                                                         {getStatusMessage(complaint)}
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-3 whitespace-nowrap">
+                                            <td className="hidden sm:table-cell px-4 py-3 whitespace-nowrap">
                                                 <div className="flex items-center justify-center">
                                                     <Link
                                                         to={`/admin/technician/complaint/${complaint.id}`}
