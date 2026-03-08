@@ -34,11 +34,13 @@ jobs:
           echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> backend/.env
           echo "backend/.env created"
 
-      - name: Stop existing containers
-        run: docker compose down || true
+      - name: Stop all containers and cleanup
+        run: |
+          docker compose down --remove-orphans || true
+          docker ps -aq | xargs -r docker rm -f || true
 
       - name: Build and start containers
-        run: docker compose up -d --build
+        run: docker compose up -d --build --force-recreate
 
       - name: Verify deployment
         run: |
