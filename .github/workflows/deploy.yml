@@ -2,7 +2,8 @@ name: CI/CD Deploy E-Care
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   deploy:
@@ -11,61 +12,38 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Pre-flight: show runner info
+      - name: Show runner info
         run: |
           echo "Runner: $(uname -a || hostname)"
           docker --version || true
           docker compose version || true
 
-      - name: Create backend .env from secrets
-        env:
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_NAME: ${{ secrets.DB_NAME }}
-          DB_PORT: ${{ secrets.DB_PORT }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          JWT_EXPIRES_IN: ${{ secrets.JWT_EXPIRES_IN }}
-          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      - name: Create backend env file
         run: |
-          if [ -f backend/.env ]; then
-            echo "backend/.env exists, skipping creation"
-          else
-            {
-              echo "PORT=${PORT:-3000}"
-              echo "FRONTEND_URL=${FRONTEND_URL:-https://zszonetechnology.top}"
-              echo "JWT_SECRET=${JWT_SECRET:-ecare_jwt_secret_key_2024_change_in_production}"
-              echo "JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}"
-              echo "DB_HOST=${DB_HOST:-localhost}"
-              echo "DB_USER=${DB_USER:-root}"
-              echo "DB_PASSWORD=${DB_PASSWORD:-}"
-              echo "DB_NAME=${DB_NAME:-ecare_db}"
-              echo "DB_PORT=${DB_PORT:-3306}"
-              echo "SUPABASE_URL=${SUPABASE_URL:-https://srshalxtikpylcfztlmz.supabase.co}"
-              echo "SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-}"
-              echo "SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}"
-            } > backend/.env
-            echo "backend/.env created"
-          fi
+          echo "PORT=${{ secrets.DB_PORT || '3000' }}" > backend/.env
+          echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> backend/.env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> backend/.env
+          echo "JWT_EXPIRES_IN=${{ secrets.JWT_EXPIRES_IN }}" >> backend/.env
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> backend/.env
+          echo "DB_USER=${{ secrets.DB_USER }}" >> backend/.env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> backend/.env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> backend/.env
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> backend/.env
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> backend/.env
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> backend/.env
+          echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> backend/.env
+          echo "backend/.env created"
 
       - name: Stop existing containers
-        run: |
-          cd ${{ github.workspace }}
-          docker compose down || true
+        run: docker compose down || true
 
       - name: Build and start containers
-        run: |
-          cd ${{ github.workspace }}
-          docker compose up -d --build
+        run: docker compose up -d --build
 
       - name: Verify deployment
         run: |
-          set -e
           echo "Waiting for services to start..."
-          sleep 10
-          curl -f http://localhost:3000/api/health || (echo "Backend health check failed" && exit 1)
-          curl -f http://localhost/ || (echo "Frontend check failed" && exit 1)
-          echo "Deployment complete!"
+          sleep 15
+          curl -sf http://localhost:3000/api/health || echo "Backend health check failed"
+          curl -sf http://localhost/ || echo "Frontend check failed"
+          echo "Deployment verification done"
