@@ -87,14 +87,14 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
     };
 
     return (
-        <div className="min-h-screen bg-gray-100">
+        <div className="min-h-screen bg-gray-100 overflow-x-hidden">
             {/* Mobile Header */}
             <div className="lg:hidden bg-dark-900 text-white p-4 flex items-center justify-between">
                 <button onClick={() => setSidebarOpen(true)} className="p-2">
                     <Menu className="w-6 h-6" />
                 </button>
-                <h1 className="text-lg font-bold">E-CARE - {isTechnician ? 'TECHNICIAN PANEL' : 'ADMIN PANEL'}</h1>
-                <div />
+                <h1 className="text-lg font-bold truncate">E-CARE - {isTechnician ? 'TECHNICIAN PANEL' : 'ADMIN PANEL'}</h1>
+                <LanguageSwitcher className="text-white sm:hidden" />
             </div>
 
             {/* Sidebar Overlay */}
@@ -313,7 +313,7 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
             {/* Main Content */}
             <main className="lg:ml-64 transition-all duration-300">
                 {/* Header */}
-                <header className="mx-6 mt-4 px-8 py-4 flex items-center justify-between">
+                <header className="mx-2 sm:mx-6 mt-4 px-3 sm:px-8 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => navigate(-1)}
@@ -331,8 +331,8 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
                         )}
                     </div>
 
-                    <div className="flex items-center gap-4">
-                        <LanguageSwitcher />
+                    <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+                        <LanguageSwitcher className="hidden sm:flex" />
                         <NotificationBell />
 
                         {/* User Profile - Top Right */}
@@ -375,7 +375,7 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
                 </header>
 
                 {/* Content */}
-                <div className="p-6 min-h-[calc(100vh-180px)]">{children}</div>
+                <div className="p-3 sm:p-6 min-h-[calc(100vh-180px)]">{children}</div>
 
                 {/* Footer */}
                 <footer className="p-4 text-center text-sm text-gray-500">

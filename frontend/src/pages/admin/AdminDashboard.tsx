@@ -81,7 +81,7 @@ export default function AdminDashboard() {
                         <Link
                             key={card.label}
                             to={card.path}
-                            className={`stat-card flex-shrink-0 w-64 sm:w-auto ${colors.border} hover:shadow-lg transition-shadow`}
+                            className={`stat-card flex-shrink-0 w-[calc(100vw-4rem)] sm:w-auto ${colors.border} hover:shadow-lg transition-shadow`}
                         >
                             <div className="flex items-center justify-between">
                                 <div>
