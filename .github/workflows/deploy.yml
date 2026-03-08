@@ -20,18 +20,19 @@ jobs:
 
       - name: Create backend env file
         run: |
-          echo "PORT=${{ secrets.DB_PORT || '3000' }}" > backend/.env
-          echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> backend/.env
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> backend/.env
-          echo "JWT_EXPIRES_IN=${{ secrets.JWT_EXPIRES_IN }}" >> backend/.env
-          echo "DB_HOST=${{ secrets.DB_HOST }}" >> backend/.env
-          echo "DB_USER=${{ secrets.DB_USER }}" >> backend/.env
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> backend/.env
-          echo "DB_NAME=${{ secrets.DB_NAME }}" >> backend/.env
-          echo "DB_PORT=${{ secrets.DB_PORT }}" >> backend/.env
-          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> backend/.env
-          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> backend/.env
-          echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> backend/.env
+          echo "PORT=3000" > backend/.env
+          echo "NODE_ENV=production" >> backend/.env
+          echo "FRONTEND_URL=https://zszonetechnology.top" >> backend/.env
+          echo "JWT_SECRET=ecare_jwt_secret_key_2024_change_in_production" >> backend/.env
+          echo "JWT_EXPIRES_IN=7d" >> backend/.env
+          echo "DB_HOST=host.docker.internal" >> backend/.env
+          echo "DB_USER=root" >> backend/.env
+          echo "DB_PASSWORD=" >> backend/.env
+          echo "DB_NAME=ecare_db" >> backend/.env
+          echo "DB_PORT=3306" >> backend/.env
+          echo "SUPABASE_URL=https://srshalxtikpylcfztlmz.supabase.co" >> backend/.env
+          echo "SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNyc2hhbHh0aWtweWxjZnp0bG16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4NDk4NDAsImV4cCI6MjA4NTQyNTg0MH0.15yIT0pGWgT5UloRyDSVSA88L0mnIJKBom0L1pw9CGw" >> backend/.env
+          echo "SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNyc2hhbHh0aWtweWxjZnp0bG16Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2OTg0OTg0MCwiZXhwIjoyMDg1NDI1ODQwfQ.Mw4wTRl8qMDLXMXClfPqbH2WbfTH4m5eGnGtK0cXXWU" >> backend/.env
           echo "backend/.env created"
 
       - name: Stop all containers and cleanup
