@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, FileText, User, Calendar, MapPin, Wrench, Clock, XCircle } from 'lucide-react';
+import { ArrowLeft, FileText, User, Calendar, MapPin, Wrench, Clock, XCircle, Eye, Download } from 'lucide-react';
 import UserLayout from '../../components/UserLayout';
 import api from '../../services/api';
 import { Complaint, ComplaintRemark, TechnicianRemark } from '../../types';
@@ -15,6 +15,27 @@ export default function UserComplaintDetail() {
     const [techRemarks, setTechRemarks] = useState<TechnicianRemark[]>([]);
 
     const [isLoading, setIsLoading] = useState(true);
+
+    // Download file from URL (works for cross-origin)
+    const handleDownload = async (url: string, filename: string) => {
+        try {
+            toast.loading('Memuat turun...', { id: 'download' });
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+            toast.success('Muat turun berjaya!', { id: 'download' });
+        } catch (error) {
+            console.error('Download failed:', error);
+            toast.error('Gagal memuat turun fail', { id: 'download' });
+        }
+    };
 
     useEffect(() => {
         loadComplaint();
@@ -184,6 +205,77 @@ export default function UserComplaintDetail() {
                             </div>
                         </div>
 
+                        {/* Documents */}
+                        {(complaint.warranty_file || complaint.receipt_file) && (
+                            <div className="mt-6 pt-6 border-t">
+                                <p className="text-sm text-gray-500 mb-4">{t('user_dashboard.label_documents')}</p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {complaint.warranty_file && (
+                                        <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                    <FileText className="w-5 h-5 text-blue-600" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-blue-700">{t('user_dashboard.label_warranty_doc')}</p>
+                                                    <p className="text-xs text-blue-500">Document</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <a
+                                                    href={complaint.warranty_file}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-2 text-blue-500 hover:text-indigo-600 hover:bg-white rounded-full transition-all shadow-sm"
+                                                    title="View"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </a>
+                                                <button
+                                                    onClick={() => handleDownload(complaint.warranty_file!, `Warranty-${complaint.report_number}.png`)}
+                                                    className="p-2 text-blue-500 hover:text-green-600 hover:bg-white rounded-full transition-all shadow-sm"
+                                                    title="Download"
+                                                >
+                                                    <Download className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {complaint.receipt_file && (
+                                        <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                                    <FileText className="w-5 h-5 text-green-600" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-green-700">{t('user_dashboard.label_receipt')}</p>
+                                                    <p className="text-xs text-green-500">Document</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <a
+                                                    href={complaint.receipt_file}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-2 text-green-500 hover:text-indigo-600 hover:bg-white rounded-full transition-all shadow-sm"
+                                                    title="View"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </a>
+                                                <button
+                                                    onClick={() => handleDownload(complaint.receipt_file!, `Receipt-${complaint.report_number}.png`)}
+                                                    className="p-2 text-green-500 hover:text-green-600 hover:bg-white rounded-full transition-all shadow-sm"
+                                                    title="Download"
+                                                >
+                                                    <Download className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Details */}
                         <div className="mt-6 pt-6 border-t">
                             <p className="text-sm text-gray-500 mb-2">{t('user_dashboard.label_defect_details')}</p>
@@ -202,47 +294,6 @@ export default function UserComplaintDetail() {
                                         <p className="font-medium">{complaint.technicians.name}</p>
                                         <p className="text-xs text-gray-400">{complaint.technicians.department}</p>
                                     </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Warranty Documents */}
-                        {complaint.complaint_type === 'Under Warranty' && (complaint.warranty_file || complaint.receipt_file) && (
-                            <div className="mt-6 pt-6 border-t">
-                                <p className="text-sm text-gray-500 mb-4">{t('user_dashboard.label_documents')}</p>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {complaint.warranty_file && (
-                                        <a
-                                            href={complaint.warranty_file}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
-                                        >
-                                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                                <FileText className="w-5 h-5 text-blue-600" />
-                                            </div>
-                                            <div>
-                                                <p className="font-medium text-blue-700">{t('user_dashboard.label_warranty_doc')}</p>
-                                                <p className="text-xs text-blue-500">{t('user_dashboard.click_to_view')}</p>
-                                            </div>
-                                        </a>
-                                    )}
-                                    {complaint.receipt_file && (
-                                        <a
-                                            href={complaint.receipt_file}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center gap-3 p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
-                                        >
-                                            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                                                <FileText className="w-5 h-5 text-green-600" />
-                                            </div>
-                                            <div>
-                                                <p className="font-medium text-green-700">{t('user_dashboard.label_receipt')}</p>
-                                                <p className="text-xs text-green-500">{t('user_dashboard.click_to_view')}</p>
-                                            </div>
-                                        </a>
-                                    )}
                                 </div>
                             </div>
                         )}
@@ -308,40 +359,7 @@ export default function UserComplaintDetail() {
                         </div>
                     </div>
 
-                    {/* Documents */}
-                    {(complaint.warranty_file || complaint.receipt_file) && (
-                        <div className="card">
-                            <h3 className="font-semibold mb-4">{t('user_dashboard.label_documents')}</h3>
-                            <div className="space-y-3">
-                                {complaint.warranty_file && (
-                                    <a
-                                        href={complaint.warranty_file}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="block p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <FileText className="w-5 h-5 text-blue-600" />
-                                            <span className="text-sm font-medium">{t('user_dashboard.label_warranty_doc')}</span>
-                                        </div>
-                                    </a>
-                                )}
-                                {complaint.receipt_file && (
-                                    <a
-                                        href={complaint.receipt_file}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="block p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <FileText className="w-5 h-5 text-green-600" />
-                                            <span className="text-sm font-medium">{t('user_dashboard.label_receipt')}</span>
-                                        </div>
-                                    </a>
-                                )}
-                            </div>
-                        </div>
-                    )}
+
                 </div>
             </div>
         </UserLayout>

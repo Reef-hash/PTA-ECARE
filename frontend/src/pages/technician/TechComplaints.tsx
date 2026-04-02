@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Search, Filter, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
@@ -11,16 +11,12 @@ import { parseNotificationMessage } from '../../utils/notificationParser';
 export default function TechComplaints() {
     const { t, i18n } = useTranslation();
     const [searchParams] = useSearchParams();
-    const [complaints, setComplaints] = useState<Complaint[]>([]);
+    const [allComplaints, setAllComplaints] = useState<Complaint[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'all');
-    const [pagination, setPagination] = useState({
-        page: 1,
-        limit: 15,
-        total: 0,
-        totalPages: 0,
-    });
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 15;
 
     useEffect(() => {
         const urlStatus = searchParams.get('status');
@@ -31,22 +27,15 @@ export default function TechComplaints() {
 
     useEffect(() => {
         loadComplaints();
-    }, [pagination.page, statusFilter]);
+    }, []);
 
     const loadComplaints = async () => {
         setIsLoading(true);
         try {
             const params = new URLSearchParams({
-                page: pagination.page.toString(),
-                limit: pagination.limit.toString(),
+                page: '1',
+                limit: '1000',
             });
-
-            if (statusFilter !== 'all') {
-                params.append('status', statusFilter);
-            }
-            if (search) {
-                params.append('search', search);
-            }
 
             const response = await api.get(`/complaints?${params.toString()}`);
 
@@ -57,12 +46,7 @@ export default function TechComplaints() {
                 return dateB - dateA;
             });
 
-            setComplaints(sortedComplaints);
-            setPagination(prev => ({
-                ...prev,
-                total: response.data.pagination.total,
-                totalPages: response.data.pagination.totalPages,
-            }));
+            setAllComplaints(sortedComplaints);
         } catch (error) {
             toast.error(t('common.error_load'));
         } finally {
@@ -70,11 +54,62 @@ export default function TechComplaints() {
         }
     };
 
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        setPagination(prev => ({ ...prev, page: 1 }));
-        loadComplaints();
-    };
+    // Frontend real-time search filter
+    const filteredComplaints = useMemo(() => {
+        let results = allComplaints;
+
+        // Filter by status
+        if (statusFilter !== 'all') {
+            results = results.filter(c => c.status === statusFilter);
+        }
+
+        // Filter by search term
+        if (search.trim()) {
+            const searchTerm = search.toLowerCase().trim();
+
+            results = results.filter(complaint => {
+                // Search by report number
+                const reportMatch = complaint.report_number?.toLowerCase().includes(searchTerm);
+
+                // Search by customer name
+                const nameMatch = complaint.users?.full_name?.toLowerCase().includes(searchTerm);
+
+                // Search by IC number (removing dashes for flexible search)
+                const icSearch = searchTerm.replace(/-/g, '');
+                const icMatch = complaint.users?.ic_number?.replace(/-/g, '')?.toLowerCase().includes(icSearch);
+
+                // Search by date
+                const dateStr = new Date(complaint.created_at).toLocaleDateString('ms-MY', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+                const dateMatch = dateStr.includes(searchTerm) || complaint.created_at?.includes(searchTerm);
+
+                // Search by subcategory
+                const subcategoryMatch = complaint.subcategory?.toLowerCase().includes(searchTerm);
+
+                // Search by brand
+                const brandMatch = complaint.brand_name?.toLowerCase().includes(searchTerm);
+
+                return reportMatch || nameMatch || icMatch || dateMatch || subcategoryMatch || brandMatch;
+            });
+        }
+
+        return results;
+    }, [allComplaints, search, statusFilter]);
+
+    // Reset page when search or filter changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [search, statusFilter]);
+
+    // Pagination computed from filtered results
+    const totalPages = Math.ceil(filteredComplaints.length / itemsPerPage);
+    const paginatedComplaints = filteredComplaints.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -210,7 +245,7 @@ export default function TechComplaints() {
             <div className="card">
                 {/* Filters */}
                 <div className="flex flex-col md:flex-row gap-4 mb-6">
-                    <form onSubmit={handleSearch} className="flex-1">
+                    <div className="flex-1">
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                             <input
@@ -221,16 +256,13 @@ export default function TechComplaints() {
                                 className="input-field pl-10"
                             />
                         </div>
-                    </form>
+                    </div>
 
                     <div className="flex items-center gap-2">
                         <Filter className="w-5 h-5 text-gray-400" />
                         <select
                             value={statusFilter}
-                            onChange={(e) => {
-                                setStatusFilter(e.target.value);
-                                setPagination(prev => ({ ...prev, page: 1 }));
-                            }}
+                            onChange={(e) => setStatusFilter(e.target.value)}
                             className="input-field w-auto"
                         >
                             <option value="all">{t('admin_users.all_status') || 'All Status'}</option> {/* Fallback if key missing */}
@@ -246,7 +278,7 @@ export default function TechComplaints() {
                     <div className="flex items-center justify-center h-64">
                         <div className="animate-spin rounded-full h-12 w-12 border-4 border-green-500 border-t-transparent"></div>
                     </div>
-                ) : complaints.length === 0 ? (
+                ) : paginatedComplaints.length === 0 ? (
                     <div className="text-center py-12">
                         <p className="text-gray-500">{t('admin_master.no_data')}</p>
                     </div>
@@ -266,10 +298,10 @@ export default function TechComplaints() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {complaints.map((complaint, index) => (
+                                    {paginatedComplaints.map((complaint, index) => (
                                         <tr key={complaint.id} className="table-row">
                                             <td className="px-4 py-3 text-center text-gray-500 font-medium whitespace-nowrap">
-                                                {(pagination.page - 1) * pagination.limit + index + 1}
+                                                {(currentPage - 1) * itemsPerPage + index + 1}
                                             </td>
                                             <td className="px-4 py-3 whitespace-nowrap">
                                                 <Link
@@ -315,25 +347,25 @@ export default function TechComplaints() {
                         </div>
 
                         {/* Pagination */}
-                        {pagination.totalPages > 1 && (
+                        {totalPages > 1 && (
                             <div className="flex items-center justify-between mt-6 pt-4 border-t">
                                 <p className="text-sm text-gray-500">
-                                    {(pagination.page - 1) * pagination.limit + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} {t('common.of') || 'of'} {pagination.total}
+                                    {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredComplaints.length)} {t('common.of') || 'of'} {filteredComplaints.length}
                                 </p>
                                 <div className="flex items-center gap-2">
                                     <button
-                                        onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
-                                        disabled={pagination.page === 1}
+                                        onClick={() => setCurrentPage(prev => prev - 1)}
+                                        disabled={currentPage === 1}
                                         className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <ChevronLeft className="w-5 h-5" />
                                     </button>
                                     <span className="px-3 py-1 bg-green-100 text-green-700 rounded-lg font-medium">
-                                        {pagination.page}
+                                        {currentPage}
                                     </span>
                                     <button
-                                        onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
-                                        disabled={pagination.page === pagination.totalPages}
+                                        onClick={() => setCurrentPage(prev => prev + 1)}
+                                        disabled={currentPage === totalPages}
                                         className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <ChevronRight className="w-5 h-5" />

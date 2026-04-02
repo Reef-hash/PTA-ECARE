@@ -272,6 +272,77 @@ export default function AdminComplaintDetail() {
                             </div>
                         </div>
 
+                        {/* Documents */}
+                        {(complaint.warranty_file || complaint.receipt_file) && (
+                            <div className="mt-6 pt-6 border-t">
+                                <p className="text-sm text-gray-500 mb-4">{t('admin_complaint_detail.documents')}</p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {complaint.warranty_file && (
+                                        <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                                                    <FileText className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-blue-700">{t('admin_complaint_detail.warranty_doc')}</p>
+                                                    <p className="text-xs text-blue-500">Document</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <a
+                                                    href={complaint.warranty_file}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-2 text-blue-500 hover:text-indigo-600 hover:bg-white rounded-full transition-all shadow-sm"
+                                                    title="View"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </a>
+                                                <button
+                                                    onClick={() => handleDownload(complaint.warranty_file!, `Warranty-${complaint.report_number}.png`)}
+                                                    className="p-2 text-blue-500 hover:text-green-600 hover:bg-white rounded-full transition-all shadow-sm"
+                                                    title="Download"
+                                                >
+                                                    <Download className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {complaint.receipt_file && (
+                                        <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-green-100 rounded-lg text-green-600">
+                                                    <FileText className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-green-700">{t('admin_complaint_detail.receipt')}</p>
+                                                    <p className="text-xs text-green-500">Document</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <a
+                                                    href={complaint.receipt_file}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-2 text-green-500 hover:text-indigo-600 hover:bg-white rounded-full transition-all shadow-sm"
+                                                    title="View"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </a>
+                                                <button
+                                                    onClick={() => handleDownload(complaint.receipt_file!, `Receipt-${complaint.report_number}.png`)}
+                                                    className="p-2 text-green-500 hover:text-green-600 hover:bg-white rounded-full transition-all shadow-sm"
+                                                    title="Download"
+                                                >
+                                                    <Download className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                         <div className="mt-6 pt-6 border-t">
                             <p className="text-sm text-gray-500 mb-2">{t('admin_complaint_detail.defect_details')}</p>
                             <p className="text-gray-700 whitespace-pre-wrap">{complaint.details}</p>
@@ -452,76 +523,6 @@ export default function AdminComplaintDetail() {
                         </div>
                     </div>
 
-                    {/* Documents */}
-                    {(complaint.warranty_file || complaint.receipt_file) && (
-                        <div className="card">
-                            <h3 className="font-semibold mb-4">{t('admin_complaint_detail.documents')}</h3>
-                            <div className="space-y-3">
-                                {complaint.warranty_file && (
-                                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors">
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
-                                                <FileText className="w-5 h-5" />
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-700">{t('admin_complaint_detail.warranty_doc')}</p>
-                                                <p className="text-xs text-gray-500">Document</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <a
-                                                href={complaint.warranty_file}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-white rounded-full transition-all shadow-sm"
-                                                title="View"
-                                            >
-                                                <Eye className="w-4 h-4" />
-                                            </a>
-                                            <button
-                                                onClick={() => handleDownload(complaint.warranty_file!, `Warranty-${complaint.report_number}.png`)}
-                                                className="p-2 text-gray-500 hover:text-green-600 hover:bg-white rounded-full transition-all shadow-sm"
-                                                title="Download"
-                                            >
-                                                <Download className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-                                {complaint.receipt_file && (
-                                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg group hover:bg-gray-100 transition-colors">
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 bg-green-100 rounded-lg text-green-600">
-                                                <FileText className="w-5 h-5" />
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-700">{t('admin_complaint_detail.receipt')}</p>
-                                                <p className="text-xs text-gray-500">Document</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <a
-                                                href={complaint.receipt_file}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-white rounded-full transition-all shadow-sm"
-                                                title="View"
-                                            >
-                                                <Eye className="w-4 h-4" />
-                                            </a>
-                                            <button
-                                                onClick={() => handleDownload(complaint.receipt_file!, `Receipt-${complaint.report_number}.png`)}
-                                                className="p-2 text-gray-500 hover:text-green-600 hover:bg-white rounded-full transition-all shadow-sm"
-                                                title="Download"
-                                            >
-                                                <Download className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
         </AdminLayout>
