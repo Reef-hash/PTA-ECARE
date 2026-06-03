@@ -2,8 +2,6 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { supabaseAdmin } from '../config/supabase.js';
 import { createNotification } from './notifications.controller.js';
-import path from 'path';
-import fs from 'fs';
 
 // Get user profile
 export const getProfile = async (req: Request, res: Response): Promise<void> => {
@@ -33,7 +31,7 @@ export const getProfile = async (req: Request, res: Response): Promise<void> => 
 export const updateProfile = async (req: Request, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
-        const { full_name, email, contact_no, contact_no_2, address, state } = req.body;
+        const { full_name, email, contact_no, contact_no_2, address, state, ic_number } = req.body;
 
         const updates: any = { updated_at: new Date().toISOString() };
         if (full_name !== undefined) updates.full_name = full_name;
@@ -42,6 +40,20 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
         if (contact_no_2 !== undefined) updates.contact_no_2 = contact_no_2 || null;
         if (address !== undefined) updates.address = address;
         if (state !== undefined) updates.state = state || null;
+
+        if (ic_number) {
+            // Only allow updating IC if current IC starts with G-
+            const { data: currentUser } = await supabaseAdmin.from('users').select('ic_number').eq('id', userId).single();
+            if (currentUser && currentUser.ic_number.startsWith('G-')) {
+                // Check if new IC is already used
+                const { data: existingUser } = await supabaseAdmin.from('users').select('id').eq('ic_number', ic_number).neq('id', userId).single();
+                if (existingUser) {
+                    res.status(400).json({ error: 'IC number already registered by another user' });
+                    return;
+                }
+                updates.ic_number = ic_number;
+            }
+        }
 
         const { error: updateError } = await supabaseAdmin
             .from('users')
@@ -136,18 +148,26 @@ export const uploadAvatar = async (req: Request, res: Response): Promise<void> =
             return;
         }
 
-        // Save file locally
-        const uploadsDir = path.join(process.cwd(), 'uploads', 'user-images');
-        if (!fs.existsSync(uploadsDir)) {
-            fs.mkdirSync(uploadsDir, { recursive: true });
+        const extension = file.originalname.split('.').pop() || 'jpg';
+        const fileName = `${userId}/${Date.now()}.${extension}`;
+        const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+            .from('user-images')
+            .upload(fileName, file.buffer, {
+                contentType: file.mimetype,
+                upsert: true,
+            });
+
+        if (uploadError) {
+            console.error('Avatar storage upload error:', uploadError);
+            res.status(500).json({ error: 'Failed to upload avatar' });
+            return;
         }
 
-        const fileName = `${userId}_${Date.now()}.${file.originalname.split('.').pop()}`;
-        const filePath = path.join(uploadsDir, fileName);
-        fs.writeFileSync(filePath, file.buffer);
+        const { data: urlData } = supabaseAdmin.storage
+            .from('user-images')
+            .getPublicUrl(uploadData.path);
 
-        // Generate public URL
-        const publicUrl = `/uploads/user-images/${fileName}`;
+        const publicUrl = urlData.publicUrl;
 
         // Update user record
         const { error } = await supabaseAdmin

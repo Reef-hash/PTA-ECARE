@@ -6,6 +6,9 @@
         "frontend",
         "backend"
     ],
+    "engines": {
+        "node": "20.x"
+    },
     "scripts": {
         "install-all": "npm install",
         "dev": "echo 'Run backend and frontend separately in their folders for now'",
