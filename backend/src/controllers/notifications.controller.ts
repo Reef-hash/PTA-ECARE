@@ -138,7 +138,11 @@ export const buildNotificationEmailHtml = (name: string, title: string, message:
     
     switch (role) {
         case 'user':
-            linkUrl = `${baseUrl}/users/complaint-history`;
+            if (complaintId) {
+                linkUrl = `${baseUrl}/users/complaint/${complaintId}`;
+            } else {
+                linkUrl = `${baseUrl}/users/complaint-history`;
+            }
             buttonText = 'Semak Progress Aduan';
             break;
         case 'technician':
