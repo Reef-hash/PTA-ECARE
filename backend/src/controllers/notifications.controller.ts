@@ -136,17 +136,30 @@ export const buildNotificationEmailHtml = (name: string, title: string, message:
     let linkUrl = baseUrl;
     let buttonText = 'Buka Portal E-CARE';
     
-    if (complaintId) {
-        if (role === 'user') {
-            linkUrl = `${baseUrl}/users/complaint/${complaintId}`;
+    switch (role) {
+        case 'user':
+            linkUrl = `${baseUrl}/users/complaint-history`;
             buttonText = 'Semak Progress Aduan';
-        } else if (role === 'technician') {
-            linkUrl = `${baseUrl}/admin/technician/complaint/${complaintId}`;
+            break;
+        case 'technician':
+            if (complaintId) {
+                linkUrl = `${baseUrl}/admin/technician/complaint/${complaintId}`;
+            } else {
+                linkUrl = `${baseUrl}/admin/technician/complaints`;
+            }
             buttonText = 'Semak Tugasan Aduan';
-        } else if (role === 'admin') {
-            linkUrl = `${baseUrl}/admin/complaint/${complaintId}`;
+            break;
+        case 'admin':
+            if (complaintId) {
+                linkUrl = `${baseUrl}/admin/complaint/${complaintId}`;
+            } else {
+                linkUrl = `${baseUrl}/admin/complaints`;
+            }
             buttonText = 'Semak Aduan';
-        }
+            break;
+        default:
+            linkUrl = baseUrl;
+            buttonText = 'Buka Portal E-CARE';
     }
 
     return `
