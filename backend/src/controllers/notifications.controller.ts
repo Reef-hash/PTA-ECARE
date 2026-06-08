@@ -76,24 +76,24 @@ export const markAsRead = async (req: Request, res: Response): Promise<void> => 
     }
 };
 
-// HTML Email Notification Template
+// HTML Email Notification Template (Blue & White Theme)
 const buildNotificationEmailHtml = (name: string, title: string, message: string) => `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #334155; line-height: 1.6;">
         <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-            <div style="background: linear-gradient(135deg, #0f766e 0%, #115e59 100%); color: #ffffff; padding: 25px 30px; text-align: center;">
+            <div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: #ffffff; padding: 25px 30px; text-align: center;">
                 <h1 style="margin: 0; font-size: 24px; letter-spacing: 1px;">E-CARE</h1>
                 <p style="margin: 5px 0 0; font-size: 14px; opacity: 0.9;">Sistem Pengurusan Servis & Aduan</p>
             </div>
             <div style="padding: 30px;">
-                <h2 style="color: #0f766e; margin-top: 0; font-size: 18px;">${title}</h2>
+                <h2 style="color: #1e3a8a; margin-top: 0; font-size: 18px;">${title}</h2>
                 <p>Hi <strong>${name}</strong>,</p>
                 <p>Anda mempunyai notifikasi baharu berkenaan aduan/servis anda:</p>
-                <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; border-left: 4px solid #0f766e; margin: 20px 0; color: #475569;">
+                <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; border-left: 4px solid #2563eb; margin: 20px 0; color: #475569;">
                     ${message.replace(/\n/g, '<br />')}
                 </div>
                 <p>Sila log masuk ke portal E-CARE anda untuk melihat butiran lanjut.</p>
                 <div style="margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 20px; text-align: center;">
-                    <a href="${process.env.FRONTEND_URL || 'https://pta-ecare.vercel.app'}" style="background-color: #0f766e; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">
+                    <a href="${process.env.FRONTEND_URL || 'https://pta-ecare.vercel.app'}" style="background-color: #2563eb; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">
                         Buka Portal E-CARE
                     </a>
                 </div>
