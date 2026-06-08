@@ -76,6 +76,56 @@ export const markAsRead = async (req: Request, res: Response): Promise<void> => 
     }
 };
 
+// Helper to parse and translate notification message payloads from JSON to human-readable Malay
+const translateMessage = (payload: string): string => {
+    try {
+        const parsed = JSON.parse(payload);
+        if (parsed && typeof parsed === 'object' && parsed.key) {
+            const key = parsed.key;
+            let params = parsed.params || {};
+
+            const templates: Record<string, string> = {
+                new_complaint_msg: "Aduan baru daripada {{user_name}}. Sila semak dan proses.",
+                status_update_msg: "Kemaskini Status: Aduan {{report_number}} kini {{status}}.",
+                job_assigned_msg: "Anda telah diagihkan aduan baru {{report_number}}",
+                user_complaint_created_msg: "Aduan anda {{report_number}} telah berjaya didaftarkan. Sila semak status di portal.",
+                user_status_updated_msg: "Aduan anda {{report_number}} telah dikemaskini kepada '{{status}}'. Sila semak butiran di portal.",
+                notif_processing_body: "Status Terkini: Aduan {{id}} sedang diproses oleh juruteknik {{name}} pada {{date}} jam {{time}}.",
+                notif_completed_body: "Aduan {{id}} telah disiapkan oleh juruteknik {{name}} pada {{date}} jam {{time}}. Sedia untuk diambil.",
+                notif_new_job: "Tugasan Baru: {{id}}",
+                notif_processing_user_body: "Status Terkini: Aduan anda {{id}} kini DALAM PROSES oleh juruteknik {{name}} pada {{date}} jam {{time}}.",
+                notif_processing_tech_body: "Anda telah ditugaskan untuk menyemak aduan {{id}} daripada {{userName}}.",
+                notif_transport_admin: "Update Transport: {{id}} - Kenderaan/Logistik dikemaskini oleh Technician.",
+                notif_transport_user: "Info Transport: Status logistik untuk aduan {{id}} anda telah dikemaskini.",
+                notif_checking_admin: "Semakan Teknikal: {{id}} telah diperiksa. Sila semak penemuan teknikal.",
+                notif_checking_user: "Status Semakan: Juruteknik kami telah selesai membuat pemeriksaan pada {{id}}.",
+                notif_remark_admin: "Nota Baru: {{id}} mempunyai ulasan tambahan daripada Technician.",
+                notif_remark_user: "Kemas kini Aduan: Terdapat nota baru mengenai status aduan {{id}} anda.",
+                service_in_process: "Servis sedang diproses oleh Juruteknik {{tech_name}} pada {{date}}.",
+                service_completed: "Servis telah disiapkan oleh Juruteknik {{tech_name}} pada {{date}}. Status kes bertukar kepada 'Sedia untuk Diambil'."
+            };
+
+            let template = templates[key] || key;
+
+            Object.keys(params).forEach(p => {
+                let val = params[p];
+                if (p === 'status') {
+                    if (val === 'pending') val = 'Menunggu';
+                    if (val === 'in_process') val = 'Dalam Proses';
+                    if (val === 'closed') val = 'Selesai';
+                    if (val === 'cancelled') val = 'Dibatalkan';
+                }
+                template = template.replace(new RegExp(`{{${p}}}`, 'g'), String(val));
+            });
+
+            return template;
+        }
+    } catch (e) {
+        // Not a JSON payload, return the plain string as is
+    }
+    return payload;
+};
+
 // HTML Email Notification Template (Blue & White Theme)
 const buildNotificationEmailHtml = (name: string, title: string, message: string) => `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #334155; line-height: 1.6;">
@@ -168,7 +218,8 @@ export const createNotification = async (
             }
 
             if (email) {
-                const emailHtml = buildNotificationEmailHtml(name || 'Pengguna', start_msg, payload);
+                const humanReadableMessage = translateMessage(payload);
+                const emailHtml = buildNotificationEmailHtml(name || 'Pengguna', start_msg, humanReadableMessage);
                 await sendEmail(email, `eCare: ${start_msg}`, emailHtml);
                 console.log(`[CREATE NOTIFICATION] Email sent successfully to ${email}`);
             } else {
