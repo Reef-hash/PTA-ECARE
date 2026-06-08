@@ -197,25 +197,31 @@ export const buildNotificationEmailHtml = (name: string, title: string, message:
     }
 
     return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #334155; line-height: 1.6;">
-        <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-            <div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: #ffffff; padding: 25px 30px; text-align: center;">
-                <h1 style="margin: 0; font-size: 24px; letter-spacing: 1px;">E-CARE</h1>
-                <p style="margin: 5px 0 0; font-size: 14px; opacity: 0.9;">Sistem Pengurusan Servis & Aduan</p>
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; background-color: #f8fafc; padding: 40px 0; width: 100%;">
+        <div style="max-width: 600px; background-color: #ffffff; margin: 0 auto; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0;">
+            <div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: #ffffff; padding: 40px 20px; text-align: center;">
+                <h1 style="margin: 0; font-size: 28px; letter-spacing: 1px; text-transform: uppercase; color: #ffffff;">eCare</h1>
+                <p style="margin: 5px 0 0; font-size: 14px; opacity: 0.9; color: #ffffff;">Powered by DFKTVETMARABESUT</p>
             </div>
-            <div style="padding: 30px;">
-                <h2 style="color: #1e3a8a; margin-top: 0; font-size: 18px;">${title}</h2>
+            <div style="padding: 40px; line-height: 1.6; color: #334155;">
+                <h2 style="color: #1e293b; margin-top: 0; font-size: 20px;">${title}</h2>
                 <p>Hi <strong>${name}</strong>,</p>
-                <p>Anda mempunyai notifikasi baharu berkenaan aduan/servis anda:</p>
-                <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; border-left: 4px solid #2563eb; margin: 20px 0; color: #475569;">
+                <div style="margin: 20px 0; color: #334155; font-size: 15px;">
                     ${message.replace(/\n/g, '<br />')}
                 </div>
-                <p>Sila klik butang di bawah untuk melihat butiran lanjut:</p>
-                <div style="margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 20px; text-align: center;">
-                    <a href="${linkUrl}" style="background-color: #2563eb; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">
+                
+                <div style="text-align: center; margin: 35px 0;">
+                    <a href="${linkUrl}" style="background-color: #2563eb; color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);">
                         ${buttonText}
                     </a>
                 </div>
+                
+                <div style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;"></div>
+                <p style="font-size: 11px; color: #94a3b8; margin: 0;">Hantaran automatik sistem eCare. Sila abaikan jika anda tersilap menerima emel ini.</p>
+            </div>
+            <div style="background-color: #f1f5f9; padding: 30px; text-align: center; font-size: 12px; color: #64748b;">
+                <p style="margin: 0 0 5px 0;">© 2026 <strong style="color: #1e3a8a;">DFKTVETMARABESUT</strong>. All rights reserved.</p>
+                <p style="margin: 0;">Besut, Terengganu, Malaysia</p>
             </div>
         </div>
     </div>
