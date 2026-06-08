@@ -8,61 +8,58 @@ const __dirname = path.dirname(__filename);
 // Load environment variables
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
-import { createNotification, buildNotificationEmailHtml } from './src/controllers/notifications.controller.js';
+import { createNotification } from './src/controllers/notifications.controller.js';
 
 async function test() {
-    console.log('--- Ujian Notifikasi E-mel Aduan Baharu ---');
-    console.log('Mensimulasikan penciptaan aduan bagi pengguna:');
-    console.log('- Nama: AHMAD ZAHID BIN MOHD SOFI');
-    console.log('- IC: 020116110323');
-    console.log('- E-mel: ahmadzahid482@gmail.com');
+    console.log('--- Ujian Notifikasi E-mel Aduan Baharu (3 Senario Pelanggan) ---');
     
+    // User details: AHMAD ZAHID BIN MOHD SOFI
     const userId = '5ed07c8a-1d30-48a8-8b58-f7223dddd5cb';
-    const reportNumber = 'R260609-001';
-    const mockComplaintId = 9999;
+    const reportNumber = 'A00052'; // Actual report number
+    const mockComplaintId = 67; // Database reference ID for A00052
     
-    // Generate the message that will be sent
-    const rawMessage = "Aduan anda R260609-001 berjaya dibuat. Sila tekan link di bawah untuk lihat progress aduan dan status semasa.";
-    const emailHtml = buildNotificationEmailHtml('AHMAD ZAHID BIN MOHD SOFI', 'Aduan Berjaya Didaftarkan', rawMessage, mockComplaintId, 'user');
-    
-    console.log('\n--- PREVIEW PENJANAAN E-MEL ---');
-    console.log('Tajuk E-mel:', 'Aduan Berjaya Didaftarkan');
-    console.log('Pautan (Link) Dinamik Dijana:');
-    const linkMatch = emailHtml.match(/href="([^"]+)"/);
-    if (linkMatch) {
-        console.log('URL Pautan:', linkMatch[1]);
-    } else {
-        console.log('URL Pautan tidak ditemui');
-    }
-    
-    console.log('\nButang Mesej dalam HTML:');
-    const buttonMatch = emailHtml.match(/<a[^>]+>([\s\S]*?)<\/a>/);
-    if (buttonMatch) {
-        console.log('Teks Butang:', buttonMatch[1].trim());
-    }
-    
-    console.log('\nHTML E-mel Penuh (Tema Biru & Putih):');
-    console.log('====================================');
-    console.log(emailHtml);
-    console.log('====================================');
-    
-    const payload = JSON.stringify({
+    // Senario 1: Aduan berjaya dibuat
+    console.log('\n--- Ujian Senario 1: Aduan Berjaya Didaftarkan ---');
+    const payload1 = JSON.stringify({
         key: 'user_complaint_created_msg',
         params: {
             report_number: reportNumber
         }
     });
-    
-    console.log('\nMemulakan createNotification untuk cubaan hantaran sebenar via SMTP...');
     await createNotification(
         userId,
         'user',
         'Aduan Berjaya Didaftarkan',
-        payload,
+        payload1,
         'status_update',
         mockComplaintId
     );
-    console.log('\nUjian selesai!');
+
+    // Senario 2: Aduan sedang diproses oleh Juruteknik
+    console.log('\n--- Ujian Senario 2: Aduan Sedang Diproses ---');
+    const payload2 = `Status Update: Complaint ${reportNumber} is being processed by technician Ahmad Zahid at 09/06/2026 01:12.`;
+    await createNotification(
+        userId,
+        'user',
+        `Status Update: ${reportNumber}`,
+        payload2,
+        'status_update_detailed',
+        mockComplaintId
+    );
+
+    // Senario 3: Aduan telah siap dibaiki oleh Juruteknik
+    console.log('\n--- Ujian Senario 3: Aduan Telah Siap Dibaiki ---');
+    const payload3 = `Status Update: Complaint ${reportNumber} is now completed by technician Ahmad Zahid at 09/06/2026 01:12. Ready for pickup.`;
+    await createNotification(
+        userId,
+        'user',
+        `Status Update: ${reportNumber}`,
+        payload3,
+        'status_update_detailed',
+        mockComplaintId
+    );
+
+    console.log('\nSemua ujian simulasi selesai!');
 }
 
 test().catch(console.error);

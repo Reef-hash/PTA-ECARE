@@ -126,6 +126,29 @@ const translateMessage = (payload: string): string => {
     return payload;
 };
 
+// Helper to translate detailed status messages (English strings from backend status updates) to custom Malay wording
+const translateDetailedMessage = (msg: string, userName: string, branchName: string): string => {
+    // 1. Processing (In Process)
+    const procRegex = /Status Update:\s+Complaint\s+([A-Z0-9]+)\s+is being processed by technician\s+(.*?)\s+at\s+([^.]+)/i;
+    const procMatch = msg.match(procRegex);
+    if (procMatch) {
+        const reportNo = procMatch[1];
+        const techName = procMatch[2];
+        return `${userName}, aduan ${reportNo} anda telah diproses oleh juruteknik ${techName}.\n\nSila klik butang di bawah untuk lihat status semasa aduan kerosakan barang anda.`;
+    }
+
+    // 2. Completed (Closed)
+    const compRegex = /Status Update:\s+Complaint\s+([A-Z0-9]+)\s+is now completed by technician\s+(.*?)\s+at\s+([^.]+)\.\s+Ready for pickup\./i;
+    const compMatch = msg.match(compRegex);
+    if (compMatch) {
+        const reportNo = compMatch[1];
+        const techName = compMatch[2];
+        return `Aduan ${reportNo} anda telah siap dibaiki oleh juruteknik ${techName}.\nBarang anda boleh diambil di cawangan ${branchName}.\n\nSila klik butang di bawah untuk lihat status barangan anda sudah sedia untuk diambil.`;
+    }
+
+    return msg;
+};
+
 // HTML Email Notification Template (Blue & White Theme)
 export const buildNotificationEmailHtml = (name: string, title: string, message: string, complaintId?: number, role?: string) => {
     let baseUrl = 'https://pta-ecare.vercel.app';
@@ -143,7 +166,14 @@ export const buildNotificationEmailHtml = (name: string, title: string, message:
             } else {
                 linkUrl = `${baseUrl}/users/complaint-history`;
             }
-            buttonText = 'Semak Progress Aduan';
+            
+            if (message.includes('siap dibaiki')) {
+                buttonText = 'Lihat Status Barangan';
+            } else if (message.includes('telah diproses')) {
+                buttonText = 'Lihat Status Semasa';
+            } else {
+                buttonText = 'Semak Progress Aduan';
+            }
             break;
         case 'technician':
             if (complaintId) {
@@ -258,7 +288,24 @@ export const createNotification = async (
             }
 
             if (email) {
-                const humanReadableMessage = translateMessage(payload);
+                let humanReadableMessage = translateMessage(payload);
+                
+                if (role === 'user' && type === 'status_update_detailed') {
+                    // Fetch state/branch of the complaint
+                    let branchName = 'cawangan asal aduan';
+                    if (complaint_id) {
+                        const { data: complaintData } = await supabaseAdmin
+                            .from('complaints')
+                            .select('state')
+                            .eq('id', complaint_id)
+                            .single();
+                        if (complaintData && complaintData.state) {
+                            branchName = complaintData.state;
+                        }
+                    }
+                    humanReadableMessage = translateDetailedMessage(humanReadableMessage, name || 'Pengguna', branchName);
+                }
+                
                 const emailHtml = buildNotificationEmailHtml(name || 'Pengguna', start_msg, humanReadableMessage, complaint_id, role);
                 await sendEmail(email, `eCare: ${start_msg}`, emailHtml);
                 console.log(`[CREATE NOTIFICATION] Email sent successfully to ${email}`);
