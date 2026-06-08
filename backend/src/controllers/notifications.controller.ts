@@ -93,6 +93,7 @@ const translateMessage = (payload: string): string => {
                 notif_processing_body: "Status Terkini: Aduan {{id}} sedang diproses oleh juruteknik {{name}} pada {{date}} jam {{time}}.",
                 notif_completed_body: "Aduan {{id}} telah disiapkan oleh juruteknik {{name}} pada {{date}} jam {{time}}. Sedia untuk diambil.",
                 notif_new_job: "Tugasan Baru: {{id}}",
+                notif_processing_user: "{{user_name}}, aduan {{id}} anda telah diproses oleh juruteknik {{name}}.\n\nSila klik butang di bawah untuk lihat status semasa aduan kerosakan barang anda.",
                 notif_processing_user_body: "Status Terkini: Aduan anda {{id}} kini DALAM PROSES oleh juruteknik {{name}} pada {{date}} jam {{time}}.",
                 notif_processing_tech_body: "Anda telah ditugaskan untuk menyemak aduan {{id}} daripada {{userName}}.",
                 notif_transport_admin: "Update Transport: {{id}} - Kenderaan/Logistik dikemaskini oleh Technician.",
@@ -128,21 +129,39 @@ const translateMessage = (payload: string): string => {
 
 // Helper to translate detailed status messages (English strings from backend status updates) to custom Malay wording
 const translateDetailedMessage = (msg: string, userName: string, branchName: string): string => {
-    // 1. Processing (In Process)
-    const procRegex = /Status Update:\s+Complaint\s+([A-Z0-9]+)\s+is being processed by technician\s+(.*?)\s+at\s+([^.]+)/i;
-    const procMatch = msg.match(procRegex);
-    if (procMatch) {
-        const reportNo = procMatch[1];
-        const techName = procMatch[2];
+    // 1. Processing (In Process) - Format A
+    const procRegexA = /Status Update:\s+Complaint\s+([A-Z0-9]+)\s+is being processed by technician\s+(.*?)\s+at\s+([^.]+)/i;
+    const procMatchA = msg.match(procRegexA);
+    if (procMatchA) {
+        const reportNo = procMatchA[1];
+        const techName = procMatchA[2];
         return `${userName}, aduan ${reportNo} anda telah diproses oleh juruteknik ${techName}.\n\nSila klik butang di bawah untuk lihat status semasa aduan kerosakan barang anda.`;
     }
 
-    // 2. Completed (Closed)
-    const compRegex = /Status Update:\s+Complaint\s+([A-Z0-9]+)\s+is now completed by technician\s+(.*?)\s+at\s+([^.]+)\.\s+Ready for pickup\./i;
-    const compMatch = msg.match(compRegex);
-    if (compMatch) {
-        const reportNo = compMatch[1];
-        const techName = compMatch[2];
+    // 1b. Processing (In Process) - Format B
+    const procRegexB = /Status Update\s+\[([A-Z0-9]+)\]:\s+Service\s+(?:in\s+)?process\s+by\s+Technician\s+(.*?)\s+on\s+([^.]+)/i;
+    const procMatchB = msg.match(procRegexB);
+    if (procMatchB) {
+        const reportNo = procMatchB[1];
+        const techName = procMatchB[2];
+        return `${userName}, aduan ${reportNo} anda telah diproses oleh juruteknik ${techName}.\n\nSila klik butang di bawah untuk lihat status semasa aduan kerosakan barang anda.`;
+    }
+
+    // 2. Completed (Closed) - Format A
+    const compRegexA = /Status Update:\s+Complaint\s+([A-Z0-9]+)\s+is now completed by technician\s+(.*?)\s+at\s+([^.]+)\.\s+Ready for pickup\./i;
+    const compMatchA = msg.match(compRegexA);
+    if (compMatchA) {
+        const reportNo = compMatchA[1];
+        const techName = compMatchA[2];
+        return `Aduan ${reportNo} anda telah siap dibaiki oleh juruteknik ${techName}.\nBarang anda boleh diambil di cawangan ${branchName}.\n\nSila klik butang di bawah untuk lihat status barangan anda sudah sedia untuk diambil.`;
+    }
+
+    // 2b. Completed (Closed) - Format B
+    const compRegexB = /Status Update\s+\[([A-Z0-9]+)\]:\s+Service\s+completed\s+by\s+Technician\s+(.*?)\s+on\s+([^.]+)\.\s+Case status transitioned to 'Ready for Pickup'\./i;
+    const compMatchB = msg.match(compRegexB);
+    if (compMatchB) {
+        const reportNo = compMatchB[1];
+        const techName = compMatchB[2];
         return `Aduan ${reportNo} anda telah siap dibaiki oleh juruteknik ${techName}.\nBarang anda boleh diambil di cawangan ${branchName}.\n\nSila klik butang di bawah untuk lihat status barangan anda sudah sedia untuk diambil.`;
     }
 
@@ -294,26 +313,51 @@ export const createNotification = async (
             }
 
             if (email) {
-                let humanReadableMessage = translateMessage(payload);
+                let reportNumber = '';
+                let branchName = 'cawangan asal aduan';
                 
-                if (role === 'user' && type === 'status_update_detailed') {
-                    // Fetch state/branch of the complaint
-                    let branchName = 'cawangan asal aduan';
-                    if (complaint_id) {
-                        const { data: complaintData } = await supabaseAdmin
-                            .from('complaints')
-                            .select('state')
-                            .eq('id', complaint_id)
-                            .single();
-                        if (complaintData && complaintData.state) {
-                            branchName = complaintData.state;
-                        }
+                if (complaint_id) {
+                    const { data: complaintData } = await supabaseAdmin
+                        .from('complaints')
+                        .select('state, report_number')
+                        .eq('id', complaint_id)
+                        .single();
+                    if (complaintData) {
+                        if (complaintData.state) branchName = complaintData.state;
+                        if (complaintData.report_number) reportNumber = complaintData.report_number;
                     }
+                }
+                
+                let parsedPayload = payload;
+                try {
+                    const parsed = JSON.parse(payload);
+                    if (parsed && typeof parsed === 'object') {
+                        if (!parsed.params) parsed.params = {};
+                        parsed.params.user_name = name || 'Pengguna';
+                        parsedPayload = JSON.stringify(parsed);
+                    }
+                } catch (e) {
+                    // Not JSON, ignore
+                }
+
+                let humanReadableMessage = translateMessage(parsedPayload);
+                
+                if (role === 'user' && (type === 'status_update_detailed' || type === 'status_update')) {
                     humanReadableMessage = translateDetailedMessage(humanReadableMessage, name || 'Pengguna', branchName);
                 }
                 
-                const emailHtml = buildNotificationEmailHtml(name || 'Pengguna', start_msg, humanReadableMessage, complaint_id, role);
-                await sendEmail(email, `eCare: ${start_msg}`, emailHtml);
+                // Format Subject according to user specification
+                let emailSubject = `eCare: ${start_msg}`;
+                if (reportNumber) {
+                    if (start_msg.includes('Aduan Berjaya Didaftarkan')) {
+                        emailSubject = `${reportNumber} Aduan Berjaya Didaftarkan`;
+                    } else if (start_msg.includes('Status Update')) {
+                        emailSubject = `Status Update: ${reportNumber}`;
+                    }
+                }
+                
+                const emailHtml = buildNotificationEmailHtml(name || 'Pengguna', emailSubject, humanReadableMessage, complaint_id, role);
+                await sendEmail(email, emailSubject, emailHtml);
                 console.log(`[CREATE NOTIFICATION] Email sent successfully to ${email}`);
             } else {
                 console.log(`[CREATE NOTIFICATION] No email found for user: ${userId}, role: ${role}`);
