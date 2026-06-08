@@ -88,7 +88,7 @@ const translateMessage = (payload: string): string => {
                 new_complaint_msg: "Aduan baru daripada {{user_name}}. Sila semak dan proses.",
                 status_update_msg: "Kemaskini Status: Aduan {{report_number}} kini {{status}}.",
                 job_assigned_msg: "Anda telah diagihkan aduan baru {{report_number}}",
-                user_complaint_created_msg: "Aduan anda {{report_number}} telah berjaya didaftarkan. Sila semak status di portal.",
+                user_complaint_created_msg: "Aduan anda {{report_number}} berjaya dibuat. Sila tekan link di bawah untuk lihat progress aduan dan status semasa.",
                 user_status_updated_msg: "Aduan anda {{report_number}} telah dikemaskini kepada '{{status}}'. Sila semak butiran di portal.",
                 notif_processing_body: "Status Terkini: Aduan {{id}} sedang diproses oleh juruteknik {{name}} pada {{date}} jam {{time}}.",
                 notif_completed_body: "Aduan {{id}} telah disiapkan oleh juruteknik {{name}} pada {{date}} jam {{time}}. Sedia untuk diambil.",
@@ -127,7 +127,29 @@ const translateMessage = (payload: string): string => {
 };
 
 // HTML Email Notification Template (Blue & White Theme)
-const buildNotificationEmailHtml = (name: string, title: string, message: string) => `
+export const buildNotificationEmailHtml = (name: string, title: string, message: string, complaintId?: number, role?: string) => {
+    let baseUrl = 'https://pta-ecare.vercel.app';
+    if (process.env.FRONTEND_URL) {
+        baseUrl = process.env.FRONTEND_URL.replace(/\/$/, ''); // Remove trailing slash if any
+    }
+    
+    let linkUrl = baseUrl;
+    let buttonText = 'Buka Portal E-CARE';
+    
+    if (complaintId) {
+        if (role === 'user') {
+            linkUrl = `${baseUrl}/users/complaint/${complaintId}`;
+            buttonText = 'Semak Progress Aduan';
+        } else if (role === 'technician') {
+            linkUrl = `${baseUrl}/admin/technician/complaint/${complaintId}`;
+            buttonText = 'Semak Tugasan Aduan';
+        } else if (role === 'admin') {
+            linkUrl = `${baseUrl}/admin/complaint/${complaintId}`;
+            buttonText = 'Semak Aduan';
+        }
+    }
+
+    return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #334155; line-height: 1.6;">
         <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
             <div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: #ffffff; padding: 25px 30px; text-align: center;">
@@ -141,16 +163,17 @@ const buildNotificationEmailHtml = (name: string, title: string, message: string
                 <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; border-left: 4px solid #2563eb; margin: 20px 0; color: #475569;">
                     ${message.replace(/\n/g, '<br />')}
                 </div>
-                <p>Sila log masuk ke portal E-CARE anda untuk melihat butiran lanjut.</p>
+                <p>Sila klik butang di bawah untuk melihat butiran lanjut:</p>
                 <div style="margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 20px; text-align: center;">
-                    <a href="${process.env.FRONTEND_URL || 'https://pta-ecare.vercel.app'}" style="background-color: #2563eb; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">
-                        Buka Portal E-CARE
+                    <a href="${linkUrl}" style="background-color: #2563eb; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">
+                        ${buttonText}
                     </a>
                 </div>
             </div>
         </div>
     </div>
-`;
+    `;
+};
 
 // Internal helper to create notification
 export const createNotification = async (
@@ -219,7 +242,7 @@ export const createNotification = async (
 
             if (email) {
                 const humanReadableMessage = translateMessage(payload);
-                const emailHtml = buildNotificationEmailHtml(name || 'Pengguna', start_msg, humanReadableMessage);
+                const emailHtml = buildNotificationEmailHtml(name || 'Pengguna', start_msg, humanReadableMessage, complaint_id, role);
                 await sendEmail(email, `eCare: ${start_msg}`, emailHtml);
                 console.log(`[CREATE NOTIFICATION] Email sent successfully to ${email}`);
             } else {
