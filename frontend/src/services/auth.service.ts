@@ -37,6 +37,26 @@ export const authService = {
         return response.data;
     },
 
+    async verifySignupOtp(data: { email: string; otp: string }) {
+        const response = await api.post('/auth/verify-signup-otp', data);
+        return response.data;
+    },
+
+    async resendSignupOtp(data: { email: string }) {
+        const response = await api.post('/auth/resend-signup-otp', data);
+        return response.data;
+    },
+
+    async verifyActivationOtp(data: { username: string; role: string; otp: string }) {
+        const response = await api.post('/auth/verify-activation-otp', data);
+        return response.data;
+    },
+
+    async resendActivationOtp(data: { username: string; role: string }) {
+        const response = await api.post('/auth/resend-activation-otp', data);
+        return response.data;
+    },
+
     logout() {
         localStorage.removeItem('token');
         localStorage.removeItem('user');

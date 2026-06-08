@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { supabaseAdmin } from '../config/supabase.js';
+import { buildActivationEmail } from './auth.controller.js';
+import { sendEmail } from '../utils/email.js';
 
 // Get dashboard statistics
 export const getStats = async (req: Request, res: Response): Promise<void> => {
@@ -145,16 +147,50 @@ export const createTechnician = async (req: Request, res: Response): Promise<voi
 
         const password_hash = await bcrypt.hash(password, 10);
 
+        // Insert technician as inactive (is_active: false)
         const { data: newTech, error } = await supabaseAdmin
             .from('technicians')
-            .insert({ name, department, email, contact_number, username, password_hash })
+            .insert({ name, department, email, contact_number, username, password_hash, is_active: false })
             .select()
             .single();
 
         if (error) throw error;
 
+        // Generate 6-digit OTP code
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours
+
+        // Delete any existing OTP for this email and role
+        await supabaseAdmin
+            .from('activation_otps')
+            .delete()
+            .eq('email', email)
+            .eq('role', 'technician');
+
+        // Insert new OTP record
+        const { error: otpError } = await supabaseAdmin
+            .from('activation_otps')
+            .insert({
+                email,
+                role: 'technician',
+                otp,
+                expires_at: expiresAt
+            });
+
+        if (otpError) {
+            console.error('Failed to save activation OTP:', otpError);
+        } else {
+            // Send activation email
+            try {
+                const activationHtml = buildActivationEmail(name, otp, 'technician');
+                await sendEmail(email, 'Aktifkan Akaun Juruteknik eCare Anda', activationHtml);
+            } catch (emailError) {
+                console.error('Failed to send technician activation email:', emailError);
+            }
+        }
+
         const { password_hash: _, ...techWithoutPassword } = newTech;
-        res.status(201).json({ message: 'Technician created', technician: techWithoutPassword });
+        res.status(201).json({ message: 'Technician created successfully and activation OTP email sent.', technician: techWithoutPassword });
     } catch (error) {
         console.error('Create technician error:', error);
         res.status(500).json({ error: 'Internal server error' });

@@ -6,7 +6,10 @@ import {
     googleAuthSchema,
     forgotPasswordSchema,
     verifyOtpSchema,
-    resetPasswordSchema
+    resetPasswordSchema,
+    verifySignupOtpSchema,
+    verifyActivationOtpSchema,
+    resendActivationOtpSchema
 } from '../utils/schemas.js';
 import {
     register,
@@ -17,6 +20,10 @@ import {
     resetPassword,
     getProfile,
     verifyIC,
+    verifySignupOtp,
+    resendSignupOtp,
+    verifyActivationOtp,
+    resendActivationOtp
 } from '../controllers/auth.controller.js';
 import { authenticateToken } from '../middleware/auth.js';
 
@@ -30,6 +37,12 @@ router.post('/verify-ic', verifyIC);
 router.post('/forgot-password', validate(forgotPasswordSchema), forgotPassword);
 router.post('/verify-otp', validate(verifyOtpSchema), verifyOtp);
 router.post('/reset-password', validate(resetPasswordSchema), resetPassword);
+
+// OTP Verification & Account Activation routes
+router.post('/verify-signup-otp', validate(verifySignupOtpSchema), verifySignupOtp);
+router.post('/resend-signup-otp', resendSignupOtp);
+router.post('/verify-activation-otp', validate(verifyActivationOtpSchema), verifyActivationOtp);
+router.post('/resend-activation-otp', validate(resendActivationOtpSchema), resendActivationOtp);
 
 // Protected routes
 router.get('/profile', authenticateToken, getProfile);

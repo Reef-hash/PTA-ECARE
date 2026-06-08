@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, UserPlus, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, UserPlus, ArrowLeft, KeyRound, Mail, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import authService from '../../services/auth.service';
 import toast from 'react-hot-toast';
@@ -12,6 +12,8 @@ export default function UserRegister() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { login } = useAuth();
+    
+    // Registration form states
     const [formData, setFormData] = useState({
         full_name: '',
         ic_number: '',
@@ -27,6 +29,19 @@ export default function UserRegister() {
     const [isLoading, setIsLoading] = useState(false);
     const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
+    // OTP verification states
+    const [requiresOtp, setRequiresOtp] = useState(false);
+    const [otpEmail, setOtpEmail] = useState('');
+    const [otp, setOtp] = useState('');
+    const [isVerifying, setIsVerifying] = useState(false);
+    const [cooldown, setCooldown] = useState(0);
+
+    useEffect(() => {
+        if (cooldown > 0) {
+            const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [cooldown]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -52,12 +67,18 @@ export default function UserRegister() {
             return;
         }
 
+        // Email is required for OTP sign-up
+        if (!formData.email) {
+            toast.error('E-mel wajib diisi untuk pendaftaran & pengesahan akaun.');
+            return;
+        }
+
         setIsLoading(true);
         try {
             const response = await authService.register({
                 full_name: formData.full_name,
                 ic_number: formData.ic_number,
-                email: formData.email || undefined,
+                email: formData.email,
                 contact_no: formData.contact_no,
                 contact_no_2: formData.contact_no_2 || undefined,
                 address: formData.address,
@@ -65,14 +86,61 @@ export default function UserRegister() {
                 password: formData.password,
             });
 
-            login(response.token, response.user, 'user');
-            toast.success(t('user_auth.success_register'));
-            navigate('/users/dashboard');
+            if (response.requires_otp) {
+                toast.success(response.message || 'Sila sahkan e-mel anda menggunakan kod OTP.');
+                setOtpEmail(response.email);
+                setRequiresOtp(true);
+                setCooldown(60);
+            } else {
+                login(response.token, response.user, 'user');
+                toast.success(t('user_auth.success_register'));
+                navigate('/users/dashboard');
+            }
         } catch (error: any) {
-            toast.error(error.response?.data?.error || t('common.error_load')); // "Pendaftaran gagal" fallback logic? I'll stick to generic error load or just "Registration Failed" key if I had one. I'll use common.error_load or hardcode generic failure message in my head or add key. error_load is "Failed to load" which is weird. I'll use backend error or hardcode fallback.
+            toast.error(error.response?.data?.error || 'Pendaftaran gagal');
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleVerifyOtp = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (otp.length !== 6) {
+            toast.error('Sila masukkan kod OTP 6-digit yang sah.');
+            return;
+        }
+
+        setIsVerifying(true);
+        try {
+            const response = await authService.verifySignupOtp({
+                email: otpEmail,
+                otp
+            });
+
+            login(response.token, response.user, 'user');
+            toast.success(response.message || 'Akaun anda berjaya diaktifkan!');
+            navigate('/users/dashboard');
+        } catch (error: any) {
+            toast.error(error.response?.data?.error || 'Kod OTP tidak sah atau telah tamat tempoh');
+        } finally {
+            setIsVerifying(false);
+        }
+    };
+
+    const handleResendOtp = async () => {
+        if (cooldown > 0) return;
+        try {
+            await authService.resendSignupOtp({ email: otpEmail });
+            toast.success('Kod OTP baharu telah dihantar ke e-mel anda.');
+            setCooldown(60);
+        } catch (error: any) {
+            toast.error(error.response?.data?.error || 'Gagal menghantar semula kod OTP.');
+        }
+    };
+
+    const handleBackToRegister = () => {
+        setRequiresOtp(false);
+        setOtp('');
     };
 
     const handleGoogleOAuth = async () => {
@@ -104,186 +172,256 @@ export default function UserRegister() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-dark-900 via-dark-800 to-primary-900 py-8 px-4">
-            <div className="max-w-2xl mx-auto">
+        <div className="min-h-screen bg-gradient-to-br from-dark-900 via-dark-800 to-primary-900 py-8 px-4 flex items-center justify-center">
+            <div className="max-w-2xl w-full mx-auto">
                 {/* Back button */}
-                <Link
-                    to="/users"
+                <button
+                    onClick={requiresOtp ? handleBackToRegister : () => navigate('/users')}
                     className="inline-flex items-center gap-2 text-white/70 hover:text-white mb-6 transition-colors"
                 >
                     <ArrowLeft className="w-4 h-4" />
-                    {t('user_auth.back_login')}
-                </Link>
+                    {requiresOtp ? 'Kembali ke Pendaftaran' : t('user_auth.back_login')}
+                </button>
 
                 {/* Card */}
-                <div className="bg-white rounded-2xl shadow-2xl p-8 animate-fade-in">
-                    {/* Header */}
-                    <div className="text-center mb-8">
-                        <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                            <UserPlus className="w-8 h-8 text-white" />
-                        </div>
-                        <h1 className="text-2xl font-bold text-gray-800">{t('user_auth.register_title')}</h1>
-                        <p className="text-gray-500 mt-1">{t('user_auth.register_subtitle')}</p>
-                    </div>
-
-                    {/* Form */}
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    {t('user_dashboard.label_full_name')} <span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.full_name}
-                                    onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                                    placeholder={t('user_dashboard.label_full_name')} /* Placeholder simplified */
-                                    className="input-field"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    {t('user_dashboard.label_ic')} <span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.ic_number}
-                                    onChange={(e) => setFormData({ ...formData, ic_number: e.target.value.replace(/\D/g, '').slice(0, 12) })}
-                                    placeholder="901234567890" /* Universal numeric example */
-                                    className="input-field"
-                                    maxLength={12}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    {t('user_dashboard.label_email')} ({t('common.optional') || 'Optional'})
-                                </label>
-                                <input
-                                    type="email"
-                                    value={formData.email}
-                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                    placeholder="email@example.com"
-                                    className="input-field"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    {t('user_dashboard.label_phone1')} <span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                    type="tel"
-                                    value={formData.contact_no}
-                                    onChange={(e) => setFormData({ ...formData, contact_no: e.target.value.replace(/\D/g, '') })}
-                                    placeholder="0123456789"
-                                    className="input-field"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    {t('user_dashboard.label_phone2')} ({t('common.optional') || 'Optional'})
-                                </label>
-                                <input
-                                    type="tel"
-                                    value={formData.contact_no_2}
-                                    onChange={(e) => setFormData({ ...formData, contact_no_2: e.target.value.replace(/\D/g, '') })}
-                                    placeholder="0198765432"
-                                    className="input-field"
-                                />
-                            </div>
-
-                            <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    {t('user_dashboard.label_address')} <span className="text-red-500">*</span>
-                                </label>
-                                <textarea
-                                    value={formData.address}
-                                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                    placeholder={t('user_dashboard.label_address')}
-                                    rows={3}
-                                    className="input-field resize-none"
-                                />
-                            </div>
-
-
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    {t('common_actions.password') || 'Password'} <span className="text-red-500">*</span> {/* Missing password key in common? I should add it or use hardcode. I'll add 'password' to common_actions later or just use 'Kata Laluan' if I can. Wait, I added UserProfile password fields. I have `user_dashboard.new_password`. I don't have just "Password". I'll use `user_dashboard.new_password` logic or just "Kata Laluan". I'll check if I have "password" in common. I have "save", "cancel". I don't have "password". I'll use `t('user_auth.pass_min_length')` logic context. I'll use `t('common_actions.password')` and add it to JSON. */}
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        type={showPassword ? 'text' : 'password'}
-                                        value={formData.password}
-                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                        placeholder={t('user_auth.pass_min_length').replace('Password must be at least ', 'Min ')} /* Hacky but works or just "Minimum 6 chars" */
-                                        className="input-field pr-12"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                                    >
-                                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                    </button>
+                <div className="bg-white rounded-2xl shadow-2xl p-8 animate-fade-in transition-all duration-300">
+                    
+                    {!requiresOtp ? (
+                        <>
+                            {/* Header */}
+                            <div className="text-center mb-8">
+                                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                                    <UserPlus className="w-8 h-8 text-white" />
                                 </div>
+                                <h1 className="text-2xl font-bold text-gray-800">{t('user_auth.register_title')}</h1>
+                                <p className="text-gray-500 mt-1">{t('user_auth.register_subtitle')}</p>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    {t('user_dashboard.confirm_password')} <span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    value={formData.confirm_password}
-                                    onChange={(e) => setFormData({ ...formData, confirm_password: e.target.value })}
-                                    placeholder={t('user_dashboard.confirm_password')}
-                                    className="input-field"
-                                />
+                            {/* Form */}
+                            <form onSubmit={handleSubmit} className="space-y-5">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            {t('user_dashboard.label_full_name')} <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.full_name}
+                                            onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                                            placeholder={t('user_dashboard.label_full_name')}
+                                            className="input-field"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            {t('user_dashboard.label_ic')} <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.ic_number}
+                                            onChange={(e) => setFormData({ ...formData, ic_number: e.target.value.replace(/\D/g, '').slice(0, 12) })}
+                                            placeholder="901234567890"
+                                            className="input-field"
+                                            maxLength={12}
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            {t('user_dashboard.label_email')} <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="email"
+                                            value={formData.email}
+                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                            placeholder="email@example.com"
+                                            className="input-field"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            {t('user_dashboard.label_phone1')} <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            value={formData.contact_no}
+                                            onChange={(e) => setFormData({ ...formData, contact_no: e.target.value.replace(/\D/g, '') })}
+                                            placeholder="0123456789"
+                                            className="input-field"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            {t('user_dashboard.label_phone2')} ({t('common.optional') || 'Optional'})
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            value={formData.contact_no_2}
+                                            onChange={(e) => setFormData({ ...formData, contact_no_2: e.target.value.replace(/\D/g, '') })}
+                                            placeholder="0198765432"
+                                            className="input-field"
+                                        />
+                                    </div>
+
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            {t('user_dashboard.label_address')} <span className="text-red-500">*</span>
+                                        </label>
+                                        <textarea
+                                            value={formData.address}
+                                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                            placeholder={t('user_dashboard.label_address')}
+                                            rows={3}
+                                            className="input-field resize-none"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Kata Laluan <span className="text-red-500">*</span>
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type={showPassword ? 'text' : 'password'}
+                                                value={formData.password}
+                                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                                placeholder="Minimum 6 aksara"
+                                                className="input-field pr-12"
+                                                required
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                            >
+                                                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            {t('user_dashboard.confirm_password')} <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type={showPassword ? 'text' : 'password'}
+                                            value={formData.confirm_password}
+                                            onChange={(e) => setFormData({ ...formData, confirm_password: e.target.value })}
+                                            placeholder={t('user_dashboard.confirm_password')}
+                                            className="input-field"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={isLoading || isGoogleLoading}
+                                    className="btn-primary w-full flex items-center justify-center gap-2 mt-6"
+                                >
+                                    {isLoading ? (
+                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                        <>
+                                            <UserPlus className="w-5 h-5" />
+                                            {t('user_auth.btn_register')}
+                                        </>
+                                    )}
+                                </button>
+                            </form>
+
+                            <div className="flex items-center gap-3 my-6">
+                                <div className="h-px bg-gray-200 flex-1" />
+                                <span className="text-xs font-medium text-gray-400 uppercase">{t('user_auth.or_google')}</span>
+                                <div className="h-px bg-gray-200 flex-1" />
+                            </div>
+
+                            <GoogleSignInButton
+                                text="signup_with"
+                                onClick={handleGoogleOAuth}
+                                disabled={isLoading || isGoogleLoading}
+                                disabledLabel={t('common.loading')}
+                                unavailableLabel={t('user_auth.google_unavailable')}
+                                isConfigured={isSupabaseAuthConfigured}
+                            />
+
+                            {/* Login link */}
+                            <p className="text-center text-gray-500 mt-6">
+                                {t('user_auth.link_login').split('?')[0]}?{' '}
+                                <Link to="/users" className="text-primary-600 hover:text-primary-700 font-medium">
+                                    {t('user_auth.link_login').split('?')[1] || 'Login'}
+                                </Link>
+                            </p>
+                        </>
+                    ) : (
+                        // OTP Verification View
+                        <div className="text-center animate-fade-in">
+                            <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                                <KeyRound className="w-8 h-8 text-white animate-pulse" />
+                            </div>
+                            <h2 className="text-2xl font-bold text-gray-800">Sahkan E-mel Anda</h2>
+                            <p className="text-gray-500 mt-2">
+                                Kami telah menghantar kod OTP 6-digit ke alamat e-mel:
+                            </p>
+                            <div className="flex items-center justify-center gap-2 mt-2 font-semibold text-gray-700 bg-gray-50 py-2 px-4 rounded-lg inline-flex mx-auto">
+                                <Mail className="w-4 h-4 text-primary-600" />
+                                <span>{otpEmail}</span>
+                            </div>
+
+                            <form onSubmit={handleVerifyOtp} className="mt-8 space-y-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Kod OTP 6-Digit
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={otp}
+                                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                        placeholder="000000"
+                                        className="text-center tracking-[1em] text-2xl font-bold input-field py-3"
+                                        maxLength={6}
+                                        required
+                                        autoFocus
+                                    />
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={isVerifying || otp.length !== 6}
+                                    className="btn-primary w-full flex items-center justify-center gap-2"
+                                >
+                                    {isVerifying ? (
+                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                        'Sahkan & Aktifkan Akaun'
+                                    )}
+                                </button>
+                            </form>
+
+                            <div className="mt-6 flex flex-col items-center justify-center gap-4">
+                                <button
+                                    onClick={handleResendOtp}
+                                    disabled={cooldown > 0}
+                                    className={`inline-flex items-center gap-2 text-sm font-medium transition-colors ${
+                                        cooldown > 0
+                                            ? 'text-gray-400 cursor-not-allowed'
+                                            : 'text-primary-600 hover:text-primary-700'
+                                    }`}
+                                >
+                                    <RefreshCw className={`w-4 h-4 ${cooldown > 0 ? '' : 'hover:animate-spin'}`} />
+                                    {cooldown > 0 ? `Hantar Semula (${cooldown}s)` : 'Hantar Semula Kod OTP'}
+                                </button>
                             </div>
                         </div>
-
-                        <button
-                            type="submit"
-                            disabled={isLoading || isGoogleLoading}
-                            className="btn-primary w-full flex items-center justify-center gap-2 mt-6"
-                        >
-                            {isLoading ? (
-                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            ) : (
-                                <>
-                                    <UserPlus className="w-5 h-5" />
-                                    {t('user_auth.btn_register')}
-                                </>
-                            )}
-                        </button>
-                    </form>
-
-                    <div className="flex items-center gap-3 my-6">
-                        <div className="h-px bg-gray-200 flex-1" />
-                        <span className="text-xs font-medium text-gray-400 uppercase">{t('user_auth.or_google')}</span>
-                        <div className="h-px bg-gray-200 flex-1" />
-                    </div>
-
-                    <GoogleSignInButton
-                        text="signup_with"
-                        onClick={handleGoogleOAuth}
-                        disabled={isLoading || isGoogleLoading}
-                        disabledLabel={t('common.loading')}
-                        unavailableLabel={t('user_auth.google_unavailable')}
-                        isConfigured={isSupabaseAuthConfigured}
-                    />
-
-                    {/* Login link */}
-                    <p className="text-center text-gray-500 mt-6">
-                        {t('user_auth.link_login').split('?')[0]}?{' '} {/* "Already have an account?" */}
-                        <Link to="/users" className="text-primary-600 hover:text-primary-700 font-medium">
-                            {t('user_auth.link_login').split('?')[1] || 'Login'}
-                        </Link>
-                    </p>
+                    )}
                 </div>
 
                 {/* Footer */}
@@ -291,7 +429,6 @@ export default function UserRegister() {
                     {t('login.footer')}
                 </footer>
             </div>
-
         </div>
     );
 }

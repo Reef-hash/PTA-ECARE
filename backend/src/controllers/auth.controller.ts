@@ -245,6 +245,30 @@ const sendWelcomeEmail = async (user: UserRow): Promise<void> => {
     );
 };
 
+export const buildActivationEmail = (name: string, otp: string, role: string) => `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #334155; line-height: 1.6;">
+        <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+            <div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: #ffffff; padding: 30px; text-align: center;">
+                <h1 style="margin: 0; font-size: 24px; letter-spacing: 1px;">E-CARE</h1>
+                <p style="margin: 5px 0 0; font-size: 14px; opacity: 0.9;">Powered by DFKTVETMARABESUT</p>
+            </div>
+            <div style="padding: 30px;">
+                <h2 style="color: #1e293b; margin-top: 0;">Aktifkan Akaun ${role === 'technician' ? 'Juruteknik' : 'Admin'} Anda</h2>
+                <p>Hi ${escapeHtml(name)},</p>
+                <p>Satu akaun ${role === 'technician' ? 'Juruteknik' : 'Admin'} eCare telah didaftarkan untuk anda. Sila gunakan kod OTP di bawah untuk mengaktifkan akaun anda:</p>
+                <div style="font-size: 32px; font-weight: 700; letter-spacing: 8px; background-color: #f1f5f9; padding: 20px; border-radius: 8px; text-align: center; color: #1e3a8a; margin: 25px 0; border: 1px dashed #cbd5e1;">
+                    ${otp}
+                </div>
+                <p>Masukkan kod OTP ini pada halaman log masuk untuk mengaktifkan akaun anda.</p>
+                <div style="border-top: 1px solid #e2e8f0; margin-top: 30px; padding-top: 20px;">
+                    <p style="font-size: 12px; color: #94a3b8; margin: 0;">Sekiranya anda tidak menjangkakan emel ini, sila hubungi pentadbir sistem.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+`;
+
+
 export const verifyIC = async (req: Request, res: Response): Promise<void> => {
     try {
         const { ic_number } = req.body;
@@ -269,6 +293,8 @@ export const verifyIC = async (req: Request, res: Response): Promise<void> => {
         res.json({ registered: true, user, token });
     } catch (error) {
         console.error('Verify IC error:', error);
+
+
         res.status(500).json({ error: 'Internal server error' });
     }
 };
@@ -277,19 +303,54 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     try {
         const { full_name, ic_number, email, contact_no, contact_no_2, address, state, password } = req.body;
 
+        // 1. Check if IC number is already registered
         const { data: existing } = await supabaseAdmin.from('users').select('id').eq('ic_number', ic_number);
         if (existing && existing.length > 0) {
             res.status(400).json({ error: 'IC number already registered' });
             return;
         }
 
+        // 2. Sign up user using Supabase Auth (which triggers the confirmation email/OTP)
+        const { data: authResult, error: authError } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: {
+                    full_name,
+                    ic_number,
+                    contact_no,
+                    address
+                }
+            }
+        });
+
+        if (authError || !authResult.user) {
+            res.status(400).json({ error: authError?.message || 'Gagal mendaftar akaun melalui Supabase Auth' });
+            return;
+        }
+
         const password_hash = await bcrypt.hash(password, 10);
-        const { data: result, error } = await supabaseAdmin.from('users').insert({
-            full_name, ic_number, email: email || null, contact_no, contact_no_2: contact_no_2 || null, address, state: state || null, password_hash
+
+        // 3. Insert user into public users table with status Inactive and email_verified false
+        const { data: result, error: insertError } = await supabaseAdmin.from('users').insert({
+            id: authResult.user.id, // Match Supabase auth UUID
+            full_name,
+            ic_number,
+            email: email || null,
+            contact_no,
+            contact_no_2: contact_no_2 || null,
+            address,
+            state: state || null,
+            password_hash,
+            status: 'Inactive',
+            email_verified: false,
+            auth_provider: 'password'
         }).select();
 
-        if (error || !result) {
-            throw error;
+        if (insertError || !result) {
+            console.error('Insert public user record failed:', insertError);
+            res.status(500).json({ error: 'Gagal mencipta rekod profil pengguna' });
+            return;
         }
 
         const user = result[0];
@@ -301,8 +362,8 @@ export const register = async (req: Request, res: Response): Promise<void> => {
                 const notifications = admins.map((admin: any) => ({
                     recipient_id: admin.id,
                     recipient_role: 'admin',
-                    title: 'New User Registration',
-                    message: `A new user has successfully registered.\nName: ${user.full_name} | IC Number: ${user.ic_number}\nClick here to view details.| uid:${user.id}`,
+                    title: 'New User Registration (Pending)',
+                    message: `A new user has registered (pending OTP verification).\nName: ${user.full_name} | IC Number: ${user.ic_number}\nuid:${user.id}`,
                     type: 'system',
                     is_read: false
                 }));
@@ -312,16 +373,234 @@ export const register = async (req: Request, res: Response): Promise<void> => {
             console.error('Failed to notify admins:', notifyError);
         }
 
+        res.status(200).json({
+            message: 'Pendaftaran berjaya. Sila sahkan akaun anda menggunakan kod OTP yang dihantar ke e-mel anda.',
+            email: email,
+            requires_otp: true
+        });
+    } catch (error) {
+        console.error('Registration error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+export const verifySignupOtp = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { email, otp } = req.body;
+        const normalizedEmail = email.trim().toLowerCase();
+
+        // 1. Verify OTP with Supabase Auth
+        const { data: authData, error: authError } = await supabase.auth.verifyOtp({
+            email: normalizedEmail,
+            token: otp,
+            type: 'signup',
+        });
+
+        if (authError || !authData.user) {
+            res.status(400).json({ error: authError?.message || 'Kod OTP tidak sah atau telah tamat tempoh' });
+            return;
+        }
+
+        // 2. Activate user in public users table
+        const { data: updatedUsers, error: updateError } = await supabaseAdmin
+            .from('users')
+            .update({
+                status: 'Active',
+                email_verified: true,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', authData.user.id)
+            .select();
+
+        if (updateError || !updatedUsers || updatedUsers.length === 0) {
+            res.status(500).json({ error: 'Gagal mengaktifkan akaun dalam pangkalan data' });
+            return;
+        }
+
+        const user = updatedUsers[0] as UserRow;
+
+        // 3. Send welcome email now that the email is verified
         try {
-            await sendWelcomeEmail(user as UserRow);
+            await sendWelcomeEmail(user);
         } catch (emailError) {
             console.error('Failed to send welcome email:', emailError);
         }
 
-        const token = jwt.sign({ id: user.id, role: 'user', ic_number: user.ic_number }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN } as SignOptions);
-        res.status(201).json({ message: 'Registration successful', user: { id: user.id, full_name: user.full_name, ic_number: user.ic_number, email: user.email }, token });
+        // 4. Create local session token
+        const token = createUserToken(user);
+
+        res.json({
+            message: 'Akaun berjaya disahkan dan diaktifkan!',
+            user: stripPasswordHash(user),
+            token,
+            role: 'user'
+        });
     } catch (error) {
-        console.error('Registration error:', error);
+        console.error('Verify signup OTP error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+export const resendSignupOtp = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            res.status(400).json({ error: 'E-mel diperlukan' });
+            return;
+        }
+
+        const normalizedEmail = email.trim().toLowerCase();
+
+        const { error: resendError } = await supabase.auth.resend({
+            type: 'signup',
+            email: normalizedEmail,
+        });
+
+        if (resendError) {
+            res.status(400).json({ error: resendError.message });
+            return;
+        }
+
+        res.json({ message: 'Kod OTP baharu telah dihantar ke e-mel anda.' });
+    } catch (error) {
+        console.error('Resend signup OTP error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+export const verifyActivationOtp = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { username, role, otp } = req.body;
+        const table = role === 'technician' ? 'technicians' : 'admins';
+
+        // 1. Get user profile
+        const { data: profile, error: fetchError } = await supabaseAdmin
+            .from(table)
+            .select('*')
+            .eq('username', username)
+            .single();
+
+        if (fetchError || !profile) {
+            res.status(404).json({ error: 'Akaun tidak ditemui' });
+            return;
+        }
+
+        const email = profile.email;
+
+        // 2. Look up code in activation_otps
+        const { data: otpRecords, error: otpError } = await supabaseAdmin
+            .from('activation_otps')
+            .select('*')
+            .eq('email', email)
+            .eq('role', role)
+            .eq('otp', otp)
+            .gte('expires_at', new Date().toISOString())
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+        if (otpError || !otpRecords || otpRecords.length === 0) {
+            res.status(400).json({ error: 'Kod OTP tidak sah atau telah tamat tempoh' });
+            return;
+        }
+
+        // 3. Update account to active
+        const { error: updateError } = await supabaseAdmin
+            .from(table)
+            .update({
+                is_active: true,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', profile.id);
+
+        if (updateError) {
+            res.status(500).json({ error: 'Gagal mengaktifkan akaun' });
+            return;
+        }
+
+        // 4. Clean up verified OTP
+        await supabaseAdmin
+            .from('activation_otps')
+            .delete()
+            .eq('id', otpRecords[0].id);
+
+        // 5. Generate session token
+        const tokenPayload = role === 'admin' 
+            ? { id: profile.id, role: 'admin', username: profile.username }
+            : { id: profile.id, role: 'technician', username: profile.username };
+
+        const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN } as SignOptions);
+        const { password_hash, ...userWithoutPassword } = profile;
+
+        res.json({
+            message: 'Akaun berjaya diaktifkan!',
+            user: userWithoutPassword,
+            token,
+            role
+        });
+    } catch (error) {
+        console.error('Verify activation OTP error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+export const resendActivationOtp = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { username, role } = req.body;
+        const table = role === 'technician' ? 'technicians' : 'admins';
+
+        const { data: profile, error: fetchError } = await supabaseAdmin
+            .from(table)
+            .select('*')
+            .eq('username', username)
+            .single();
+
+        if (fetchError || !profile) {
+            res.status(404).json({ error: 'Akaun tidak ditemui' });
+            return;
+        }
+
+        const email = profile.email;
+        const name = role === 'technician' ? profile.name : profile.admin_name;
+
+        // Generate new OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours
+
+        // Delete previous OTPs for this email and role
+        await supabaseAdmin
+            .from('activation_otps')
+            .delete()
+            .eq('email', email)
+            .eq('role', role);
+
+        // Save new OTP
+        const { error: insertError } = await supabaseAdmin
+            .from('activation_otps')
+            .insert({
+                email,
+                role,
+                otp,
+                expires_at: expiresAt
+            });
+
+        if (insertError) {
+            res.status(500).json({ error: 'Gagal menjana kod OTP baharu' });
+            return;
+        }
+
+        // Send email
+        try {
+            const activationHtml = buildActivationEmail(name, otp, role);
+            await sendEmail(email, `Aktifkan Akaun ${role === 'technician' ? 'Juruteknik' : 'Admin'} eCare Anda`, activationHtml);
+        } catch (emailError) {
+            console.error('Failed to send activation email:', emailError);
+            res.status(500).json({ error: 'Gagal menghantar emel OTP. Sila hubungi pentadbir.' });
+            return;
+        }
+
+        res.json({ message: 'Kod OTP baharu telah dihantar ke e-mel berdaftar anda.' });
+    } catch (error) {
+        console.error('Resend activation OTP error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 };
@@ -687,10 +966,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
                 try { await supabaseAdmin.from('user_logs').insert({ username: ic_number, user_ip: clientIp, success: false }); } catch (e) { console.log('[LOGIN] user_logs insert error (ignored):', e); }
                 res.status(401).json({ error: 'Invalid IC number or password' }); return;
             }
-            console.log(`[LOGIN] User status: ${data[0].status}`);
-            if (data[0].status !== 'Active' && data[0].status !== 'active') { // Note status is lowercase 'active' in mock data
-                res.status(403).json({ error: 'Account is not active. Please contact administrator.' }); return;
-            }
             user = data[0];
             tokenPayload = { id: user.id, role: 'user', ic_number: user.ic_number };
         } else if (role === 'admin') {
@@ -703,7 +978,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             if (!username) { res.status(400).json({ error: 'Username is required' }); return; }
             const { data } = await supabaseAdmin.from('technicians').select('*').eq('username', username);
             if (!data || data.length === 0) { res.status(401).json({ error: 'Invalid username or password' }); return; }
-            if (!data[0].is_active) { res.status(403).json({ error: 'Account is not active' }); return; }
             user = data[0];
             tokenPayload = { id: user.id, role: 'technician', username: user.username };
         }
@@ -719,8 +993,47 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
+        // Check activation / active state after successful password comparison
         if (role === 'user') {
+            if (user.status !== 'Active' && user.status !== 'active') {
+                // If the user's email is not verified, they need signup OTP verification
+                if (user.email_verified === false) {
+                    res.status(403).json({
+                        error: 'Sila sahkan akaun anda menggunakan kod OTP yang dihantar ke e-mel anda.',
+                        requires_otp: true,
+                        email: user.email
+                    });
+                    return;
+                }
+                res.status(403).json({ error: 'Account is not active. Please contact administrator.' });
+                return;
+            }
             try { await supabaseAdmin.from('user_logs').insert({ user_id: user.id, username: ic_number, user_ip: clientIp, success: true }); } catch (e) { console.log('[LOGIN] user_logs insert error (ignored):', e); }
+        } else if (role === 'admin' || role === 'technician') {
+            if (user.is_active === false) {
+                // Check if there's a pending activation OTP for this admin/technician
+                const { data: otpRecords, error: otpError } = await supabaseAdmin
+                    .from('activation_otps')
+                    .select('*')
+                    .eq('email', user.email)
+                    .eq('role', role)
+                    .gte('expires_at', new Date().toISOString())
+                    .order('created_at', { ascending: false })
+                    .limit(1);
+
+                if (!otpError && otpRecords && otpRecords.length > 0) {
+                    res.status(403).json({
+                        error: 'Akaun anda belum diaktifkan. Sila masukkan kod OTP yang dihantar ke e-mel anda.',
+                        requires_activation: true,
+                        email: user.email,
+                        username: user.username,
+                        role
+                    });
+                    return;
+                }
+                res.status(403).json({ error: 'Akaun anda tidak aktif. Sila hubungi pentadbir.' });
+                return;
+            }
         }
 
         const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN } as SignOptions);

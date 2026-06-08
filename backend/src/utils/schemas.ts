@@ -4,7 +4,7 @@ import { z } from 'zod';
 export const registerSchema = z.object({
     full_name: z.string().min(2, 'Name must be at least 2 characters'),
     ic_number: z.string().length(12, 'IC number must be 12 digits').regex(/^\d+$/, 'IC number must contain only digits'),
-    email: z.string().email('Invalid email').optional().or(z.literal('')),
+    email: z.string().email('Email is required'),
     contact_no: z.string().min(10, 'Invalid phone number'),
     contact_no_2: z.string().optional(),
     address: z.string().min(5, 'Address is required'),
@@ -134,4 +134,21 @@ export const brandSchema = z.object({
 export const stateSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     description: z.string().optional(),
+});
+
+// New OTP / Activation schemas
+export const verifySignupOtpSchema = z.object({
+    email: z.string().email('Invalid email'),
+    otp: z.string().length(6, 'OTP must be 6 digits'),
+});
+
+export const verifyActivationOtpSchema = z.object({
+    username: z.string().min(1, 'Username is required'),
+    role: z.enum(['admin', 'technician']),
+    otp: z.string().length(6, 'OTP must be 6 digits'),
+});
+
+export const resendActivationOtpSchema = z.object({
+    username: z.string().min(1, 'Username is required'),
+    role: z.enum(['admin', 'technician']),
 });
