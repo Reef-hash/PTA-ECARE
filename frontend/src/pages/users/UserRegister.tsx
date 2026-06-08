@@ -5,6 +5,8 @@ import { useAuth } from '../../context/AuthContext';
 import authService from '../../services/auth.service';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import GoogleSignInButton from '../../components/GoogleSignInButton';
+import { isSupabaseAuthConfigured, supabaseAuth } from '../../config/supabase';
 
 export default function UserRegister() {
     const { t } = useTranslation();
@@ -23,6 +25,7 @@ export default function UserRegister() {
     });
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -69,6 +72,34 @@ export default function UserRegister() {
             toast.error(error.response?.data?.error || t('common.error_load')); // "Pendaftaran gagal" fallback logic? I'll stick to generic error load or just "Registration Failed" key if I had one. I'll use common.error_load or hardcode generic failure message in my head or add key. error_load is "Failed to load" which is weird. I'll use backend error or hardcode fallback.
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleGoogleOAuth = async () => {
+        if (!supabaseAuth) {
+            toast.error(t('user_auth.google_unavailable'));
+            return;
+        }
+
+        setIsGoogleLoading(true);
+        try {
+            const { error } = await supabaseAuth.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/auth/callback?intent=register`,
+                    queryParams: {
+                        prompt: 'select_account',
+                    },
+                },
+            });
+
+            if (error) {
+                toast.error(error.message || t('common.error_load'));
+            }
+        } catch (error: any) {
+            toast.error(error?.message || t('common.error_load'));
+        } finally {
+            setIsGoogleLoading(false);
         }
     };
 
@@ -217,7 +248,7 @@ export default function UserRegister() {
 
                         <button
                             type="submit"
-                            disabled={isLoading}
+                            disabled={isLoading || isGoogleLoading}
                             className="btn-primary w-full flex items-center justify-center gap-2 mt-6"
                         >
                             {isLoading ? (
@@ -230,6 +261,21 @@ export default function UserRegister() {
                             )}
                         </button>
                     </form>
+
+                    <div className="flex items-center gap-3 my-6">
+                        <div className="h-px bg-gray-200 flex-1" />
+                        <span className="text-xs font-medium text-gray-400 uppercase">{t('user_auth.or_google')}</span>
+                        <div className="h-px bg-gray-200 flex-1" />
+                    </div>
+
+                    <GoogleSignInButton
+                        text="signup_with"
+                        onClick={handleGoogleOAuth}
+                        disabled={isLoading || isGoogleLoading}
+                        disabledLabel={t('common.loading')}
+                        unavailableLabel={t('user_auth.google_unavailable')}
+                        isConfigured={isSupabaseAuthConfigured}
+                    />
 
                     {/* Login link */}
                     <p className="text-center text-gray-500 mt-6">
@@ -245,6 +291,7 @@ export default function UserRegister() {
                     {t('login.footer')}
                 </footer>
             </div>
+
         </div>
     );
 }

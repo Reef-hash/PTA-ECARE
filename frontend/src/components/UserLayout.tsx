@@ -15,6 +15,9 @@ import {
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './LanguageSwitcher';
 import NotificationBell from './NotificationBell';
+import CompleteProfileModal from './CompleteProfileModal';
+import api from '../services/api';
+import toast from 'react-hot-toast';
 
 interface UserLayoutProps {
     children: ReactNode;
@@ -23,12 +26,15 @@ interface UserLayoutProps {
 }
 
 export default function UserLayout({ children, breadcrumb }: UserLayoutProps) {
-    const { user, logout } = useAuth();
+    const { user, logout, updateUser } = useAuth();
     const { t } = useTranslation();
     const location = useLocation();
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
+    const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+
+    const isProfileIncomplete = (user as any)?.ic_number?.startsWith('G-') || false;
 
     const menuItems = [
         { path: '/users/dashboard', label: t('user_sidebar.dashboard'), icon: Home },
@@ -40,6 +46,19 @@ export default function UserLayout({ children, breadcrumb }: UserLayoutProps) {
     const handleLogout = () => {
         logout();
         navigate('/users');
+    };
+
+    const handleCompleteProfile = async (profileData: { ic_number: string; contact_no: string; address: string }) => {
+        setIsUpdatingProfile(true);
+        try {
+            const response = await api.put('/users/profile', profileData);
+            updateUser({ ...user!, ...response.data.user });
+            toast.success(t('admin_master.success_update') || 'Profile updated successfully');
+        } catch (error: any) {
+            toast.error(error.response?.data?.error || t('common.error_load'));
+        } finally {
+            setIsUpdatingProfile(false);
+        }
     };
 
     return (
@@ -179,6 +198,14 @@ export default function UserLayout({ children, breadcrumb }: UserLayoutProps) {
                     © 2026 DFKTVETMARABESUT. All rights reserved.
                 </footer>
             </main>
+
+            <CompleteProfileModal
+                isOpen={isProfileIncomplete}
+                onClose={() => {}} // Cannot be closed
+                onSubmit={handleCompleteProfile}
+                isLoading={isUpdatingProfile}
+                isMandatory={true}
+            />
         </div>
     );
 }

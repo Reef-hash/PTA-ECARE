@@ -416,7 +416,11 @@
         "fill_required": "Please fill all required fields",
         "ic_length": "IC Number must be 12 digits",
         "pass_min_length": "Password must be at least 6 characters",
-        "pass_mismatch": "Passwords do not match"
+        "pass_mismatch": "Passwords do not match",
+        "or_google": "or",
+        "google_unavailable": "Google is not configured",
+        "google_register_first": "Please register your Gmail account first",
+        "google_profile_required": "Please complete IC Number, Phone Number and Address before Gmail registration"
     },
     "common_actions": {
         "save": "Save",

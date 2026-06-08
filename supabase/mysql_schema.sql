@@ -17,6 +17,10 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) UNIQUE,
     ic_number VARCHAR(12) UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
+    google_sub VARCHAR(255) UNIQUE,
+    auth_provider VARCHAR(20) DEFAULT 'password',
+    email_verified BOOLEAN DEFAULT FALSE,
+    google_picture TEXT,
     contact_no VARCHAR(15) NOT NULL,
     contact_no_2 VARCHAR(15),
     address TEXT NOT NULL,
@@ -194,6 +198,7 @@ CREATE TABLE IF NOT EXISTS notifications (
 
 CREATE INDEX idx_users_ic_number ON users(ic_number);
 CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_google_sub ON users(google_sub);
 CREATE INDEX idx_complaints_user_id ON complaints(user_id);
 CREATE INDEX idx_complaints_status ON complaints(status);
 CREATE INDEX idx_complaints_assigned_to ON complaints(assigned_to);

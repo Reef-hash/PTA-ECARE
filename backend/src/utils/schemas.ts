@@ -21,6 +21,20 @@ export const loginSchema = z.object({
     message: 'IC number or username is required',
 });
 
+export const googleAuthSchema = z.object({
+    credential: z.string().min(1, 'Google credential is required').optional(),
+    supabase_access_token: z.string().min(1, 'Supabase access token is required').optional(),
+    full_name: z.string().min(2, 'Name must be at least 2 characters').optional(),
+    ic_number: z.string().length(12, 'IC number must be 12 digits').regex(/^\d+$/, 'IC number must contain only digits').optional(),
+    contact_no: z.string().min(10, 'Invalid phone number').optional(),
+    contact_no_2: z.string().optional(),
+    address: z.string().min(5, 'Address is required').optional(),
+    state: z.string().optional(),
+    intent: z.enum(['login', 'register']).optional(),
+}).refine(data => data.credential || data.supabase_access_token, {
+    message: 'Google credential or Supabase access token is required',
+});
+
 export const forgotPasswordSchema = z.object({
     ic_number: z.string().optional(),
     email: z.string().email().optional(),

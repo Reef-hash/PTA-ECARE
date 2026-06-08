@@ -33,6 +33,12 @@ jobs:
           echo "SUPABASE_URL=https://srshalxtikpylcfztlmz.supabase.co" >> backend/.env
           echo "SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNyc2hhbHh0aWtweWxjZnp0bG16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4NDk4NDAsImV4cCI6MjA4NTQyNTg0MH0.15yIT0pGWgT5UloRyDSVSA88L0mnIJKBom0L1pw9CGw" >> backend/.env
           echo "SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNyc2hhbHh0aWtweWxjZnp0bG16Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2OTg0OTg0MCwiZXhwIjoyMDg1NDI1ODQwfQ.Mw4wTRl8qMDLXMXClfPqbH2WbfTH4m5eGnGtK0cXXWU" >> backend/.env
+          echo "SMTP_HOST=smtp.gmail.com" >> backend/.env
+          echo "SMTP_PORT=587" >> backend/.env
+          echo "SMTP_USER=${{ secrets.SMTP_USER }}" >> backend/.env
+          echo "SMTP_PASS=${{ secrets.SMTP_PASS }}" >> backend/.env
+          echo "SMTP_FROM=${{ secrets.SMTP_USER }}" >> backend/.env
+          echo "SMTP_FROM_NAME=E-CARE System" >> backend/.env
           echo "backend/.env created"
 
       - name: Stop all containers and cleanup

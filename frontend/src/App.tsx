@@ -13,6 +13,8 @@ import PublicComplaint from './pages/public/PublicComplaint';
 // User pages
 import UserLogin from './pages/users/UserLogin';
 import UserRegister from './pages/users/UserRegister';
+import GoogleCompleteProfile from './pages/users/GoogleCompleteProfile';
+import AuthCallback from './pages/users/AuthCallback';
 import ForgotPassword from './pages/users/ForgotPassword';
 import UserDashboard from './pages/users/UserDashboard';
 import RegisterComplaint from './pages/users/RegisterComplaint';
@@ -102,6 +104,9 @@ function App() {
             <Route path="/users" element={<UserLogin />} />
             <Route path="/users/login" element={<UserLogin />} />
             <Route path="/users/register" element={<UserRegister />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/lengkapkan-profil" element={<GoogleCompleteProfile />} />
+            <Route path="/users/complete-profile" element={<GoogleCompleteProfile />} />
             <Route path="/users/forgot-password" element={<ForgotPassword />} />
             <Route
                 path="/users/dashboard"

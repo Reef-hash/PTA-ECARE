@@ -13,6 +13,7 @@ export const getNotifications = async (req: Request, res: Response): Promise<voi
             .from('notifications')
             .select('*')
             .eq('recipient_id', userId)
+            .eq('recipient_role', role)
             .order('created_at', { ascending: false })
             .limit(50);
 
@@ -25,6 +26,7 @@ export const getNotifications = async (req: Request, res: Response): Promise<voi
             .from('notifications')
             .select('*', { count: 'exact', head: true })
             .eq('recipient_id', userId)
+            .eq('recipient_role', role)
             .eq('is_read', false);
 
         if (countError) throw countError;
@@ -43,6 +45,7 @@ export const getNotifications = async (req: Request, res: Response): Promise<voi
 export const markAsRead = async (req: Request, res: Response): Promise<void> => {
     try {
         const userId = (req as any).user.id;
+        const role = (req as any).user.role;
         const { id } = req.params;
 
         if (id === 'all') {
@@ -50,6 +53,7 @@ export const markAsRead = async (req: Request, res: Response): Promise<void> => 
                 .from('notifications')
                 .update({ is_read: true })
                 .eq('recipient_id', userId)
+                .eq('recipient_role', role)
                 .eq('is_read', false);
 
             if (error) throw error;
@@ -58,7 +62,8 @@ export const markAsRead = async (req: Request, res: Response): Promise<void> => 
                 .from('notifications')
                 .update({ is_read: true })
                 .eq('id', id)
-                .eq('recipient_id', userId);
+                .eq('recipient_id', userId)
+                .eq('recipient_role', role);
 
             if (error) throw error;
         }
@@ -76,7 +81,7 @@ export const createNotification = async (
     role: 'user' | 'admin' | 'technician',
     start_msg: string,
     payload: string,
-    type: 'assignment' | 'status_update' | 'status_update_detailed' | 'transport_update' | 'checking_update' | 'remark_update' = 'status_update',
+    type: 'assignment' | 'status_update' | 'status_update_detailed' | 'transport_update' | 'checking_update' | 'remark_update' | 'system' = 'status_update',
     complaint_id?: number
 ): Promise<void> => {
     try {

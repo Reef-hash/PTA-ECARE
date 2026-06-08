@@ -5,6 +5,10 @@ export interface User {
     full_name: string;
     email: string | null;
     ic_number: string;
+    google_sub?: string | null;
+    auth_provider?: 'password' | 'google';
+    email_verified?: boolean;
+    google_picture?: string | null;
     contact_no: string;
     contact_no_2: string | null;
     address: string;
@@ -159,6 +163,16 @@ export interface RegisterRequest {
     address: string;
     state?: string;
     password: string;
+}
+
+export interface GoogleAuthRequest {
+    credential: string;
+    full_name?: string;
+    ic_number?: string;
+    contact_no?: string;
+    contact_no_2?: string;
+    address?: string;
+    state?: string;
 }
 
 export interface CreateComplaintRequest {

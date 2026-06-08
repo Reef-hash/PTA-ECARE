@@ -416,7 +416,11 @@
         "fill_required": "Sila lengkapkan semua maklumat wajib",
         "ic_length": "No Kad Pengenalan mestilah 12 digit",
         "pass_min_length": "Kata laluan mestilah sekurang-kurangnya 6 aksara",
-        "pass_mismatch": "Kata laluan tidak sepadan"
+        "pass_mismatch": "Kata laluan tidak sepadan",
+        "or_google": "atau",
+        "google_unavailable": "Google belum dikonfigurasi",
+        "google_register_first": "Sila daftar akaun Gmail dahulu",
+        "google_profile_required": "Sila lengkapkan No IC, No Telefon dan Alamat sebelum daftar Gmail"
     },
     "common_actions": {
         "save": "Simpan",

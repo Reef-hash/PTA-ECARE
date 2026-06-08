@@ -1,5 +1,5 @@
 import api from './api';
-import { LoginCredentials, RegisterData, AuthUser } from '../types';
+import { LoginCredentials, RegisterData, GoogleAuthData, AuthUser } from '../types';
 
 export const authService = {
     async login(credentials: LoginCredentials) {
@@ -9,6 +9,11 @@ export const authService = {
 
     async register(data: RegisterData) {
         const response = await api.post('/auth/register', data);
+        return response.data;
+    },
+
+    async googleAuth(data: GoogleAuthData) {
+        const response = await api.post('/auth/google', data);
         return response.data;
     },
 
