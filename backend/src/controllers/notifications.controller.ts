@@ -228,12 +228,13 @@ export const buildNotificationEmailHtml = (name: string, title: string, message:
                 <div style="margin: 20px 0; color: #334155; font-size: 15px;">
                     ${message.replace(/\n/g, '<br />')}
                 </div>
-                
+                ${role !== 'no_link' ? `
                 <div style="text-align: center; margin: 35px 0;">
                     <a href="${linkUrl}" style="background-color: #2563eb; color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);">
                         ${buttonText}
                     </a>
                 </div>
+                ` : ''}
                 
                 <div style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;"></div>
                 <p style="font-size: 11px; color: #94a3b8; margin: 0;">Hantaran automatik sistem eCare. Sila abaikan jika anda tersilap menerima emel ini.</p>

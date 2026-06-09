@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import { supabaseAdmin } from '../config/supabase.js';
 import { buildActivationEmail } from './auth.controller.js';
 import { sendEmail } from '../utils/email.js';
+import { buildNotificationEmailHtml } from './notifications.controller.js';
 
 // Get dashboard statistics
 export const getStats = async (req: Request, res: Response): Promise<void> => {
@@ -439,11 +440,10 @@ export const updateAdminPassword = async (req: Request, res: Response): Promise<
 
         const table = role === 'technician' ? 'technicians' : 'admins';
 
-        const { data: userRow, error: fetchError } = await supabaseAdmin
-            .from(table)
-            .select('password_hash')
-            .eq('id', userId)
-            .single();
+        const { data: userRow, error: fetchError } = await (role === 'technician'
+            ? supabaseAdmin.from('technicians').select('password_hash, email, name, username').eq('id', userId).single()
+            : supabaseAdmin.from('admins').select('password_hash').eq('id', userId).single()
+        ) as any;
 
         if (fetchError || !userRow) {
             res.status(404).json({ error: 'User not found' });
@@ -458,12 +458,32 @@ export const updateAdminPassword = async (req: Request, res: Response): Promise<
 
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-        const { error } = await supabaseAdmin
+        const { error: updateError } = await supabaseAdmin
             .from(table)
             .update({ password_hash: hashedPassword, updated_at: new Date().toISOString() })
             .eq('id', userId);
 
-        if (error) throw error;
+        if (updateError) throw updateError;
+
+        // Send email notification ONLY for technicians
+        if (role === 'technician' && userRow.email) {
+            try {
+                const subject = 'Kata Laluan eCare Berjaya Ditukar';
+                const message = 'Anda telah menukar kata laluan baharu sila ingat dan simpan dengan baik';
+                const emailHtml = buildNotificationEmailHtml(
+                    userRow.name || userRow.username || 'Juruteknik',
+                    subject,
+                    message,
+                    undefined,
+                    'no_link'
+                );
+                await sendEmail(userRow.email, subject, emailHtml);
+                console.log(`Password change notification sent to technician: ${userRow.email}`);
+            } catch (emailErr) {
+                console.error('Failed to send technician password change notification email:', emailErr);
+            }
+        }
+
         res.json({ message: 'Password updated successfully' });
     } catch (error) {
         console.error('Update password error:', error);
