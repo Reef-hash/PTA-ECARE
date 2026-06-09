@@ -970,13 +970,13 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             tokenPayload = { id: user.id, role: 'user', ic_number: user.ic_number };
         } else if (role === 'admin') {
             if (!username) { res.status(400).json({ error: 'Username is required' }); return; }
-            const { data } = await supabaseAdmin.from('admins').select('*').eq('username', username);
+            const { data } = await supabaseAdmin.from('admins').select('*').ilike('username', username);
             if (!data || data.length === 0) { res.status(401).json({ error: 'Invalid username or password' }); return; }
             user = data[0];
             tokenPayload = { id: user.id, role: 'admin', username: user.username };
         } else if (role === 'technician') {
             if (!username) { res.status(400).json({ error: 'Username is required' }); return; }
-            const { data } = await supabaseAdmin.from('technicians').select('*').eq('username', username);
+            const { data } = await supabaseAdmin.from('technicians').select('*').ilike('username', username);
             if (!data || data.length === 0) { res.status(401).json({ error: 'Invalid username or password' }); return; }
             user = data[0];
             tokenPayload = { id: user.id, role: 'technician', username: user.username };
