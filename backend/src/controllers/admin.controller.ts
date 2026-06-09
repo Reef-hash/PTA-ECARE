@@ -468,8 +468,8 @@ export const updateAdminPassword = async (req: Request, res: Response): Promise<
         // Send email notification ONLY for technicians
         if (role === 'technician' && userRow.email) {
             try {
-                const subject = 'Kata Laluan eCare Berjaya Ditukar';
-                const message = 'Anda telah menukar kata laluan baharu sila ingat dan simpan dengan baik';
+                const subject = 'Kata Laluan Juruteknik eCare Berjaya Ditukar';
+                const message = `Anda telah menukar kata laluan baharu: ${newPassword}\n\nSila ingat dan simpan dengan baik`;
                 const emailHtml = buildNotificationEmailHtml(
                     userRow.name || userRow.username || 'Juruteknik',
                     subject,
