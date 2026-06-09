@@ -66,7 +66,8 @@ export default function AdminProfilePage() {
         }
     };
 
-    const handleSaveProfile = async () => {
+    const handleSaveProfile = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
         if (!username.trim()) {
             toast.error(t('admin_profile.error_username_required') || 'Username is required');
             return;
@@ -86,7 +87,8 @@ export default function AdminProfilePage() {
         }
     };
 
-    const handleChangePassword = async () => {
+    const handleChangePassword = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
         if (!currentPassword || !newPassword || !confirmPassword) {
             toast.error(t('admin_profile.error_password_fields') || 'Please fill all password fields');
             return;
@@ -156,7 +158,7 @@ export default function AdminProfilePage() {
                         </button>
                     </div>
 
-                    <div className="space-y-4">
+                    <form onSubmit={handleSaveProfile} className="space-y-4">
                         {/* Username */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -168,7 +170,7 @@ export default function AdminProfilePage() {
                                     type="text"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
-                                    className={`input pl-10 ${!isEditing ? 'bg-gray-50 text-gray-500' : ''}`}
+                                    className={`input-field pl-10 ${!isEditing ? 'bg-gray-50 text-gray-500' : ''}`}
                                     placeholder={t('admin_profile.placeholder_username') || 'Enter username'}
                                     disabled={!isEditing}
                                 />
@@ -186,7 +188,7 @@ export default function AdminProfilePage() {
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className={`input pl-10 ${!isEditing ? 'bg-gray-50 text-gray-500' : ''}`}
+                                    className={`input-field pl-10 ${!isEditing ? 'bg-gray-50 text-gray-500' : ''}`}
                                     placeholder={t('admin_profile.placeholder_email') || 'Enter email'}
                                     disabled={!isEditing}
                                 />
@@ -197,7 +199,7 @@ export default function AdminProfilePage() {
                         {isEditing && (
                             <div className="pt-4 border-t flex justify-end">
                                 <button
-                                    onClick={handleSaveProfile}
+                                    type="submit"
                                     disabled={isSaving}
                                     className="btn-primary flex items-center gap-2"
                                 >
@@ -210,7 +212,7 @@ export default function AdminProfilePage() {
                                 </button>
                             </div>
                         )}
-                    </div>
+                    </form>
                 </div>
 
                 {/* Password Change Card */}
@@ -230,7 +232,7 @@ export default function AdminProfilePage() {
                     </div>
 
                     {showPasswordSection && (
-                        <div className="space-y-4">
+                        <form onSubmit={handleChangePassword} className="space-y-4">
                             {/* Current Password */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -241,7 +243,7 @@ export default function AdminProfilePage() {
                                         type={showCurrentPassword ? 'text' : 'password'}
                                         value={currentPassword}
                                         onChange={(e) => setCurrentPassword(e.target.value)}
-                                        className="input pr-10"
+                                        className="input-field pr-10"
                                         placeholder="••••••••"
                                     />
                                     <button
@@ -264,7 +266,7 @@ export default function AdminProfilePage() {
                                         type={showNewPassword ? 'text' : 'password'}
                                         value={newPassword}
                                         onChange={(e) => setNewPassword(e.target.value)}
-                                        className="input pr-10"
+                                        className="input-field pr-10"
                                         placeholder="••••••••"
                                     />
                                     <button
@@ -286,7 +288,7 @@ export default function AdminProfilePage() {
                                     type="password"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className="input"
+                                    className="input-field"
                                     placeholder="••••••••"
                                 />
                             </div>
@@ -294,7 +296,7 @@ export default function AdminProfilePage() {
                             {/* Change Password Button */}
                             <div className="pt-4 border-t flex justify-end">
                                 <button
-                                    onClick={handleChangePassword}
+                                    type="submit"
                                     disabled={isChangingPassword}
                                     className="btn-primary flex items-center gap-2"
                                 >
@@ -306,7 +308,7 @@ export default function AdminProfilePage() {
                                     {t('admin_profile.btn_update_password') || 'Update Password'}
                                 </button>
                             </div>
-                        </div>
+                        </form>
                     )}
                 </div>
             </div>
