@@ -32,6 +32,7 @@ export default function AdminProfilePage() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isChangingPassword, setIsChangingPassword] = useState(false);
 
     useEffect(() => {
@@ -109,6 +110,7 @@ export default function AdminProfilePage() {
             setCurrentPassword('');
             setNewPassword('');
             setConfirmPassword('');
+            setShowConfirmPassword(false);
             setShowPasswordSection(false);
         } catch (error: any) {
             toast.error(error.response?.data?.error || t('admin_profile.error_password') || 'Failed to change password');
@@ -284,13 +286,22 @@ export default function AdminProfilePage() {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     {t('admin_profile.confirm_password') || 'Confirm New Password'}
                                 </label>
-                                <input
-                                    type="password"
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className="input-field"
-                                    placeholder="••••••••"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type={showConfirmPassword ? 'text' : 'password'}
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        className="input-field pr-10"
+                                        placeholder="••••••••"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    >
+                                        {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Change Password Button */}
