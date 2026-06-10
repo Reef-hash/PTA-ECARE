@@ -63,6 +63,11 @@ export default function TechnicianForm() {
             return;
         }
 
+        if (isEdit && formData.password && formData.password.length < 6) {
+            toast.error('Kata laluan baharu mestilah sekurang-kurangnya 6 aksara');
+            return;
+        }
+
         setIsLoading(true);
         try {
             if (isEdit) {
@@ -73,6 +78,11 @@ export default function TechnicianForm() {
                     contact_number: formData.contact_number ? parseInt(formData.contact_number) : undefined,
                     is_active: formData.is_active,
                 });
+                if (formData.password) {
+                    await api.post(`/admin/technicians/${id}/reset-password`, {
+                        new_password: formData.password,
+                    });
+                }
                 toast.success('Juruteknik berjaya dikemaskini');
             } else {
                 await api.post('/admin/technicians', {
@@ -140,29 +150,31 @@ export default function TechnicianForm() {
                             {isEdit && <p className="text-xs text-gray-500 mt-1">Username tidak boleh diubah</p>}
                         </div>
 
-                        {!isEdit && (
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Kata Laluan <span className="text-red-500">*</span>
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        type={showPassword ? 'text' : 'password'}
-                                        value={formData.password}
-                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                        className="input-field pr-10"
-                                        placeholder="Minimum 6 aksara"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                                    >
-                                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                    </button>
-                                </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                {isEdit ? 'Kata Laluan Baharu (Tinggalkan kosong jika tiada perubahan)' : (
+                                    <>
+                                        Kata Laluan <span className="text-red-500">*</span>
+                                    </>
+                                )}
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? 'text' : 'password'}
+                                    value={formData.password}
+                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                    className="input-field pr-10"
+                                    placeholder={isEdit ? 'Masukkan kata laluan baharu jika ingin ditukar' : 'Minimum 6 aksara'}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                >
+                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                </button>
                             </div>
-                        )}
+                        </div>
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">

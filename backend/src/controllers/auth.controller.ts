@@ -226,7 +226,7 @@ const buildWelcomeEmail = (name: string) => `
                 <p style="margin-top: 0;">Hi ${escapeHtml(name || 'Customer')},</p>
                 <p>Welcome to E-CARE. Your account has been registered successfully.</p>
                 <p style="font-size: 16px; color: #0f766e; font-weight: 700;">
-                    eCare: Track your repair from start to finish. Receive live updates on your repair progress and get notified the moment it's ready for pickup.
+                    e-Care: Track your repair from start to finish. Receive live updates on your repair progress and get notified the moment it's ready for pickup.
                 </p>
                 <p>You can now log in to view your repair status, notifications, and service history.</p>
                 <p style="margin-bottom: 0;">Thank you,<br />E-CARE Admin</p>
@@ -255,7 +255,7 @@ export const buildActivationEmail = (name: string, otp: string, role: string) =>
             <div style="padding: 30px;">
                 <h2 style="color: #1e293b; margin-top: 0;">Aktifkan Akaun ${role === 'technician' ? 'Juruteknik' : 'Admin'} Anda</h2>
                 <p>Hi ${escapeHtml(name)},</p>
-                <p>Satu akaun ${role === 'technician' ? 'Juruteknik' : 'Admin'} eCare telah didaftarkan untuk anda. Sila gunakan kod OTP di bawah untuk mengaktifkan akaun anda:</p>
+                <p>Satu akaun ${role === 'technician' ? 'Juruteknik' : 'Admin'} e-Care telah didaftarkan untuk anda. Sila gunakan kod OTP di bawah untuk mengaktifkan akaun anda:</p>
                 <div style="font-size: 32px; font-weight: 700; letter-spacing: 8px; background-color: #f1f5f9; padding: 20px; border-radius: 8px; text-align: center; color: #1e3a8a; margin: 25px 0; border: 1px dashed #cbd5e1;">
                     ${otp}
                 </div>
@@ -591,7 +591,7 @@ export const resendActivationOtp = async (req: Request, res: Response): Promise<
         // Send email
         try {
             const activationHtml = buildActivationEmail(name, otp, role);
-            await sendEmail(email, `Aktifkan Akaun ${role === 'technician' ? 'Juruteknik' : 'Admin'} eCare Anda`, activationHtml);
+            await sendEmail(email, `Aktifkan Akaun ${role === 'technician' ? 'Juruteknik' : 'Admin'} e-Care Anda`, activationHtml);
         } catch (emailError) {
             console.error('Failed to send activation email:', emailError);
             res.status(500).json({ error: 'Gagal menghantar emel OTP. Sila hubungi pentadbir.' });

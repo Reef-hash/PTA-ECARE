@@ -184,7 +184,7 @@ export const createTechnician = async (req: Request, res: Response): Promise<voi
             // Send activation email
             try {
                 const activationHtml = buildActivationEmail(name, otp, 'technician');
-                await sendEmail(email, 'Aktifkan Akaun Juruteknik eCare Anda', activationHtml);
+                await sendEmail(email, 'Aktifkan Akaun Juruteknik e-Care Anda', activationHtml);
             } catch (emailError) {
                 console.error('Failed to send technician activation email:', emailError);
             }
@@ -236,12 +236,44 @@ export const resetTechnicianPassword = async (req: Request, res: Response): Prom
 
         const password_hash = await bcrypt.hash(new_password, 10);
 
+        // Fetch technician details to get email & name
+        const { data: techRow, error: fetchError } = await supabaseAdmin
+            .from('technicians')
+            .select('email, name, username')
+            .eq('id', id)
+            .single() as any;
+
+        if (fetchError || !techRow) {
+            res.status(404).json({ error: 'Technician not found' });
+            return;
+        }
+
         const { error } = await supabaseAdmin
             .from('technicians')
             .update({ password_hash, updated_at: new Date().toISOString() })
             .eq('id', id);
 
         if (error) throw error;
+
+        // Send email notification to technician
+        if (techRow.email) {
+            try {
+                const subject = 'Kata Laluan Juruteknik e-Care Berjaya Ditukar';
+                const message = `Anda telah menukar kata laluan baharu: ${new_password}\n\nSila ingat dan simpan dengan baik`;
+                const emailHtml = buildNotificationEmailHtml(
+                    techRow.name || techRow.username || 'Juruteknik',
+                    subject,
+                    message,
+                    undefined,
+                    'no_link'
+                );
+                await sendEmail(techRow.email, subject, emailHtml);
+                console.log(`Password reset notification sent to technician: ${techRow.email}`);
+            } catch (emailErr) {
+                console.error('Failed to send technician password reset notification email:', emailErr);
+            }
+        }
+
         res.json({ message: 'Password reset successful' });
     } catch (error) {
         console.error('Reset password error:', error);
@@ -468,7 +500,7 @@ export const updateAdminPassword = async (req: Request, res: Response): Promise<
         // Send email notification ONLY for technicians
         if (role === 'technician' && userRow.email) {
             try {
-                const subject = 'Kata Laluan Juruteknik eCare Berjaya Ditukar';
+                const subject = 'Kata Laluan Juruteknik e-Care Berjaya Ditukar';
                 const message = `Anda telah menukar kata laluan baharu: ${newPassword}\n\nSila ingat dan simpan dengan baik`;
                 const emailHtml = buildNotificationEmailHtml(
                     userRow.name || userRow.username || 'Juruteknik',

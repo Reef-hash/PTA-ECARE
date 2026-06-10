@@ -219,7 +219,7 @@ export const buildNotificationEmailHtml = (name: string, title: string, message:
     <div style="font-family: 'Segoe UI', Arial, sans-serif; background-color: #f8fafc; padding: 40px 0; width: 100%;">
         <div style="max-width: 600px; background-color: #ffffff; margin: 0 auto; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0;">
             <div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: #ffffff; padding: 40px 20px; text-align: center;">
-                <h1 style="margin: 0; font-size: 28px; letter-spacing: 1px; text-transform: uppercase; color: #ffffff;">eCare</h1>
+                <h1 style="margin: 0; font-size: 28px; letter-spacing: 1px; text-transform: uppercase; color: #ffffff;">e-Care</h1>
                 <p style="margin: 5px 0 0; font-size: 14px; opacity: 0.9; color: #ffffff;">Powered by DFKTVETMARABESUT</p>
             </div>
             <div style="padding: 40px; line-height: 1.6; color: #334155;">
@@ -237,7 +237,7 @@ export const buildNotificationEmailHtml = (name: string, title: string, message:
                 ` : ''}
                 
                 <div style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;"></div>
-                <p style="font-size: 11px; color: #94a3b8; margin: 0;">Hantaran automatik sistem eCare. Sila abaikan jika anda tersilap menerima emel ini.</p>
+                <p style="font-size: 11px; color: #94a3b8; margin: 0;">Hantaran automatik sistem e-Care. Sila abaikan jika anda tersilap menerima emel ini.</p>
             </div>
             <div style="background-color: #f1f5f9; padding: 30px; text-align: center; font-size: 12px; color: #64748b;">
                 <p style="margin: 0 0 5px 0;">© 2026 <strong style="color: #1e3a8a;">DFKTVETMARABESUT</strong>. All rights reserved.</p>
@@ -348,7 +348,7 @@ export const createNotification = async (
                 }
                 
                 // Format Subject according to user specification
-                let emailSubject = `eCare: ${start_msg}`;
+                let emailSubject = `e-Care: ${start_msg}`;
                 if (reportNumber) {
                     if (start_msg.includes('Aduan Berjaya Didaftarkan')) {
                         emailSubject = `${reportNumber} Aduan Berjaya Didaftarkan`;
