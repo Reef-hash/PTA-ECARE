@@ -191,7 +191,7 @@ export default function AdminProfilePage() {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     className={`input-field pl-10 ${!isEditing ? 'bg-gray-50 text-gray-500' : ''}`}
-                                    placeholder={t('admin_profile.placeholder_email') || 'Enter email'}
+                                    placeholder="ptaservicedept@gmail.com"
                                     disabled={!isEditing}
                                 />
                             </div>

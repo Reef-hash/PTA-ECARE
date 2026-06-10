@@ -44,7 +44,7 @@ async function resetAdminPassword() {
                     username: 'admin',
                     password_hash: hash,
                     admin_name: 'System Administrator',
-                    email: 'admin@ptaservices.com',
+                    email: 'ptaservicedept@gmail.com',
                     contact_number: 1234567890
                 });
 
