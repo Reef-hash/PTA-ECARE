@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, Building, Search, Eye } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, Building, Search, Eye, Edit } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 import { Technician, Complaint } from '../../types';
@@ -95,12 +95,21 @@ export default function TechnicianDetail() {
     return (
         <AdminLayout title={technician.name} breadcrumb={t('admin_technicians.title')}>
             <div className="max-w-6xl mx-auto space-y-6">
-                {/* Header / Back */}
-                <div className="flex items-center gap-4">
-                    <Link to="/admin/technicians" className="p-2 bg-white rounded-lg hover:bg-gray-50 text-gray-600 transition-colors shadow-sm">
-                        <ArrowLeft className="w-5 h-5" />
+                {/* Header / Back & Edit */}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <Link to="/admin/technicians" className="p-2 bg-white rounded-lg hover:bg-gray-50 text-gray-600 transition-colors shadow-sm">
+                            <ArrowLeft className="w-5 h-5" />
+                        </Link>
+                        <h1 className="text-2xl font-bold text-gray-800">{t('admin_technicians.title')}</h1>
+                    </div>
+                    <Link
+                        to={`/admin/technicians/edit/${id}`}
+                        className="btn-primary flex items-center gap-2"
+                    >
+                        <Edit className="w-4 h-4" />
+                        Edit
                     </Link>
-                    <h1 className="text-2xl font-bold text-gray-800">{t('admin_technicians.title')}</h1>
                 </div>
 
                 {/* Technician Info Card */}
