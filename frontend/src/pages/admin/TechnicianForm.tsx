@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Save, ArrowLeft } from 'lucide-react';
+import { Save, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
@@ -21,6 +21,7 @@ export default function TechnicianForm() {
     });
     const [isLoading, setIsLoading] = useState(false);
     const [isFetching, setIsFetching] = useState(isEdit);
+    const [showPassword, setShowPassword] = useState(false);
 
     useEffect(() => {
         if (isEdit) {
@@ -144,13 +145,22 @@ export default function TechnicianForm() {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Kata Laluan <span className="text-red-500">*</span>
                                 </label>
-                                <input
-                                    type="password"
-                                    value={formData.password}
-                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                    className="input-field"
-                                    placeholder="Minimum 6 aksara"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        value={formData.password}
+                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                        className="input-field pr-10"
+                                        placeholder="Minimum 6 aksara"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    >
+                                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                    </button>
+                                </div>
                             </div>
                         )}
 

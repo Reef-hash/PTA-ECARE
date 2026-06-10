@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Edit, Trash2, Key, Search } from 'lucide-react';
+import { Plus, Edit, Trash2, Key, Search, Eye, EyeOff } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 import { Technician } from '../../types';
@@ -15,6 +15,7 @@ export default function Technicians() {
     const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
     const [showResetModal, setShowResetModal] = useState<string | null>(null);
     const [newPassword, setNewPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
 
     useEffect(() => {
         loadTechnicians();
@@ -42,7 +43,8 @@ export default function Technicians() {
         }
     };
 
-    const handleResetPassword = async () => {
+    const handleResetPassword = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
         if (!newPassword || newPassword.length < 6) {
             toast.error(t('admin_technicians.new_password_placeholder'));
             return;
@@ -53,6 +55,7 @@ export default function Technicians() {
             toast.success(t('admin_technicians.password_reset_success'));
             setShowResetModal(null);
             setNewPassword('');
+            setShowPassword(false);
         } catch (error: any) {
             toast.error(error.response?.data?.error || t('common.error_load'));
         }
@@ -183,24 +186,40 @@ export default function Technicians() {
 
             {/* Reset Password Modal */}
             {showResetModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl max-w-md w-full p-6">
-                        <h3 className="text-lg font-semibold mb-4">{t('admin_technicians.reset_password_title')}</h3>
-                        <input
-                            type="password"
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            placeholder={t('admin_technicians.new_password_placeholder')}
-                            className="input-field mb-4"
-                        />
-                        <div className="flex justify-end gap-3">
-                            <button onClick={() => { setShowResetModal(null); setNewPassword(''); }} className="btn-secondary">
-                                {t('common_actions.cancel')}
-                            </button>
-                            <button onClick={handleResetPassword} className="btn-primary">
-                                {t('common_actions.save')}
-                            </button>
-                        </div>
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in">
+                    <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-soft-xl">
+                        <h3 className="text-lg font-semibold mb-4 text-gray-800">{t('admin_technicians.reset_password_title')}</h3>
+                        <form onSubmit={handleResetPassword} className="space-y-4">
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? 'text' : 'password'}
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    placeholder={t('admin_technicians.new_password_placeholder')}
+                                    className="input-field pr-10"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                >
+                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                </button>
+                            </div>
+                            <div className="flex justify-end gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => { setShowResetModal(null); setNewPassword(''); setShowPassword(false); }}
+                                    className="btn-secondary"
+                                >
+                                    {t('common_actions.cancel')}
+                                </button>
+                                <button type="submit" className="btn-primary">
+                                    {t('common_actions.save')}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}
