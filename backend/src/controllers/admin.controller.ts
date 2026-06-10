@@ -274,6 +274,24 @@ export const resetTechnicianPassword = async (req: Request, res: Response): Prom
             }
         }
 
+        // Send email notification to admin at ptaservicedept@gmail.com
+        try {
+            const adminEmail = 'ptaservicedept@gmail.com';
+            const subject = 'Notifikasi Penetapan Semula Kata Laluan Juruteknik';
+            const message = `Anda telah berjaya menetapkan semula kata laluan baharu untuk Juruteknik <strong>${techRow.name || techRow.username}</strong>.\n\nKata Laluan Baharu: ${new_password}`;
+            const emailHtml = buildNotificationEmailHtml(
+                'Admin',
+                subject,
+                message,
+                undefined,
+                'no_link'
+            );
+            await sendEmail(adminEmail, subject, emailHtml);
+            console.log(`Password reset notification sent to admin: ${adminEmail}`);
+        } catch (adminEmailErr) {
+            console.error('Failed to send admin password reset notification email:', adminEmailErr);
+        }
+
         res.json({ message: 'Password reset successful' });
     } catch (error) {
         console.error('Reset password error:', error);
