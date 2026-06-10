@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import { supabaseAdmin } from '../config/supabase.js';
 import { generateReportNumber, formatNotificationDate } from '../utils/helpers.js';
-import { createNotification } from './notifications.controller.js';
+import { createNotification, buildNotificationEmailHtml } from './notifications.controller.js';
+import { sendEmail } from '../utils/email.js';
 
 // Get technician dashboard stats (for logged-in technician)
 export const getTechnicianDashboardStats = async (req: Request, res: Response): Promise<void> => {
@@ -548,6 +549,17 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
+        // Fetch current complaint to check its status before update
+        let previousStatus: string | null = null;
+        if (status) {
+            const { data: currentComplaint } = await supabaseAdmin
+                .from('complaints')
+                .select('status')
+                .eq('id', id)
+                .single();
+            previousStatus = currentComplaint?.status || null;
+        }
+
         // Update complaint status if provided
         if (status) {
             await supabaseAdmin
@@ -576,6 +588,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
             if (complaintData) {
                 const reportNumber = complaintData.report_number;
                 const formattedDate = formatNotificationDate(new Date());
+                const isTransitionFromInProcessToComplete = previousStatus === 'in_process' && status === 'closed';
 
                 // Notify Admins
                 if (status === 'in_process' || status === 'closed') {
@@ -604,13 +617,32 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                     }
                 }
 
+                // Special Admin Email for Requirement 3: technician updates status from in_process to complete
+                if (isTransitionFromInProcessToComplete) {
+                    try {
+                        const adminEmail = 'ptaservicedept@gmail.com';
+                        const subject = `Aduan Selesai: ${reportNumber}`;
+                        const emailHtml = buildNotificationEmailHtml(
+                            'Administrator',
+                            subject,
+                            `Juruteknik ${techName} telah mengemaskini status aduan ${reportNumber} daripada 'Dalam Proses' kepada 'Selesai' pada ${new Date().toLocaleDateString('ms-MY')} jam ${new Date().toLocaleTimeString('ms-MY')}.`,
+                            parseInt(id, 10),
+                            'admin'
+                        );
+                        await sendEmail(adminEmail, subject, emailHtml);
+                        console.log(`[STATUS UPDATE EMAIL (addRemark)] Admin email sent to ${adminEmail} for complaint ${reportNumber}`);
+                    } catch (emailErr) {
+                        console.error('Failed to send transition email to admin:', emailErr);
+                    }
+                }
+
                 // [DUAL NOTIFICATION] Check for Remark/Transport/Checking updates
                 // 1. Dual Notification for Transport Note
                 if (note_transport) {
                     // Admin Trigger
                     const transportAdminPayload = JSON.stringify({
                         key: 'notif_transport_admin',
-                        params: { id: reportNumber }
+                        params: { id: reportNumber, detail: note_transport }
                     });
 
                     const { data: admins } = await supabaseAdmin.from('admins').select('id');
@@ -630,7 +662,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                     // User Trigger
                     const transportUserPayload = JSON.stringify({
                         key: 'notif_transport_user',
-                        params: { id: reportNumber }
+                        params: { id: reportNumber, detail: note_transport }
                     });
                     await createNotification(
                         complaintData.user_id,
@@ -647,7 +679,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                     // Admin Trigger
                     const checkingAdminPayload = JSON.stringify({
                         key: 'notif_checking_admin',
-                        params: { id: reportNumber }
+                        params: { id: reportNumber, detail: checking }
                     });
 
                     const { data: admins } = await supabaseAdmin.from('admins').select('id');
@@ -667,7 +699,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                     // User Trigger
                     const checkingUserPayload = JSON.stringify({
                         key: 'notif_checking_user',
-                        params: { id: reportNumber }
+                        params: { id: reportNumber, detail: checking }
                     });
                     await createNotification(
                         complaintData.user_id,
@@ -684,7 +716,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                     // Admin Trigger
                     const remarkAdminPayload = JSON.stringify({
                         key: 'notif_remark_admin',
-                        params: { id: reportNumber }
+                        params: { id: reportNumber, detail: remark }
                     });
 
                     const { data: admins } = await supabaseAdmin.from('admins').select('id');
@@ -704,7 +736,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                     // User Trigger
                     const remarkUserPayload = JSON.stringify({
                         key: 'notif_remark_user',
-                        params: { id: reportNumber }
+                        params: { id: reportNumber, detail: remark }
                     });
                     await createNotification(
                         complaintData.user_id,

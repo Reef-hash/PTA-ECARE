@@ -67,9 +67,9 @@ export default function UserRegister() {
             return;
         }
 
-        // Email is required for OTP sign-up
+        // Email is required for signup
         if (!formData.email) {
-            toast.error('E-mel wajib diisi untuk pendaftaran & pengesahan akaun.');
+            toast.error('E-mel wajib diisi untuk pendaftaran.');
             return;
         }
 

@@ -96,12 +96,12 @@ const translateMessage = (payload: string): string => {
                 notif_processing_user: "{{user_name}}, aduan {{id}} anda telah diproses oleh juruteknik {{name}}.\n\nSila klik butang di bawah untuk lihat status semasa aduan kerosakan barang anda.",
                 notif_processing_user_body: "Status Terkini: Aduan anda {{id}} kini DALAM PROSES oleh juruteknik {{name}} pada {{date}} jam {{time}}.",
                 notif_processing_tech_body: "Anda telah ditugaskan untuk menyemak aduan {{id}} daripada {{userName}}.",
-                notif_transport_admin: "Update Transport: {{id}} - Kenderaan/Logistik dikemaskini oleh Technician.",
-                notif_transport_user: "Info Transport: Status logistik untuk aduan {{id}} anda telah dikemaskini.",
-                notif_checking_admin: "Semakan Teknikal: {{id}} telah diperiksa. Sila semak penemuan teknikal.",
-                notif_checking_user: "Status Semakan: Juruteknik kami telah selesai membuat pemeriksaan pada {{id}}.",
-                notif_remark_admin: "Nota Baru: {{id}} mempunyai ulasan tambahan daripada Technician.",
-                notif_remark_user: "Kemas kini Aduan: Terdapat nota baru mengenai status aduan {{id}} anda.",
+                notif_transport_admin: "Update Transport: {{id}} - Kenderaan/Logistik dikemaskini oleh Technician. Butiran: {{detail}}",
+                notif_transport_user: "Info Transport: Status logistik untuk aduan {{id}} anda telah dikemaskini. Butiran: {{detail}}",
+                notif_checking_admin: "Semakan Teknikal: {{id}} telah diperiksa. Penemuan teknikal: {{detail}}",
+                notif_checking_user: "Status Semakan: Juruteknik kami telah selesai membuat pemeriksaan pada {{id}}. Penemuan: {{detail}}",
+                notif_remark_admin: "Nota Baru: {{id}} mempunyai ulasan tambahan daripada Technician: {{detail}}",
+                notif_remark_user: "Kemas kini Aduan: Terdapat nota baru mengenai status aduan {{id}} anda: {{detail}}",
                 service_in_process: "Servis sedang diproses oleh Juruteknik {{tech_name}} pada {{date}}.",
                 service_completed: "Servis telah disiapkan oleh Juruteknik {{tech_name}} pada {{date}}. Status kes bertukar kepada 'Sedia untuk Diambil'."
             };
@@ -116,8 +116,11 @@ const translateMessage = (payload: string): string => {
                     if (val === 'closed') val = 'Selesai';
                     if (val === 'cancelled') val = 'Dibatalkan';
                 }
-                template = template.replace(new RegExp(`{{${p}}}`, 'g'), String(val));
+                template = template.replace(new RegExp(`{{${p}}}`, 'g'), String(val !== undefined && val !== null ? val : ''));
             });
+
+            // Clean up any remaining unresolved placeholders
+            template = template.replace(/\{\{[a-zA-Z0-9_-]+\}\}/g, '');
 
             return template;
         }
@@ -297,10 +300,9 @@ export const createNotification = async (
                     .select('email, admin_name')
                     .eq('id', userId)
                     .single();
-                if (adminProfile) {
-                    email = adminProfile.email || '';
-                    name = adminProfile.admin_name || '';
-                }
+                // Ensure all notifications for admin role go to ptaservicedept@gmail.com
+                email = 'ptaservicedept@gmail.com';
+                name = adminProfile?.admin_name || 'Administrator';
             } else if (role === 'technician') {
                 const { data: techProfile } = await supabaseAdmin
                     .from('technicians')

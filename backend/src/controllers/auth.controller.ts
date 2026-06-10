@@ -4,7 +4,7 @@ import jwt, { SignOptions } from 'jsonwebtoken';
 import { OAuth2Client, TokenPayload } from 'google-auth-library';
 import { randomUUID } from 'crypto';
 import { supabase, supabaseAdmin } from '../config/supabase.js';
-import { createNotification } from './notifications.controller.js';
+import { createNotification, buildNotificationEmailHtml } from './notifications.controller.js';
 import { sendEmail } from '../utils/email.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
@@ -331,7 +331,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
         const password_hash = await bcrypt.hash(password, 10);
 
-        // 3. Insert user into public users table with status Inactive and email_verified false
+        // 3. Insert user into public users table with status Active and email_verified true (no OTP required)
         const { data: result, error: insertError } = await supabaseAdmin.from('users').insert({
             id: authResult.user.id, // Match Supabase auth UUID
             full_name,
@@ -342,8 +342,8 @@ export const register = async (req: Request, res: Response): Promise<void> => {
             address,
             state: state || null,
             password_hash,
-            status: 'Inactive',
-            email_verified: false,
+            status: 'Active',
+            email_verified: true,
             auth_provider: 'password'
         }).select();
 
@@ -355,28 +355,51 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
         const user = result[0];
 
-        // Notify Admins
+        // Send welcome email immediately
+        try {
+            await sendWelcomeEmail(user);
+        } catch (emailError) {
+            console.error('Failed to send welcome email:', emailError);
+        }
+
+        // Notify Admins via DB and Email directly to ptaservicedept@gmail.com
         try {
             const { data: admins } = await supabaseAdmin.from('admins').select('id');
             if (admins && admins.length > 0) {
                 const notifications = admins.map((admin: any) => ({
                     recipient_id: admin.id,
                     recipient_role: 'admin',
-                    title: 'New User Registration (Pending)',
-                    message: `A new user has registered (pending OTP verification).\nName: ${user.full_name} | IC Number: ${user.ic_number}\nuid:${user.id}`,
+                    title: 'Pendaftaran Pengguna Baru',
+                    message: `Pengguna baru telah mendaftar: ${user.full_name} | No. K/P: ${user.ic_number}\nuid:${user.id}`,
                     type: 'system',
                     is_read: false
                 }));
                 await supabaseAdmin.from('notifications').insert(notifications);
             }
+
+            const adminEmail = 'ptaservicedept@gmail.com';
+            const emailSubject = 'Pendaftaran Pengguna Baru';
+            const emailHtml = buildNotificationEmailHtml(
+                'Administrator',
+                emailSubject,
+                `Seorang pengguna baru telah mendaftar di portal pentadbir:\n\nNama: ${user.full_name}\nNo. K/P: ${user.ic_number}\nE-mel: ${user.email || 'Tiada'}\n\nSila semak butiran di portal pentadbir.`,
+                undefined,
+                'no_link'
+            );
+            await sendEmail(adminEmail, emailSubject, emailHtml);
+            console.log(`[REGISTER] Admin notification email sent to ${adminEmail}`);
         } catch (notifyError) {
             console.error('Failed to notify admins:', notifyError);
         }
 
+        // Generate local session token for auto login
+        const token = createUserToken(user);
+
         res.status(200).json({
-            message: 'Pendaftaran berjaya. Sila sahkan akaun anda menggunakan kod OTP yang dihantar ke e-mel anda.',
-            email: email,
-            requires_otp: true
+            message: 'Pendaftaran berjaya!',
+            user: stripPasswordHash(user),
+            token,
+            requires_otp: false
         });
     } catch (error) {
         console.error('Registration error:', error);
@@ -996,17 +1019,19 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         // Check activation / active state after successful password comparison
         if (role === 'user') {
             if (user.status !== 'Active' && user.status !== 'active') {
-                // If the user's email is not verified, they need signup OTP verification
-                if (user.email_verified === false) {
-                    res.status(403).json({
-                        error: 'Sila sahkan akaun anda menggunakan kod OTP yang dihantar ke e-mel anda.',
-                        requires_otp: true,
-                        email: user.email
-                    });
+                // Auto-activate any user who is Inactive (OTP is no longer required)
+                const { data: activatedUser, error: activateError } = await supabaseAdmin
+                    .from('users')
+                    .update({ status: 'Active', email_verified: true })
+                    .eq('id', user.id)
+                    .select()
+                    .single();
+                if (!activateError && activatedUser) {
+                    user = activatedUser;
+                } else {
+                    res.status(403).json({ error: 'Account is not active. Please contact administrator.' });
                     return;
                 }
-                res.status(403).json({ error: 'Account is not active. Please contact administrator.' });
-                return;
             }
             try { await supabaseAdmin.from('user_logs').insert({ user_id: user.id, username: ic_number, user_ip: clientIp, success: true }); } catch (e) { console.log('[LOGIN] user_logs insert error (ignored):', e); }
         } else if (role === 'admin' || role === 'technician') {
