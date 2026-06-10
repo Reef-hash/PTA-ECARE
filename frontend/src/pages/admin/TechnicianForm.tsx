@@ -23,6 +23,14 @@ export default function TechnicianForm() {
     const [isFetching, setIsFetching] = useState(isEdit);
     const [showPassword, setShowPassword] = useState(false);
 
+    // Change Password Card states
+    const [showPasswordSection, setShowPasswordSection] = useState(false);
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
+
     useEffect(() => {
         if (isEdit) {
             loadTechnician();
@@ -63,11 +71,6 @@ export default function TechnicianForm() {
             return;
         }
 
-        if (isEdit && formData.password && formData.password.length < 6) {
-            toast.error('Kata laluan baharu mestilah sekurang-kurangnya 6 aksara');
-            return;
-        }
-
         setIsLoading(true);
         try {
             if (isEdit) {
@@ -78,11 +81,6 @@ export default function TechnicianForm() {
                     contact_number: formData.contact_number ? parseInt(formData.contact_number) : undefined,
                     is_active: formData.is_active,
                 });
-                if (formData.password) {
-                    await api.post(`/admin/technicians/${id}/reset-password`, {
-                        new_password: formData.password,
-                    });
-                }
                 toast.success('Juruteknik berjaya dikemaskini');
             } else {
                 await api.post('/admin/technicians', {
@@ -96,6 +94,32 @@ export default function TechnicianForm() {
             toast.error(error.response?.data?.error || 'Operasi gagal');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleChangePassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newPassword || newPassword.length < 6) {
+            toast.error('Kata laluan baharu mestilah sekurang-kurangnya 6 aksara');
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            toast.error('Kata laluan baharu dan pengesahan kata laluan tidak sepadan');
+            return;
+        }
+        setIsChangingPassword(true);
+        try {
+            await api.post(`/admin/technicians/${id}/reset-password`, {
+                new_password: newPassword,
+            });
+            toast.success('Kata laluan berjaya dikemaskini');
+            setNewPassword('');
+            setConfirmPassword('');
+            setShowPasswordSection(false);
+        } catch (error: any) {
+            toast.error(error.response?.data?.error || 'Gagal menukar kata laluan');
+        } finally {
+            setIsChangingPassword(false);
         }
     };
 
@@ -119,8 +143,9 @@ export default function TechnicianForm() {
                 Kembali
             </button>
 
-            <div className="card max-w-2xl">
-                <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="max-w-2xl space-y-6">
+                <div className="card">
+                    <form onSubmit={handleSubmit} className="space-y-5">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div className="md:col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -150,31 +175,30 @@ export default function TechnicianForm() {
                             {isEdit && <p className="text-xs text-gray-500 mt-1">Username tidak boleh diubah</p>}
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                {isEdit ? 'Kata Laluan Baharu (Tinggalkan kosong jika tiada perubahan)' : (
-                                    <>
-                                        Kata Laluan <span className="text-red-500">*</span>
-                                    </>
-                                )}
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    value={formData.password}
-                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                    className="input-field pr-10"
-                                    placeholder={isEdit ? 'Masukkan kata laluan baharu jika ingin ditukar' : 'Minimum 6 aksara'}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                                >
-                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                </button>
+                        {!isEdit && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Kata Laluan <span className="text-red-500">*</span>
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        value={formData.password}
+                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                        className="input-field pr-10"
+                                        placeholder="Minimum 6 aksara"
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    >
+                                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                    </button>
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -241,6 +265,95 @@ export default function TechnicianForm() {
                         )}
                     </button>
                 </form>
+            </div>
+
+            {isEdit && (
+                <div className="card">
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                            <span role="img" aria-label="lock">🔒</span> Change Password
+                        </h2>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setShowPasswordSection(!showPasswordSection);
+                                if (showPasswordSection) {
+                                    setNewPassword('');
+                                    setConfirmPassword('');
+                                }
+                            }}
+                            className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                        >
+                            {showPasswordSection ? 'Discard' : 'Change'}
+                        </button>
+                    </div>
+
+                    {showPasswordSection && (
+                        <form onSubmit={handleChangePassword} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    New Password
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type={showNewPassword ? 'text' : 'password'}
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        className="input-field pr-10"
+                                        placeholder="••••••••"
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowNewPassword(!showNewPassword)}
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    >
+                                        {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Confirm New Password
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type={showConfirmPassword ? 'text' : 'password'}
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        className="input-field pr-10"
+                                        placeholder="••••••••"
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    >
+                                        {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="pt-4 border-t flex justify-end">
+                                <button
+                                    type="submit"
+                                    disabled={isChangingPassword}
+                                    className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-bold py-2.5 px-6 rounded-lg shadow-md transition-all flex items-center gap-2 text-sm uppercase tracking-wider disabled:opacity-50"
+                                >
+                                    {isChangingPassword ? (
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                        <Save className="w-4 h-4" />
+                                    )}
+                                    UPDATE PASSWORD
+                                </button>
+                            </div>
+                        </form>
+                    )}
+                </div>
+            )}
             </div>
         </AdminLayout>
     );
