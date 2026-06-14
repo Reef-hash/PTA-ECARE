@@ -69,7 +69,8 @@ export default function AuthCallback() {
             console.log('[AuthCallback] Intent:', intent, '| Token found:', !!accessToken);
 
             if (!accessToken) {
-                toast.error('Sesi Google tidak sah. Sila cuba lagi.');
+                const debugInfo = `H:${window.location.hash ? 'Y' : 'N'}|C:${searchParams.has('code') ? 'Y' : 'N'}|S:${supabaseAuth ? 'Y' : 'N'}`;
+                toast.error(`Sesi Google tidak sah. Sila cuba lagi. (${debugInfo})`);
                 navigate(intent === 'register' ? '/users/register' : '/users', { replace: true });
                 return;
             }
