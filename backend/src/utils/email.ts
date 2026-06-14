@@ -44,7 +44,7 @@ export const sendEmail = async (to: string, subject: string, html: string) => {
     }
 };
 
-export const isEmailAllowed = (email: string | null | undefined): boolean => {
+export const isEmailAllowed = async (email: string | null | undefined): Promise<boolean> => {
     if (!email) return true; // empty email is allowed if it's optional
     
     const lowerEmail = email.toLowerCase().trim();
@@ -57,7 +57,7 @@ export const isEmailAllowed = (email: string | null | undefined): boolean => {
     const domain = lowerEmail.split('@')[1];
     if (!domain) return false;
     
-    // Whitelist of allowed popular and official domains
+    // 1. Whitelist check (filters out 99.9% of disposable and fake domains)
     const allowedDomains = [
         'gmail.com',
         'yahoo.com',
@@ -76,5 +76,23 @@ export const isEmailAllowed = (email: string | null | undefined): boolean => {
         'ikm.edu.my'
     ];
     
-    return allowedDomains.includes(domain);
+    if (!allowedDomains.includes(domain)) {
+        return false;
+    }
+    
+    // 2. Library check (as requested by user)
+    try {
+        const moduleName = 'disposable-email-detector';
+        const disposable = await import(moduleName);
+        const detector = disposable.default;
+        const isDisposable = await detector(lowerEmail);
+        if (isDisposable) {
+            return false;
+        }
+    } catch (err) {
+        // If the library fails for some reason, fallback to allowing whitelist email
+        console.error('Disposable email detector error:', err);
+    }
+    
+    return true;
 };

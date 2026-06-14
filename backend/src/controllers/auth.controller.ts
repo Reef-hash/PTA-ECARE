@@ -304,7 +304,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         const { full_name, ic_number, email, contact_no, contact_no_2, address, state, password } = req.body;
 
         // Validation for fake email domains
-        if (email && !isEmailAllowed(email)) {
+        if (email && !(await isEmailAllowed(email))) {
             res.status(400).json({ error: 'Sila gunakan alamat e-mel yang sah. Domain e-mel ini tidak dibenarkan.' });
             return;
         }

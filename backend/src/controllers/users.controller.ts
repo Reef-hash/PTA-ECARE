@@ -35,7 +35,7 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
         const userId = req.user?.id;
         const { full_name, email, contact_no, contact_no_2, address, state, ic_number } = req.body;
 
-        if (email && !isEmailAllowed(email)) {
+        if (email && !(await isEmailAllowed(email))) {
             res.status(400).json({ error: 'Sila gunakan alamat e-mel yang sah. Domain e-mel ini tidak dibenarkan.' });
             return;
         }

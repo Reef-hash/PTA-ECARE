@@ -130,7 +130,7 @@ export const createTechnician = async (req: Request, res: Response): Promise<voi
     try {
         const { name, department, email, contact_number, username, password } = req.body;
 
-        if (email && !isEmailAllowed(email)) {
+        if (email && !(await isEmailAllowed(email))) {
             res.status(400).json({ error: 'Sila gunakan alamat e-mel yang sah. Domain e-mel ini tidak dibenarkan.' });
             return;
         }
@@ -209,7 +209,7 @@ export const updateTechnician = async (req: Request, res: Response): Promise<voi
         const { id } = req.params;
         const { name, department, email, contact_number, is_active } = req.body;
 
-        if (email && !isEmailAllowed(email)) {
+        if (email && !(await isEmailAllowed(email))) {
             res.status(400).json({ error: 'Sila gunakan alamat e-mel yang sah. Domain e-mel ini tidak dibenarkan.' });
             return;
         }
@@ -447,7 +447,7 @@ export const updateAdminProfile = async (req: Request, res: Response): Promise<v
         const role = (req as any).user.role;
         const { username, email } = req.body;
 
-        if (email && !isEmailAllowed(email)) {
+        if (email && !(await isEmailAllowed(email))) {
             res.status(400).json({ error: 'Sila gunakan alamat e-mel yang sah. Domain e-mel ini tidak dibenarkan.' });
             return;
         }
