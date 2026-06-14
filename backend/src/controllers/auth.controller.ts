@@ -337,7 +337,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
         const password_hash = await bcrypt.hash(password, 10);
 
-        // 3. Insert user into public users table with status Active and email_verified true (no OTP required)
+        // 3. Insert user into public users table with status Pending and email_verified false (OTP required)
         const { data: result, error: insertError } = await supabaseAdmin.from('users').insert({
             id: authResult.user.id, // Match Supabase auth UUID
             full_name,
@@ -348,8 +348,8 @@ export const register = async (req: Request, res: Response): Promise<void> => {
             address,
             state: state || null,
             password_hash,
-            status: 'Active',
-            email_verified: true,
+            status: 'Pending',
+            email_verified: false,
             auth_provider: 'password'
         }).select();
 
@@ -361,51 +361,11 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
         const user = result[0];
 
-        // Send welcome email immediately
-        try {
-            await sendWelcomeEmail(user);
-        } catch (emailError) {
-            console.error('Failed to send welcome email:', emailError);
-        }
-
-        // Notify Admins via DB and Email directly to ptaservicedept@gmail.com
-        try {
-            const { data: admins } = await supabaseAdmin.from('admins').select('id');
-            if (admins && admins.length > 0) {
-                const notifications = admins.map((admin: any) => ({
-                    recipient_id: admin.id,
-                    recipient_role: 'admin',
-                    title: 'Pendaftaran Pengguna Baru',
-                    message: `Pengguna baru telah mendaftar: ${user.full_name} | No. K/P: ${user.ic_number}\nuid:${user.id}`,
-                    type: 'system',
-                    is_read: false
-                }));
-                await supabaseAdmin.from('notifications').insert(notifications);
-            }
-
-            const adminEmail = 'ptaservicedept@gmail.com';
-            const emailSubject = 'Pendaftaran Pengguna Baru';
-            const emailHtml = buildNotificationEmailHtml(
-                'Administrator',
-                emailSubject,
-                `Seorang pengguna baru telah mendaftar di portal pentadbir:\n\nNama: ${user.full_name}\nNo. K/P: ${user.ic_number}\nE-mel: ${user.email || 'Tiada'}\n\nSila semak butiran di portal pentadbir.`,
-                undefined,
-                'no_link'
-            );
-            await sendEmail(adminEmail, emailSubject, emailHtml);
-            console.log(`[REGISTER] Admin notification email sent to ${adminEmail}`);
-        } catch (notifyError) {
-            console.error('Failed to notify admins:', notifyError);
-        }
-
-        // Generate local session token for auto login
-        const token = createUserToken(user);
-
         res.status(200).json({
-            message: 'Pendaftaran berjaya!',
+            message: 'Pendaftaran berjaya! Sila semak e-mel anda untuk kod OTP pengesahan.',
             user: stripPasswordHash(user),
-            token,
-            requires_otp: false
+            requires_otp: true,
+            email: user.email
         });
     } catch (error) {
         console.error('Registration error:', error);
@@ -453,6 +413,36 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
             await sendWelcomeEmail(user);
         } catch (emailError) {
             console.error('Failed to send welcome email:', emailError);
+        }
+
+        // Notify Admins via DB and Email directly to ptaservicedept@gmail.com
+        try {
+            const { data: admins } = await supabaseAdmin.from('admins').select('id');
+            if (admins && admins.length > 0) {
+                const notifications = admins.map((admin: any) => ({
+                    recipient_id: admin.id,
+                    recipient_role: 'admin',
+                    title: 'Pendaftaran Pengguna Baru',
+                    message: `Pengguna baru telah mendaftar: ${user.full_name} | No. K/P: ${user.ic_number}\nuid:${user.id}`,
+                    type: 'system',
+                    is_read: false
+                }));
+                await supabaseAdmin.from('notifications').insert(notifications);
+            }
+
+            const adminEmail = 'ptaservicedept@gmail.com';
+            const emailSubject = 'Pendaftaran Pengguna Baru';
+            const emailHtml = buildNotificationEmailHtml(
+                'Administrator',
+                emailSubject,
+                `Seorang pengguna baru telah mendaftar di portal pentadbir:\n\nNama: ${user.full_name}\nNo. K/P: ${user.ic_number}\nE-mel: ${user.email || 'Tiada'}\n\nSila semak butiran di portal pentadbir.`,
+                undefined,
+                'no_link'
+            );
+            await sendEmail(adminEmail, emailSubject, emailHtml);
+            console.log(`[VERIFY-OTP] Admin notification email sent to ${adminEmail}`);
+        } catch (notifyError) {
+            console.error('Failed to notify admins:', notifyError);
         }
 
         // 4. Create local session token
