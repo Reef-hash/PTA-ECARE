@@ -206,11 +206,11 @@ export default function UserRegister() {
             <div className="max-w-2xl w-full mx-auto">
                 {/* Back button */}
                 <button
-                    onClick={requiresOtp ? handleBackToRegister : () => navigate('/users')}
+                    onClick={requiresOtp ? handleBackToRegister : () => navigate('/')}
                     className="inline-flex items-center gap-2 text-white/70 hover:text-white mb-6 transition-colors"
                 >
                     <ArrowLeft className="w-4 h-4" />
-                    {requiresOtp ? 'Kembali ke Pendaftaran' : t('user_auth.back_login')}
+                    {requiresOtp ? 'Kembali ke Pendaftaran' : t('login.back')}
                 </button>
 
                 {/* Card */}

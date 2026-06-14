@@ -162,7 +162,7 @@ export default function GoogleCompleteProfile() {
                     className="inline-flex items-center gap-2 text-white/70 hover:text-white mb-6 transition-colors"
                 >
                     <ArrowLeft className="w-4 h-4" />
-                    {requiresOtp ? 'Kembali ke Borang Profil' : t('user_auth.back_login')}
+                    {requiresOtp ? 'Kembali ke Borang Profil' : t('login.back')}
                 </button>
 
                 <div className="bg-white rounded-2xl shadow-2xl p-8 animate-fade-in">
