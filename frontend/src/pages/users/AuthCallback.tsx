@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import authService from '../../services/auth.service';
+import { supabaseAuth } from '../../config/supabase';
 
 /**
  * Extract access_token directly from the URL hash fragment.
@@ -50,20 +51,33 @@ export default function AuthCallback() {
         if (hasProcessed.current) return;
         hasProcessed.current = true;
 
-        const accessToken = capturedToken.current;
-        console.log('[AuthCallback] Intent:', intent, '| Token found:', !!accessToken);
-
-        if (!accessToken) {
-            toast.error('Sesi Google tidak sah. Sila cuba lagi.');
-            navigate(intent === 'register' ? '/users/register' : '/users', { replace: true });
-            return;
-        }
-
-        // Clean the URL hash so it doesn't linger
-        window.history.replaceState(null, '', window.location.pathname + window.location.search);
-        memoryToken = null;
-
         const processCallback = async () => {
+            let accessToken = capturedToken.current;
+            const code = searchParams.get('code');
+
+            if (!accessToken && code && supabaseAuth) {
+                try {
+                    setStatusText('Mengambil token sesi...');
+                    const { data, error } = await supabaseAuth.auth.exchangeCodeForSession(code);
+                    if (error) throw error;
+                    accessToken = data.session?.access_token || null;
+                } catch (exchangeError: any) {
+                    console.error('Failed to exchange code for session:', exchangeError);
+                }
+            }
+
+            console.log('[AuthCallback] Intent:', intent, '| Token found:', !!accessToken);
+
+            if (!accessToken) {
+                toast.error('Sesi Google tidak sah. Sila cuba lagi.');
+                navigate(intent === 'register' ? '/users/register' : '/users', { replace: true });
+                return;
+            }
+
+            // Clean the URL hash so it doesn't linger
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            memoryToken = null;
+
             setStatusText(intent === 'register' ? 'Mendaftarkan akaun...' : 'Log masuk...');
 
             try {
