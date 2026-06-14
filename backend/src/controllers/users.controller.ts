@@ -2,7 +2,8 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { supabaseAdmin } from '../config/supabase.js';
 import { createNotification } from './notifications.controller.js';
-import { isEmailAllowed } from '../utils/email.js';
+import { isEmailAllowed, sendEmail } from '../utils/email.js';
+import { buildUserSignupOtpEmailHtml } from './auth.controller.js';
 
 // Get user profile
 export const getProfile = async (req: Request, res: Response): Promise<void> => {
@@ -48,9 +49,12 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
         if (address !== undefined) updates.address = address;
         if (state !== undefined) updates.state = state || null;
 
+        let requiresOtp = false;
+        let emailToUse = '';
+
         if (ic_number) {
             // Only allow updating IC if current IC starts with G-
-            const { data: currentUser } = await supabaseAdmin.from('users').select('ic_number').eq('id', userId).single();
+            const { data: currentUser } = await supabaseAdmin.from('users').select('ic_number, email').eq('id', userId).single();
             if (currentUser && currentUser.ic_number.startsWith('G-')) {
                 // Check if new IC is already used
                 const { data: existingUser } = await supabaseAdmin.from('users').select('id').eq('ic_number', ic_number).neq('id', userId).single();
@@ -59,6 +63,12 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
                     return;
                 }
                 updates.ic_number = ic_number;
+                
+                // If user is Google user completing profile for the first time, force OTP verification
+                updates.status = 'Pending';
+                updates.email_verified = false;
+                requiresOtp = true;
+                emailToUse = email || currentUser.email;
             }
         }
 
@@ -69,7 +79,52 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
 
         if (updateError) throw updateError;
 
-        // Notify user about profile update
+        if (requiresOtp && emailToUse) {
+            // Generate random 6-digit OTP
+            const otp = Math.floor(100000 + Math.random() * 900000).toString();
+            const expires_at = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 mins
+
+            // Clean up any existing OTP for this email
+            await supabaseAdmin
+                .from('activation_otps')
+                .delete()
+                .eq('email', emailToUse)
+                .eq('role', 'user');
+
+            // Insert into activation_otps
+            const { error: otpError } = await supabaseAdmin.from('activation_otps').insert({
+                email: emailToUse,
+                otp,
+                role: 'user',
+                expires_at
+            });
+
+            if (otpError) {
+                console.error('Failed to create activation OTP record:', otpError);
+                res.status(500).json({ error: 'Gagal menjana kod OTP pengesahan' });
+                return;
+            }
+
+            // Send OTP email via Nodemailer
+            try {
+                const emailHtml = buildUserSignupOtpEmailHtml(emailToUse, otp);
+                await sendEmail(emailToUse, 'Sahkan Pendaftaran Akaun E-CARE', emailHtml);
+                console.log(`[PROFILE-COMPLETE] OTP email sent to ${emailToUse}`);
+            } catch (emailError) {
+                console.error('[PROFILE-COMPLETE] Failed to send OTP email:', emailError);
+                res.status(500).json({ error: 'Gagal menghantar kod OTP ke e-mel anda. Sila cuba lagi.' });
+                return;
+            }
+
+            res.json({
+                message: 'Maklumat profil dikemaskini! Sila semak e-mel anda untuk kod OTP pengesahan.',
+                requires_otp: true,
+                email: emailToUse
+            });
+            return;
+        }
+
+        // Notify user about profile update (for normal profile updates)
         await createNotification(
             userId!,
             'user',

@@ -245,7 +245,7 @@ const sendWelcomeEmail = async (user: UserRow): Promise<void> => {
     );
 };
 
-const buildUserSignupOtpEmailHtml = (email: string, otp: string) => {
+export const buildUserSignupOtpEmailHtml = (email: string, otp: string) => {
     let baseUrl = 'https://pta-ecare.vercel.app';
     if (process.env.FRONTEND_URL) {
         baseUrl = process.env.FRONTEND_URL.replace(/\/$/, '');
