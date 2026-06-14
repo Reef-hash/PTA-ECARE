@@ -388,7 +388,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
             address,
             state: state || null,
             password_hash,
-            status: 'Pending',
+            status: 'Inactive',
             email_verified: false,
             auth_provider: 'password'
         }).select();

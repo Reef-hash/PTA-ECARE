@@ -93,7 +93,7 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
                 updates.ic_number = ic_number;
                 
                 // If user is Google user completing profile for the first time, force OTP verification
-                updates.status = 'Pending';
+                updates.status = 'Inactive';
                 updates.email_verified = false;
                 requiresOtp = true;
                 emailToUse = email || currentUser.email;
