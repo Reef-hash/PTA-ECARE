@@ -57,47 +57,24 @@ export const isEmailAllowed = (email: string | null | undefined): boolean => {
     const domain = lowerEmail.split('@')[1];
     if (!domain) return false;
     
-    // Block common keywords in fake/temp domains
-    const tempKeywords = [
-        'temp', 
-        'fake', 
-        'test', 
-        'trash', 
-        'disposable', 
-        'junk', 
-        'yopmail', 
-        'mailinator', 
-        'maildrop', 
-        'dispostable', 
-        'guerrillamail', 
-        'generator.email',
-        'getnada'
+    // Whitelist of allowed popular and official domains
+    const allowedDomains = [
+        'gmail.com',
+        'yahoo.com',
+        'hotmail.com',
+        'outlook.com',
+        'icloud.com',
+        'live.com',
+        'ymail.com',
+        'gmx.com',
+        'mail.com',
+        'zoho.com',
+        'proton.me',
+        'protonmail.com',
+        // Official/Corporate domains
+        'mara.gov.my',
+        'ikm.edu.my'
     ];
     
-    const containsTempKeyword = tempKeywords.some(keyword => domain.includes(keyword));
-    if (containsTempKeyword) {
-        return false;
-    }
-    
-    const blockedDomains = [
-        'ptaservice.com',
-        'ptaservices.com',
-        'example.com',
-        'test.com',
-        'fake.com',
-        'aratrin.com',
-        'getnada.com',
-        'nada.ltd',
-        'grr.la',
-        'sharklasers.com',
-        'getairmail.com',
-        'throwawaymail.com',
-        'mailcatch.com',
-        'mailnesia.com',
-        'mintemail.com',
-        '10minutemail.com',
-        'temp-mail.org'
-    ];
-    
-    return !blockedDomains.includes(domain);
+    return allowedDomains.includes(domain);
 };
