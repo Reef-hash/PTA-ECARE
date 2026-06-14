@@ -86,6 +86,7 @@ export const updateProfileSchema = z.object({
     contact_no_2: z.string().optional(),
     address: z.string().min(5).optional(),
     state: z.string().optional(),
+    ic_number: z.string().length(12, 'IC number must be 12 digits').optional(),
 });
 
 export const changePasswordSchema = z.object({
