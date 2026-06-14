@@ -69,8 +69,18 @@ export default function AuthCallback() {
             console.log('[AuthCallback] Intent:', intent, '| Token found:', !!accessToken);
 
             if (!accessToken) {
+                const hash = window.location.hash.substring(1);
+                const params = new URLSearchParams(hash);
+                const errorName = params.get('error') || params.get('error_code');
+                const errorDesc = params.get('error_description') || params.get('message');
+                
+                let errorMsg = 'Sesi Google tidak sah. Sila cuba lagi.';
+                if (errorName) {
+                    errorMsg = `Ralat Supabase: ${errorName} - ${errorDesc || 'Tiada huraian'}`;
+                }
+                
                 const debugInfo = `H:${window.location.hash ? 'Y' : 'N'}|C:${searchParams.has('code') ? 'Y' : 'N'}|S:${supabaseAuth ? 'Y' : 'N'}`;
-                toast.error(`Sesi Google tidak sah. Sila cuba lagi. (${debugInfo})`);
+                toast.error(`${errorMsg} (${debugInfo})`);
                 navigate(intent === 'register' ? '/users/register' : '/users', { replace: true });
                 return;
             }
