@@ -13,6 +13,9 @@ import authService from '../../services/auth.service';
  * NOTE: detectSessionInUrl is set to false in supabase.ts so that
  * Supabase does NOT auto-consume the hash before we can read it.
  */
+// Persist token in memory across React 18 double-mounts in Strict Mode
+let memoryToken: string | null = null;
+
 const getAccessTokenFromHash = (): string | null => {
     const hash = window.location.hash.substring(1); // remove leading #
     if (!hash) return null;
@@ -30,8 +33,15 @@ export default function AuthCallback() {
 
     // Prevent React StrictMode from running the callback twice
     const hasProcessed = useRef(false);
-    // Capture token immediately on first render (before StrictMode re-render clears hash)
-    const capturedToken = useRef<string | null>(getAccessTokenFromHash());
+    
+    // Capture token immediately (check memory or hash)
+    const capturedToken = useRef<string | null>(null);
+    if (!capturedToken.current) {
+        capturedToken.current = memoryToken || getAccessTokenFromHash();
+        if (capturedToken.current && !memoryToken) {
+            memoryToken = capturedToken.current;
+        }
+    }
 
     const intent = (searchParams.get('intent') || 'login') as 'login' | 'register';
 
@@ -51,6 +61,7 @@ export default function AuthCallback() {
 
         // Clean the URL hash so it doesn't linger
         window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        memoryToken = null;
 
         const processCallback = async () => {
             setStatusText(intent === 'register' ? 'Mendaftarkan akaun...' : 'Log masuk...');
