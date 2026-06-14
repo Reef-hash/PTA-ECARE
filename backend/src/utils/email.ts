@@ -84,7 +84,7 @@ export const isEmailAllowed = async (email: string | null | undefined): Promise<
     try {
         const moduleName = 'disposable-email-detector';
         const disposable = await import(moduleName);
-        const detector = disposable.default;
+        const detector = typeof disposable.default === 'function' ? disposable.default : disposable.default.default;
         const isDisposable = await detector(lowerEmail);
         if (isDisposable) {
             return false;
