@@ -245,6 +245,46 @@ const sendWelcomeEmail = async (user: UserRow): Promise<void> => {
     );
 };
 
+const buildUserSignupOtpEmailHtml = (email: string, otp: string) => {
+    let baseUrl = 'https://pta-ecare.vercel.app';
+    if (process.env.FRONTEND_URL) {
+        baseUrl = process.env.FRONTEND_URL.replace(/\/$/, '');
+    }
+    const confirmationUrl = `${baseUrl}/users/register?email=${encodeURIComponent(email)}&otp=${otp}`;
+
+    return `
+<div style="font-family: 'Segoe UI', Arial, sans-serif; background-color: #f8fafc; padding: 40px 0; width: 100%;">
+    <div style="max-width: 600px; background-color: #ffffff; margin: 0 auto; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0;">
+        <div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: #ffffff; padding: 40px 20px; text-align: center;">
+            <h1 style="margin: 0; font-size: 28px; letter-spacing: 1px; text-transform: uppercase; color: #ffffff;">E-CARE</h1>
+            <p style="margin: 5px 0 0; font-size: 14px; opacity: 0.9; color: #ffffff;">Powered by DFKTVETMARABESUT</p>
+        </div>
+        <div style="padding: 40px; line-height: 1.6; color: #334155;">
+            <h2 style="color: #1e293b; margin-top: 0; font-size: 20px;">Sahkan Pendaftaran Akaun</h2>
+            <p>Hi,</p>
+            <p>Terima kasih kerana mendaftar dengan E-CARE. Sila klik butang di bawah untuk mengesahkan akaun anda:</p>
+            <div style="text-align: center; margin: 35px 0;">
+                <a href="${confirmationUrl}" style="background-color: #2563eb; color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);">
+                    Sahkan Akaun
+                </a>
+            </div>
+            <p>Atau gunakan kod OTP di bawah pada halaman pendaftaran:</p>
+            <div style="font-size: 32px; font-weight: 700; letter-spacing: 8px; background-color: #f1f5f9; padding: 15px; border-radius: 8px; text-align: center; color: #1e3a8a; margin: 20px 0; border: 1px dashed #cbd5e1; display: inline-block;">
+                ${otp}
+            </div>
+            
+            <div style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;"></div>
+            <p style="font-size: 11px; color: #94a3b8; margin: 0;">Hantaran automatik sistem e-Care. Sila abaikan jika anda tersilap menerima emel ini.</p>
+        </div>
+        <div style="background-color: #f1f5f9; padding: 30px; text-align: center; font-size: 12px; color: #64748b;">
+            <p style="margin: 0 0 5px 0;">© 2026 <strong style="color: #1e3a8a;">DFKTVETMARABESUT</strong>. All rights reserved.</p>
+            <p style="margin: 0;">Besut, Terengganu, Malaysia</p>
+        </div>
+    </div>
+</div>
+    `;
+};
+
 export const buildActivationEmail = (name: string, otp: string, role: string) => `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #334155; line-height: 1.6;">
         <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
@@ -316,7 +356,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        // 2. Sign up user using Supabase Auth (which triggers the confirmation email/OTP)
+        // 2. Sign up user using Supabase Auth (with confirm email turned off in settings, this auto-confirms in Supabase)
         const { data: authResult, error: authError } = await supabase.auth.signUp({
             email,
             password,
@@ -361,6 +401,42 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
         const user = result[0];
 
+        // 4. Generate random 6-digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const expires_at = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 mins
+
+        // Clean up any existing OTP for this email
+        await supabaseAdmin
+            .from('activation_otps')
+            .delete()
+            .eq('email', email)
+            .eq('role', 'user');
+
+        // Insert into activation_otps
+        const { error: otpError } = await supabaseAdmin.from('activation_otps').insert({
+            email,
+            otp,
+            role: 'user',
+            expires_at
+        });
+
+        if (otpError) {
+            console.error('Failed to create activation OTP record:', otpError);
+            res.status(500).json({ error: 'Gagal menjana kod OTP pengesahan' });
+            return;
+        }
+
+        // Send OTP email via Nodemailer
+        try {
+            const emailHtml = buildUserSignupOtpEmailHtml(email, otp);
+            await sendEmail(email, 'Sahkan Pendaftaran Akaun E-CARE', emailHtml);
+            console.log(`[REGISTER] Custom signup OTP email sent to ${email}`);
+        } catch (emailError) {
+            console.error('[REGISTER] Failed to send custom signup OTP email:', emailError);
+            res.status(500).json({ error: 'Gagal menghantar kod OTP ke e-mel anda. Sila cuba lagi.' });
+            return;
+        }
+
         res.status(200).json({
             message: 'Pendaftaran berjaya! Sila semak e-mel anda untuk kod OTP pengesahan.',
             user: stripPasswordHash(user),
@@ -378,15 +454,19 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
         const { email, otp } = req.body;
         const normalizedEmail = email.trim().toLowerCase();
 
-        // 1. Verify OTP with Supabase Auth
-        const { data: authData, error: authError } = await supabase.auth.verifyOtp({
-            email: normalizedEmail,
-            token: otp,
-            type: 'signup',
-        });
+        // 1. Verify OTP with custom activation_otps table
+        const { data: otpRecords, error: otpError } = await supabaseAdmin
+            .from('activation_otps')
+            .select('*')
+            .eq('email', normalizedEmail)
+            .eq('role', 'user')
+            .eq('otp', otp.trim())
+            .gte('expires_at', new Date().toISOString())
+            .order('created_at', { ascending: false })
+            .limit(1);
 
-        if (authError || !authData.user) {
-            res.status(400).json({ error: authError?.message || 'Kod OTP tidak sah atau telah tamat tempoh' });
+        if (otpError || !otpRecords || otpRecords.length === 0) {
+            res.status(400).json({ error: 'Kod OTP tidak sah atau telah tamat tempoh' });
             return;
         }
 
@@ -398,7 +478,7 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
                 email_verified: true,
                 updated_at: new Date().toISOString()
             })
-            .eq('id', authData.user.id)
+            .eq('email', normalizedEmail)
             .select();
 
         if (updateError || !updatedUsers || updatedUsers.length === 0) {
@@ -408,7 +488,13 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
 
         const user = updatedUsers[0] as UserRow;
 
-        // 3. Send welcome email now that the email is verified
+        // 3. Clean up verified OTP
+        await supabaseAdmin
+            .from('activation_otps')
+            .delete()
+            .eq('id', otpRecords[0].id);
+
+        // 4. Send welcome email now that the email is verified
         try {
             await sendWelcomeEmail(user);
         } catch (emailError) {
@@ -445,7 +531,7 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
             console.error('Failed to notify admins:', notifyError);
         }
 
-        // 4. Create local session token
+        // 5. Create local session token
         const token = createUserToken(user);
 
         res.json({
@@ -470,13 +556,39 @@ export const resendSignupOtp = async (req: Request, res: Response): Promise<void
 
         const normalizedEmail = email.trim().toLowerCase();
 
-        const { error: resendError } = await supabase.auth.resend({
-            type: 'signup',
+        // 1. Delete any existing OTP records for this email and role user
+        await supabaseAdmin
+            .from('activation_otps')
+            .delete()
+            .eq('email', normalizedEmail)
+            .eq('role', 'user');
+
+        // 2. Generate new OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const expires_at = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
+        // 3. Insert into activation_otps
+        const { error: otpError } = await supabaseAdmin.from('activation_otps').insert({
             email: normalizedEmail,
+            otp,
+            role: 'user',
+            expires_at
         });
 
-        if (resendError) {
-            res.status(400).json({ error: resendError.message });
+        if (otpError) {
+            console.error('Failed to create activation OTP record:', otpError);
+            res.status(500).json({ error: 'Gagal menjana kod OTP pengesahan' });
+            return;
+        }
+
+        // 4. Send OTP email via Nodemailer
+        try {
+            const emailHtml = buildUserSignupOtpEmailHtml(normalizedEmail, otp);
+            await sendEmail(normalizedEmail, 'Sahkan Pendaftaran Akaun E-CARE', emailHtml);
+            console.log(`[RESEND-OTP] Custom signup OTP email sent to ${normalizedEmail}`);
+        } catch (emailError) {
+            console.error('[RESEND-OTP] Failed to send custom signup OTP email:', emailError);
+            res.status(500).json({ error: 'Gagal menghantar kod OTP ke e-mel anda.' });
             return;
         }
 

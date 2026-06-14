@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff, UserPlus, ArrowLeft, KeyRound, Mail, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import authService from '../../services/auth.service';
@@ -12,6 +12,7 @@ export default function UserRegister() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { login } = useAuth();
+    const [searchParams] = useSearchParams();
     
     // Registration form states
     const [formData, setFormData] = useState({
@@ -42,6 +43,35 @@ export default function UserRegister() {
             return () => clearTimeout(timer);
         }
     }, [cooldown]);
+
+    // Check for email & otp parameters in URL for auto-verification
+    useEffect(() => {
+        const emailParam = searchParams.get('email');
+        const otpParam = searchParams.get('otp');
+        if (emailParam && otpParam) {
+            setOtpEmail(emailParam);
+            setOtp(otpParam);
+            setRequiresOtp(true);
+            
+            const autoVerify = async () => {
+                setIsVerifying(true);
+                try {
+                    const response = await authService.verifySignupOtp({
+                        email: emailParam,
+                        otp: otpParam
+                    });
+                    login(response.token, response.user, 'user');
+                    toast.success(response.message || 'Akaun anda berjaya diaktifkan!');
+                    navigate('/users/dashboard');
+                } catch (error: any) {
+                    toast.error(error.response?.data?.error || 'Kod OTP tidak sah atau telah tamat tempoh');
+                } finally {
+                    setIsVerifying(false);
+                }
+            };
+            autoVerify();
+        }
+    }, [searchParams]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
