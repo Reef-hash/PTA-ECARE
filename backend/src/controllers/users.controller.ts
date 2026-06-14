@@ -2,11 +2,13 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { supabaseAdmin } from '../config/supabase.js';
 import { createNotification } from './notifications.controller.js';
+import { isEmailAllowed } from '../utils/email.js';
 
 // Get user profile
 export const getProfile = async (req: Request, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
+
 
         const { data, error } = await supabaseAdmin
             .from('users')
@@ -32,6 +34,11 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
     try {
         const userId = req.user?.id;
         const { full_name, email, contact_no, contact_no_2, address, state, ic_number } = req.body;
+
+        if (email && !isEmailAllowed(email)) {
+            res.status(400).json({ error: 'Sila gunakan alamat e-mel yang sah. Domain e-mel ini tidak dibenarkan.' });
+            return;
+        }
 
         const updates: any = { updated_at: new Date().toISOString() };
         if (full_name !== undefined) updates.full_name = full_name;

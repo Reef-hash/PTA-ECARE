@@ -43,3 +43,36 @@ export const sendEmail = async (to: string, subject: string, html: string) => {
         throw new Error('Failed to send email');
     }
 };
+
+export const isEmailAllowed = (email: string | null | undefined): boolean => {
+    if (!email) return true; // empty email is allowed if it's optional
+    
+    const lowerEmail = email.toLowerCase().trim();
+    
+    // Exception for the one current fake email as requested
+    if (lowerEmail === 'tech1@ptaservices.com') {
+        return true;
+    }
+    
+    const domain = lowerEmail.split('@')[1];
+    if (!domain) return false;
+    
+    const blockedDomains = [
+        'ptaservice.com',
+        'ptaservices.com',
+        'example.com',
+        'test.com',
+        'fake.com',
+        'tempmail.com',
+        'mailinator.com',
+        'yopmail.com',
+        'dispostable.com',
+        'temp-mail.org',
+        '10minutemail.com',
+        'trashmail.com',
+        'maildrop.cc',
+        'guerrillamail.com'
+    ];
+    
+    return !blockedDomains.includes(domain);
+};

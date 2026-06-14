@@ -5,7 +5,7 @@ import { OAuth2Client, TokenPayload } from 'google-auth-library';
 import { randomUUID } from 'crypto';
 import { supabase, supabaseAdmin } from '../config/supabase.js';
 import { createNotification, buildNotificationEmailHtml } from './notifications.controller.js';
-import { sendEmail } from '../utils/email.js';
+import { sendEmail, isEmailAllowed } from '../utils/email.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
@@ -302,6 +302,12 @@ export const verifyIC = async (req: Request, res: Response): Promise<void> => {
 export const register = async (req: Request, res: Response): Promise<void> => {
     try {
         const { full_name, ic_number, email, contact_no, contact_no_2, address, state, password } = req.body;
+
+        // Validation for fake email domains
+        if (email && !isEmailAllowed(email)) {
+            res.status(400).json({ error: 'Sila gunakan alamat e-mel yang sah. Domain e-mel ini tidak dibenarkan.' });
+            return;
+        }
 
         // 1. Check if IC number is already registered
         const { data: existing } = await supabaseAdmin.from('users').select('id').eq('ic_number', ic_number);

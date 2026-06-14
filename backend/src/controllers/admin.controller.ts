@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { supabaseAdmin } from '../config/supabase.js';
 import { buildActivationEmail } from './auth.controller.js';
-import { sendEmail } from '../utils/email.js';
+import { sendEmail, isEmailAllowed } from '../utils/email.js';
 import { buildNotificationEmailHtml } from './notifications.controller.js';
 
 // Get dashboard statistics
@@ -130,6 +130,11 @@ export const createTechnician = async (req: Request, res: Response): Promise<voi
     try {
         const { name, department, email, contact_number, username, password } = req.body;
 
+        if (email && !isEmailAllowed(email)) {
+            res.status(400).json({ error: 'Sila gunakan alamat e-mel yang sah. Domain e-mel ini tidak dibenarkan.' });
+            return;
+        }
+
         // Check if username or email already exists
         const { data: existingUser } = await supabaseAdmin
             .from('technicians')
@@ -203,6 +208,11 @@ export const updateTechnician = async (req: Request, res: Response): Promise<voi
     try {
         const { id } = req.params;
         const { name, department, email, contact_number, is_active } = req.body;
+
+        if (email && !isEmailAllowed(email)) {
+            res.status(400).json({ error: 'Sila gunakan alamat e-mel yang sah. Domain e-mel ini tidak dibenarkan.' });
+            return;
+        }
 
         const updates: any = { updated_at: new Date().toISOString() };
         if (name !== undefined) updates.name = name;
@@ -436,6 +446,11 @@ export const updateAdminProfile = async (req: Request, res: Response): Promise<v
         const userId = (req as any).user.id;
         const role = (req as any).user.role;
         const { username, email } = req.body;
+
+        if (email && !isEmailAllowed(email)) {
+            res.status(400).json({ error: 'Sila gunakan alamat e-mel yang sah. Domain e-mel ini tidak dibenarkan.' });
+            return;
+        }
 
         if (!username || !username.trim()) {
             res.status(400).json({ error: 'Username is required' });
