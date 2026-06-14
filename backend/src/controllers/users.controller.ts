@@ -54,12 +54,40 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
 
         if (ic_number) {
             // Only allow updating IC if current IC starts with G-
-            const { data: currentUser } = await supabaseAdmin.from('users').select('ic_number, email').eq('id', userId).single();
-            if (currentUser && currentUser.ic_number.startsWith('G-')) {
-                // Check if new IC is already used
-                const { data: existingUser } = await supabaseAdmin.from('users').select('id').eq('ic_number', ic_number).neq('id', userId).single();
+            const { data: currentUser, error: fetchError } = await supabaseAdmin
+                .from('users')
+                .select('ic_number, email')
+                .eq('id', userId)
+                .maybeSingle();
+
+            if (fetchError) {
+                console.error('Fetch current user error:', fetchError);
+                res.status(500).json({ error: 'Ralat pangkalan data semasa mendapatkan profil.' });
+                return;
+            }
+
+            if (!currentUser) {
+                res.status(404).json({ error: 'Pengguna tidak ditemui.' });
+                return;
+            }
+
+            if (currentUser.ic_number && currentUser.ic_number.startsWith('G-')) {
+                // Check if new IC is already used by another user
+                const { data: existingUser, error: checkError } = await supabaseAdmin
+                    .from('users')
+                    .select('id')
+                    .eq('ic_number', ic_number)
+                    .neq('id', userId)
+                    .maybeSingle();
+
+                if (checkError) {
+                    console.error('Check existing IC error check:', checkError);
+                    res.status(500).json({ error: 'Ralat semasa menyemak No IC.' });
+                    return;
+                }
+
                 if (existingUser) {
-                    res.status(400).json({ error: 'IC number already registered by another user' });
+                    res.status(400).json({ error: 'No IC ini telah didaftarkan oleh pengguna lain.' });
                     return;
                 }
                 updates.ic_number = ic_number;
@@ -138,9 +166,13 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
             .from('users')
             .select('*')
             .eq('id', userId)
-            .single();
+            .maybeSingle();
 
-        if (error || !data) throw error;
+        if (error || !data) {
+            console.error('Fetch updated user failed:', error);
+            res.status(404).json({ error: 'Pengguna tidak ditemui selepas dikemaskini.' });
+            return;
+        }
 
         const { password_hash, ...userWithoutPassword } = data;
         res.json({ message: 'Profile updated', user: userWithoutPassword });

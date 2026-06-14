@@ -11,6 +11,12 @@ export default function GoogleCompleteProfile() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { user, isAuthenticated, isLoading: authLoading, updateUser, login } = useAuth();
+
+    const fullName = (user as any)?.full_name || 'Google User';
+    const email = (user as any)?.email || '';
+    const picture = (user as any)?.google_picture || null;
+    const initial = fullName.charAt(0).toUpperCase();
+
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         ic_number: '',
@@ -134,10 +140,7 @@ export default function GoogleCompleteProfile() {
         setOtp('');
     };
 
-    const fullName = (user as any)?.full_name || 'Google User';
-    const email = (user as any)?.email || '';
-    const picture = (user as any)?.google_picture || null;
-    const initial = fullName.charAt(0).toUpperCase();
+
 
     // Show loading while auth context initialises
     if (authLoading) {
