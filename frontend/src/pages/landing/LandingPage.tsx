@@ -70,6 +70,15 @@ export default function LandingPage() {
                     {t('landing.user')}
                 </Link>
 
+                <Link
+                    to="/users/register"
+                    className={`animate-fade-in flex items-center justify-center gap-3 border-2 border-white rounded-full py-4 font-semibold uppercase bg-sky-600 hover:bg-sky-500 transition-all duration-300 transform hover:scale-105 active:scale-95 ${isLoaded ? '' : 'opacity-0'}`}
+                    style={{ animationDelay: '0.38s' }}
+                >
+                    <i className="fa-solid fa-user-plus"></i>
+                    {t('landing.register')}
+                </Link>
+
                 <a
                     href="https://api.whatsapp.com/send?phone=601151134656&text=info"
                     target="_blank"
