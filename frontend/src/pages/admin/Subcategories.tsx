@@ -147,7 +147,7 @@ export default function Subcategories() {
                                     <tr key={sub.id} className="table-row">
                                         <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                                         <td className="px-4 py-3 font-medium whitespace-nowrap">{sub.name}</td>
-                                        <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{sub.categories?.name || '-'}</td>
+                                        <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{sub.category_name || '-'}</td>
                                         <td className="px-4 py-3 whitespace-nowrap">
                                             <div className="flex items-center justify-center gap-2">
                                                 <button

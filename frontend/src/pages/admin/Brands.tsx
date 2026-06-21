@@ -147,7 +147,7 @@ export default function Brands() {
                                     <tr key={brand.id} className="table-row">
                                         <td className="px-4 py-3 text-gray-500">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                                         <td className="px-4 py-3 font-medium">{brand.name}</td>
-                                        <td className="px-4 py-3 text-gray-600">{brand.categories?.name || t('admin_master.all_categories')}</td>
+                                        <td className="px-4 py-3 text-gray-600">{brand.category_name || t('admin_master.all_categories')}</td>
                                         <td className="px-4 py-3">
                                             <div className="flex items-center justify-center gap-2">
                                                 <button

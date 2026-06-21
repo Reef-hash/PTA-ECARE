@@ -53,6 +53,7 @@ export interface Subcategory {
     id: number;
     category_id: number;
     name: string;
+    category_name?: string;
     categories?: Category;
 }
 
@@ -60,6 +61,7 @@ export interface Brand {
     id: number;
     category_id: number | null;
     name: string;
+    category_name?: string;
     categories?: Category;
 }
 
