@@ -53,10 +53,10 @@ export default function States() {
         setIsSaving(true);
         try {
             if (editingId) {
-                await api.put(`/admin/states/${editingId}`, formData);
+                await api.put(`/states/${editingId}`, formData);
                 toast.success(t('admin_master.success_update'));
             } else {
-                await api.post('/admin/states', formData);
+                await api.post('/states', formData);
                 toast.success(t('admin_master.success_add'));
             }
             setShowModal(false);
@@ -72,7 +72,7 @@ export default function States() {
         if (!confirm(t('admin_master.delete_confirm'))) return;
 
         try {
-            await api.delete(`/admin/states/${id}`);
+            await api.delete(`/states/${id}`);
             toast.success(t('admin_master.success_delete'));
             setStates(states.filter(s => s.id !== id));
         } catch (error: any) {

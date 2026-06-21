@@ -53,10 +53,10 @@ export default function Categories() {
         setIsSaving(true);
         try {
             if (editingId) {
-                await api.put(`/admin/categories/${editingId}`, formData);
+                await api.put(`/categories/${editingId}`, formData);
                 toast.success(t('admin_master.success_update'));
             } else {
-                await api.post('/admin/categories', formData);
+                await api.post('/categories', formData);
                 toast.success(t('admin_master.success_add'));
             }
             setShowModal(false);
@@ -72,7 +72,7 @@ export default function Categories() {
         if (!confirm(t('admin_master.delete_confirm'))) return;
 
         try {
-            await api.delete(`/admin/categories/${id}`);
+            await api.delete(`/categories/${id}`);
             toast.success(t('admin_master.success_delete'));
             setCategories(categories.filter(c => c.id !== id));
         } catch (error: any) {

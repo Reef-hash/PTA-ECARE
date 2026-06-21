@@ -58,13 +58,13 @@ export default function Brands() {
         setIsSaving(true);
         try {
             if (editingId) {
-                await api.put(`/admin/brands/${editingId}`, {
+                await api.put(`/brands/${editingId}`, {
                     name: formData.name,
                     category_id: formData.category_id ? parseInt(formData.category_id) : null,
                 });
                 toast.success(t('admin_master.success_update'));
             } else {
-                await api.post('/admin/brands', {
+                await api.post('/brands', {
                     name: formData.name,
                     category_id: formData.category_id ? parseInt(formData.category_id) : null,
                 });
@@ -83,7 +83,7 @@ export default function Brands() {
         if (!confirm(t('admin_master.delete_confirm'))) return;
 
         try {
-            await api.delete(`/admin/brands/${id}`);
+            await api.delete(`/brands/${id}`);
             toast.success(t('admin_master.success_delete'));
             setBrands(brands.filter(b => b.id !== id));
         } catch (error: any) {

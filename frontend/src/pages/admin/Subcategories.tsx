@@ -58,13 +58,13 @@ export default function Subcategories() {
         setIsSaving(true);
         try {
             if (editingId) {
-                await api.put(`/admin/subcategories/${editingId}`, {
+                await api.put(`/subcategories/${editingId}`, {
                     name: formData.name,
                     category_id: parseInt(formData.category_id),
                 });
                 toast.success(t('admin_master.success_update'));
             } else {
-                await api.post('/admin/subcategories', {
+                await api.post('/subcategories', {
                     name: formData.name,
                     category_id: parseInt(formData.category_id),
                 });
@@ -83,7 +83,7 @@ export default function Subcategories() {
         if (!confirm(t('admin_master.delete_confirm'))) return;
 
         try {
-            await api.delete(`/admin/subcategories/${id}`);
+            await api.delete(`/subcategories/${id}`);
             toast.success(t('admin_master.success_delete'));
             setSubcategories(subcategories.filter(s => s.id !== id));
         } catch (error: any) {
