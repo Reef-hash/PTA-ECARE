@@ -93,6 +93,11 @@ export default function RegisterComplaint() {
             return;
         }
 
+        if (formData.complaint_type === 'Under Warranty' && !formData.model_no) {
+            toast.error('No Model wajib diisi untuk aduan Under Warranty.');
+            return;
+        }
+
         if (formData.details.length > 2000) {
             toast.error(t('complaint_form.error_details_length'));
             return;
@@ -235,7 +240,7 @@ export default function RegisterComplaint() {
                         {/* Model */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                {t('complaint_form.model_no')}
+                                {t('complaint_form.model_no')} {formData.complaint_type === 'Under Warranty' && <span className="text-red-500">*</span>}
                             </label>
                             <input
                                 type="text"
@@ -244,6 +249,9 @@ export default function RegisterComplaint() {
                                 placeholder={t('complaint_form.placeholder_model')}
                                 className="input-field border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                             />
+                            {formData.complaint_type === 'Over Warranty' && (
+                                <p className="text-xs text-gray-500 mt-1">Tidak wajib untuk aduan Over Warranty</p>
+                            )}
                         </div>
 
                         {/* Details */}
