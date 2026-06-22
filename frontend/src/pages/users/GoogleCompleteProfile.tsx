@@ -21,6 +21,7 @@ export default function GoogleCompleteProfile() {
     const [formData, setFormData] = useState({
         ic_number: '',
         contact_no: '',
+        contact_no_2: '',
         address: '',
     });
 
@@ -74,6 +75,7 @@ export default function GoogleCompleteProfile() {
             const response = await api.put('/users/profile', {
                 ic_number: formData.ic_number,
                 contact_no: formData.contact_no,
+                contact_no_2: formData.contact_no_2 || null,
                 address: formData.address,
             });
 
@@ -220,6 +222,20 @@ export default function GoogleCompleteProfile() {
                                         value={formData.contact_no}
                                         onChange={(e) => setFormData({ ...formData, contact_no: e.target.value.replace(/\D/g, '') })}
                                         placeholder="0123456789"
+                                        className="input-field"
+                                        disabled={isSubmitting}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        {t('user_dashboard.label_phone2')}
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        value={formData.contact_no_2}
+                                        onChange={(e) => setFormData({ ...formData, contact_no_2: e.target.value.replace(/\D/g, '') })}
+                                        placeholder="0131234567"
                                         className="input-field"
                                         disabled={isSubmitting}
                                     />
