@@ -356,22 +356,27 @@ export const register = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        // 2. Sign up user using Supabase Auth (with confirm email turned off in settings, this auto-confirms in Supabase)
-        const { data: authResult, error: authError } = await supabase.auth.signUp({
+        // 2. Create user via Supabase Admin API (bypasses email confirmation entirely — we handle OTP ourselves)
+        const { data: authResult, error: authError } = await supabaseAdmin.auth.admin.createUser({
             email,
             password,
-            options: {
-                data: {
-                    full_name,
-                    ic_number,
-                    contact_no,
-                    address
-                }
+            email_confirm: true, // Auto-confirm in Supabase Auth since we verify via our own OTP
+            user_metadata: {
+                full_name,
+                ic_number,
+                contact_no,
+                address
             }
         });
 
         if (authError || !authResult.user) {
-            res.status(400).json({ error: authError?.message || 'Gagal mendaftar akaun melalui Supabase Auth' });
+            // Handle duplicate email in Supabase Auth
+            const msg = authError?.message || '';
+            if (msg.includes('already been registered') || msg.includes('already exists')) {
+                res.status(400).json({ error: 'E-mel ini telah didaftarkan. Sila gunakan e-mel lain atau log masuk.' });
+                return;
+            }
+            res.status(400).json({ error: msg || 'Gagal mendaftar akaun melalui Supabase Auth' });
             return;
         }
 

@@ -127,7 +127,9 @@ export default function UserRegister() {
                 navigate('/users/dashboard');
             }
         } catch (error: any) {
-            toast.error(error.response?.data?.error || 'Pendaftaran gagal');
+            console.error('Registration error:', error?.response?.data || error);
+            const errorMsg = error.response?.data?.error || error.response?.data?.details?.[0]?.message || 'Pendaftaran gagal';
+            toast.error(errorMsg);
         } finally {
             setIsLoading(false);
         }
