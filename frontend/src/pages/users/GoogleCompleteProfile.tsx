@@ -60,7 +60,7 @@ export default function GoogleCompleteProfile() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!formData.ic_number || !formData.contact_no || !formData.address) {
+        if (!formData.ic_number || !formData.contact_no || !formData.contact_no_2 || !formData.address) {
             toast.error(t('user_auth.fill_required') || 'Sila isi semua maklumat wajib');
             return;
         }
@@ -229,7 +229,7 @@ export default function GoogleCompleteProfile() {
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        {t('user_dashboard.label_phone2')}
+                                        {t('user_dashboard.label_phone2')} <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="tel"
