@@ -58,7 +58,8 @@
             "days_ago": "{{count}} hari yang lalu",
             "hours_ago": "{{count}} jam yang lalu",
             "minutes_ago": "{{count}} minit yang lalu"
-        }
+        },
+        "optional": "Pilihan"
     },
     "status_msg": {
         "cancelled_by": "Aduan telah dibatalkan oleh",
