@@ -77,7 +77,7 @@ export default function UserRegister() {
         e.preventDefault();
 
         // Validation
-        if (!formData.full_name || !formData.ic_number || !formData.contact_no || !formData.address || !formData.password) {
+        if (!formData.full_name || !formData.ic_number || !formData.contact_no || !formData.contact_no_2 || !formData.address || !formData.password) {
             toast.error(t('user_auth.fill_required'));
             return;
         }
@@ -289,7 +289,7 @@ export default function UserRegister() {
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            {t('user_dashboard.label_phone2')} ({t('common.optional') || 'Optional'})
+                                            {t('user_dashboard.label_phone2')} <span className="text-red-500">*</span>
                                         </label>
                                         <input
                                             type="tel"
@@ -297,6 +297,7 @@ export default function UserRegister() {
                                             onChange={(e) => setFormData({ ...formData, contact_no_2: e.target.value.replace(/\D/g, '') })}
                                             placeholder="0198765432"
                                             className="input-field"
+                                            required
                                         />
                                     </div>
 
