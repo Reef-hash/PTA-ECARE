@@ -97,11 +97,7 @@ export default function UserRegister() {
             return;
         }
 
-        // Email is required for signup
-        if (!formData.email) {
-            toast.error('E-mel wajib diisi untuk pendaftaran.');
-            return;
-        }
+
 
         setIsLoading(true);
         try {
@@ -263,7 +259,7 @@ export default function UserRegister() {
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            {t('user_dashboard.label_email')} <span className="text-red-500">*</span>
+                                            {t('user_dashboard.label_email')} <span className="text-gray-400 text-xs font-normal ml-1">(tidak wajib)</span>
                                         </label>
                                         <input
                                             type="email"
@@ -271,7 +267,6 @@ export default function UserRegister() {
                                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                             placeholder="email@example.com"
                                             className="input-field"
-                                            required
                                         />
                                     </div>
 

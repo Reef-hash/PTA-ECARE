@@ -342,9 +342,10 @@ export const verifyIC = async (req: Request, res: Response): Promise<void> => {
 export const register = async (req: Request, res: Response): Promise<void> => {
     try {
         const { full_name, ic_number, email, contact_no, contact_no_2, address, state, password } = req.body;
+        const normalizedEmail = email ? email.trim().toLowerCase() : '';
 
         // Validation for fake email domains
-        if (email && !(await isEmailAllowed(email))) {
+        if (normalizedEmail && !(await isEmailAllowed(normalizedEmail))) {
             res.status(400).json({ error: 'Sila gunakan alamat e-mel yang sah. Domain e-mel ini tidak dibenarkan.' });
             return;
         }
@@ -356,45 +357,62 @@ export const register = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        // 2. Create user via Supabase Admin API (bypasses email confirmation entirely — we handle OTP ourselves)
-        const { data: authResult, error: authError } = await supabaseAdmin.auth.admin.createUser({
-            email,
-            password,
-            email_confirm: true, // Auto-confirm in Supabase Auth since we verify via our own OTP
-            user_metadata: {
-                full_name,
-                ic_number,
-                contact_no,
-                address
-            }
-        });
-
-        if (authError || !authResult.user) {
-            // Handle duplicate email in Supabase Auth
-            const msg = authError?.message || '';
-            if (msg.includes('already been registered') || msg.includes('already exists')) {
+        // Check if email is already registered (if provided)
+        if (normalizedEmail) {
+            const { data: existingEmail } = await supabaseAdmin.from('users').select('id').eq('email', normalizedEmail);
+            if (existingEmail && existingEmail.length > 0) {
                 res.status(400).json({ error: 'E-mel ini telah didaftarkan. Sila gunakan e-mel lain atau log masuk.' });
                 return;
             }
-            res.status(400).json({ error: msg || 'Gagal mendaftar akaun melalui Supabase Auth' });
-            return;
+        }
+
+        let userId: string;
+
+        if (normalizedEmail) {
+            // 2. Create user via Supabase Admin API (bypasses email confirmation entirely — we handle OTP ourselves)
+            const { data: authResult, error: authError } = await supabaseAdmin.auth.admin.createUser({
+                email: normalizedEmail,
+                password,
+                email_confirm: true, // Auto-confirm in Supabase Auth since we verify via our own OTP
+                user_metadata: {
+                    full_name,
+                    ic_number,
+                    contact_no,
+                    address
+                }
+            });
+
+            if (authError || !authResult.user) {
+                const msg = authError?.message || '';
+                if (msg.includes('already been registered') || msg.includes('already exists')) {
+                    res.status(400).json({ error: 'E-mel ini telah didaftarkan. Sila gunakan e-mel lain atau log masuk.' });
+                    return;
+                }
+                res.status(400).json({ error: msg || 'Gagal mendaftar akaun melalui Supabase Auth' });
+                return;
+            }
+            userId = authResult.user.id;
+        } else {
+            // Without email: generate UUID
+            const { randomUUID } = await import('crypto');
+            userId = randomUUID();
         }
 
         const password_hash = await bcrypt.hash(password, 10);
 
-        // 3. Insert user into public users table with status Pending and email_verified false (OTP required)
+        // 3. Insert user into public users table
         const { data: result, error: insertError } = await supabaseAdmin.from('users').insert({
-            id: authResult.user.id, // Match Supabase auth UUID
+            id: userId,
             full_name,
             ic_number,
-            email: email || null,
+            email: normalizedEmail || null,
             contact_no,
             contact_no_2: contact_no_2 || null,
             address,
             state: state || null,
             password_hash,
-            status: 'Inactive',
-            email_verified: false,
+            status: normalizedEmail ? 'Inactive' : 'Active', // Auto active if no email
+            email_verified: !!normalizedEmail,
             auth_provider: 'password'
         }).select();
 
@@ -406,48 +424,65 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
         const user = result[0];
 
-        // 4. Generate random 6-digit OTP
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const expires_at = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 mins
+        if (normalizedEmail) {
+            // 4. Generate random 6-digit OTP
+            const otp = Math.floor(100000 + Math.random() * 900000).toString();
+            const expires_at = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 mins
 
-        // Clean up any existing OTP for this email
-        await supabaseAdmin
-            .from('activation_otps')
-            .delete()
-            .eq('email', email)
-            .eq('role', 'user');
+            // Clean up any existing OTP for this email
+            await supabaseAdmin
+                .from('activation_otps')
+                .delete()
+                .eq('email', normalizedEmail)
+                .eq('role', 'user');
 
-        // Insert into activation_otps
-        const { error: otpError } = await supabaseAdmin.from('activation_otps').insert({
-            email,
-            otp,
-            role: 'user',
-            expires_at
-        });
+            // Insert into activation_otps
+            const { error: otpError } = await supabaseAdmin.from('activation_otps').insert({
+                email: normalizedEmail,
+                otp,
+                role: 'user',
+                expires_at
+            });
 
-        if (otpError) {
-            console.error('Failed to create activation OTP record:', otpError);
-            res.status(500).json({ error: 'Gagal menjana kod OTP pengesahan' });
-            return;
+            if (otpError) {
+                console.error('Failed to create activation OTP record:', otpError);
+                res.status(500).json({ error: 'Gagal menjana kod OTP pengesahan' });
+                return;
+            }
+
+            // Send OTP email via Nodemailer
+            try {
+                const emailHtml = buildUserSignupOtpEmailHtml(normalizedEmail, otp);
+                await sendEmail(normalizedEmail, 'Sahkan Pendaftaran Akaun E-CARE', emailHtml);
+                console.log(`[REGISTER] Custom signup OTP email sent to ${normalizedEmail}`);
+            } catch (emailError) {
+                console.error('[REGISTER] Failed to send custom signup OTP email:', emailError);
+                res.status(500).json({ error: 'Gagal menghantar kod OTP ke e-mel anda. Sila cuba lagi.' });
+                return;
+            }
+
+            res.status(200).json({
+                message: 'Pendaftaran berjaya! Sila semak e-mel anda untuk kod OTP pengesahan.',
+                user: stripPasswordHash(user),
+                requires_otp: true,
+                email: user.email
+            });
+        } else {
+            // Auto-login since no email OTP is needed
+            const tokenPayload = {
+                id: user.id,
+                role: 'user',
+                ic_number: user.ic_number
+            };
+            const token = jwt.sign(tokenPayload, process.env.JWT_SECRET as string, { expiresIn: '24h' });
+
+            res.status(200).json({
+                message: 'Pendaftaran berjaya! Akaun anda telah diaktifkan.',
+                user: stripPasswordHash(user),
+                requires_otp: false,
+                token
+            });
         }
-
-        // Send OTP email via Nodemailer
-        try {
-            const emailHtml = buildUserSignupOtpEmailHtml(email, otp);
-            await sendEmail(email, 'Sahkan Pendaftaran Akaun E-CARE', emailHtml);
-            console.log(`[REGISTER] Custom signup OTP email sent to ${email}`);
-        } catch (emailError) {
-            console.error('[REGISTER] Failed to send custom signup OTP email:', emailError);
-            res.status(500).json({ error: 'Gagal menghantar kod OTP ke e-mel anda. Sila cuba lagi.' });
-            return;
-        }
-
-        res.status(200).json({
-            message: 'Pendaftaran berjaya! Sila semak e-mel anda untuk kod OTP pengesahan.',
-            user: stripPasswordHash(user),
-            requires_otp: true,
-            email: user.email
-        });
     } catch (error) {
         console.error('Registration error:', error);
         res.status(500).json({ error: 'Internal server error' });
