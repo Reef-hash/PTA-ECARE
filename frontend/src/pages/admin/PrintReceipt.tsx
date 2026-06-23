@@ -85,6 +85,8 @@ export default function PrintReceipt() {
                     .min-h-screen {
                         min-height: 0 !important;
                         height: 210mm !important;
+                        overflow: hidden !important;
+                        box-sizing: border-box !important;
                     }
 
                     .no-print {
@@ -92,6 +94,7 @@ export default function PrintReceipt() {
                     }
 
                     .print-stage {
+                        box-sizing: border-box !important; /* 210mm TERMASUK padding */
                         width: 297mm !important;
                         max-width: 297mm !important;
                         height: 210mm !important;
