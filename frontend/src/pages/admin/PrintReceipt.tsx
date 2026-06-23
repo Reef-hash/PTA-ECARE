@@ -296,10 +296,11 @@ function InfoGrid({ children }: { children: React.ReactNode }) {
 }
 
 function Info({ label, value, wide = false, tall = false, lastInRow = false }: { label: string; value?: string | number | null; wide?: boolean; tall?: boolean; lastInRow?: boolean }) {
+    const heightClass = tall ? 'h-[9.6mm]' : 'h-[4.8mm]';
     return (
         <>
-            <div className="h-[4.8mm] border-r border-b border-black bg-slate-50 px-1 py-0.5 font-bold">{label}</div>
-            <div className={`h-[4.8mm] overflow-hidden border-b border-black px-1 py-0.5 font-semibold ${lastInRow ? '' : 'border-r'} ${wide ? 'col-span-3' : ''} ${tall ? 'h-[9.6mm] whitespace-pre-wrap' : ''}`}>
+            <div className={`${heightClass} border-r border-b border-black bg-slate-50 px-1 py-0.5 font-bold`}>{label}</div>
+            <div className={`${heightClass} overflow-hidden border-b border-black px-1 py-0.5 font-semibold ${lastInRow ? '' : 'border-r'} ${wide ? 'col-span-3' : ''} ${tall ? 'whitespace-pre-wrap' : ''}`}>
                 {value || '-'}
             </div>
         </>
