@@ -1364,3 +1364,47 @@ export const cancelComplaint = async (req: Request, res: Response): Promise<void
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+// Delete complaint (admin only)
+export const deleteComplaint = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { id } = req.params;
+
+        // Optionally fetch the complaint first to ensure it exists
+        const { data: complaint, error: fetchError } = await supabaseAdmin
+            .from('complaints')
+            .select('report_number')
+            .eq('id', id)
+            .single();
+
+        if (fetchError || !complaint) {
+            res.status(404).json({ error: 'Aduan tidak dijumpai' });
+            return;
+        }
+
+        // Delete from technician_remarks
+        await supabaseAdmin.from('technician_remarks').delete().eq('complaint_id', id);
+        
+        // Delete from complaint_remarks
+        await supabaseAdmin.from('complaint_remarks').delete().eq('complaint_id', id);
+
+        // Delete from notifications where reference_id = id
+        await supabaseAdmin.from('notifications').delete().eq('reference_id', id);
+
+        // Finally delete the complaint
+        const { error: deleteError } = await supabaseAdmin
+            .from('complaints')
+            .delete()
+            .eq('id', id);
+
+        if (deleteError) {
+            throw deleteError;
+        }
+
+        console.log(`[DELETE COMPLAINT] Admin deleted complaint ${complaint.report_number}`);
+        res.json({ message: 'Aduan berjaya dipadam' });
+    } catch (error: any) {
+        console.error('Error deleting complaint:', error);
+        res.status(500).json({ error: 'Ralat memadam aduan' });
+    }
+};

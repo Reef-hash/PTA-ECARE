@@ -14,6 +14,7 @@ import {
     forwardComplaint,
     getTechnicianDashboardStats,
     cancelComplaint,
+    deleteComplaint,
 } from '../controllers/complaints.controller.js';
 
 const router = Router();
@@ -55,6 +56,9 @@ router.post('/:id/forward', requireRole('admin'), validate(forwardComplaintSchem
 
 // Cancel complaint (user only, pending status only)
 router.delete('/:id/cancel', requireRole('user'), cancelComplaint);
+
+// Delete complaint entirely (admin only)
+router.delete('/:id', requireRole('admin'), deleteComplaint);
 
 export default router;
 
