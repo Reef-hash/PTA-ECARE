@@ -79,9 +79,9 @@
     },
     "landing": {
         "subtitle": "Electrical Appliance Service Center",
-        "admin_tech": "Admin / Technician",
-        "user": "User",
-        "register": "User Registration",
+        "admin_tech": "Admin / Technician / Main Technician",
+        "user": "Login Customer",
+        "register": "Customer Registration",
         "whatsapp": "Whatsapp",
         "report_damage": "Damage Report",
         "service_aircond": "Aircond Service",
