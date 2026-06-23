@@ -61,12 +61,12 @@ export default function PrintReceipt() {
             <style>{`
                 @page {
                     size: A4 landscape;
-                    margin: 5mm;
+                    margin: 0 !important;
                 }
 
                 @media print {
                     * {
-                        box-shadow: none !important;
+                        box-sizing: border-box !important;
                         -webkit-print-color-adjust: exact !important;
                         print-color-adjust: exact !important;
                     }
@@ -74,18 +74,17 @@ export default function PrintReceipt() {
                     html,
                     body,
                     #root {
-                        width: 100% !important;
-                        height: 100% !important;
-                        max-height: 200mm !important; /* maximum available space after 5mm margins */
+                        width: 297mm !important;
+                        height: 210mm !important;
                         margin: 0 !important;
                         padding: 0 !important;
                         background: #fff !important;
                         overflow: hidden !important;
                     }
 
-                    /* Override min-h-screen which adds 100vh that causes 2nd page */
                     .min-h-screen {
                         min-height: 0 !important;
+                        height: 210mm !important;
                     }
 
                     .no-print {
@@ -93,34 +92,36 @@ export default function PrintReceipt() {
                     }
 
                     .print-stage {
-                        width: 287mm !important;
-                        height: 190mm !important;
+                        width: 297mm !important;
+                        max-width: 297mm !important;
+                        height: 210mm !important;
                         margin: 0 !important;
-                        padding: 0 !important;
+                        padding: 10mm 5mm !important;
                         background: #fff !important;
                         box-shadow: none !important;
+                        border: none !important;
+                        display: flex !important;
+                        flex-direction: row !important;
+                        flex-wrap: nowrap !important;
+                        justify-content: center !important;
+                        align-items: flex-start !important;
+                        gap: 5mm !important;
                         overflow: hidden !important;
-                        page-break-before: avoid !important;
-                        page-break-after: avoid !important;
-                        page-break-inside: avoid !important;
                     }
 
                     .print-grid {
-                        width: 287mm !important;
-                        height: 190mm !important;
-                        display: grid !important;
-                        grid-template-columns: 142mm 142mm !important; /* strict width */
-                        gap: 3mm !important;
-                        break-inside: avoid !important;
-                        page-break-inside: avoid !important;
-                        page-break-after: avoid !important;
+                        display: contents !important;
                     }
 
                     .receipt-copy {
-                        width: 142mm !important;
+                        flex: 0 0 140mm !important;
+                        width: 140mm !important;
+                        max-width: 140mm !important;
                         height: 190mm !important;
+                        max-height: 190mm !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
                         overflow: hidden !important;
-                        break-inside: avoid !important;
                         page-break-inside: avoid !important;
                     }
                 }
