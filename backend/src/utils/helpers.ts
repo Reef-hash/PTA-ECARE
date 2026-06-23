@@ -1,51 +1,37 @@
 import { supabaseAdmin } from '../config/supabase.js';
 
 export async function generateReportNumber(): Promise<string> {
-    // Get the highest report number that matches the Axxxxx pattern
-    // We need to find the max report_number that starts with a letter
     const { data, error } = await supabaseAdmin
         .from('complaints')
         .select('report_number')
-        .like('report_number', 'PTAS%')  // Only get reports starting with PTAS
-        .order('report_number', { ascending: false })
-        .limit(1);
+        .like('report_number', 'PTAS%');
 
     if (error) {
-        console.error('Error fetching last report number:', error);
+        console.error('Error fetching report numbers:', error);
         throw new Error('Failed to generate report number');
     }
 
+    const letterPrefix = 'PTAS';
     let nextNumber = 1;
-    let letterPrefix = 'PTAS';
 
     if (data && data.length > 0) {
-        const lastReport = data[0].report_number;
-        const match = lastReport.match(/^([A-Z]+)(\d+)$/);
+        // Extract the numerical parts and sort them
+        const numbers = data
+            .map(row => {
+                const match = row.report_number.match(/^PTAS(\d+)$/);
+                return match ? parseInt(match[1], 10) : null;
+            })
+            .filter((num): num is number => num !== null)
+            .sort((a, b) => a - b);
 
-        if (match) {
-            const letters = match[1];
-            const num = parseInt(match[2], 10);
-
-            if (num < 99999) {
-                letterPrefix = letters;
-                nextNumber = num + 1;
-            } else {
-                // Increment letter prefix
-                if (letters.length === 1) {
-                    if (letters === 'Z') {
-                        letterPrefix = 'AA';
-                    } else {
-                        letterPrefix = String.fromCharCode(letters.charCodeAt(0) + 1);
-                    }
-                } else {
-                    const lastChar = letters.charAt(letters.length - 1);
-                    if (lastChar === 'Z') {
-                        letterPrefix = String.fromCharCode(letters.charCodeAt(0) + 1) + 'A';
-                    } else {
-                        letterPrefix = letters.charAt(0) + String.fromCharCode(lastChar.charCodeAt(0) + 1);
-                    }
-                }
-                nextNumber = 1;
+        // Find the first missing number (gap) in the sequence starting from 1
+        for (let i = 0; i < numbers.length; i++) {
+            if (numbers[i] > nextNumber) {
+                // Gap found! nextNumber is the missing number
+                break;
+            } else if (numbers[i] === nextNumber) {
+                // Number exists, increment our expected nextNumber
+                nextNumber++;
             }
         }
     }
