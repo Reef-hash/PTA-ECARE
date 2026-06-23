@@ -210,39 +210,34 @@ function ReceiptCopy({ complaint, remarks, copyLabel }: { complaint: Complaint; 
                 </InfoGrid>
             </Section>
 
-            <Section title="Aduan / Kerosakan" className="shrink-0">
-                <div className="h-[20mm] overflow-hidden whitespace-pre-wrap px-1 py-0.5 font-semibold">{complaint.details || '-'}</div>
-            </Section>
-
-            <div className="flex-1 grid grid-cols-[1fr_33mm] border-b-2 border-black overflow-hidden">
-                <Section title="Semakan / Catatan Terkini" flush className="h-full">
-                    <div className="flex-1 flex flex-col">
-                        {Array.from({ length: 3 }).map((_, index) => {
-                            const remark = remarks[index];
-                            return (
-                                <div key={index} className="flex-1 border-b border-black last:border-b-0 px-1 py-0.5 flex flex-col justify-start">
-                                    <Line label="Pemeriksaan" value={remark ? (remark.checking || '-') : ''} />
-                                    <Line label="Transport" value={remark ? (remark.note_transport || '-') : ''} />
-                                    <Line label="Catatan" value={remark ? (remark.remark || '-') : ''} />
-                                    <Line label="Juruteknik" value={remark ? (technician ? `${technician.name} (${technician.department})` : '-') : ''} />
-                                </div>
-                            );
-                        })}
-                    </div>
+            <div className="shrink-0 grid grid-cols-[1fr_33mm] border-b-2 border-black">
+                <Section title="Aduan / Kerosakan" flush className="h-full border-r-2 border-black">
+                    <div className="flex-1 overflow-hidden whitespace-pre-wrap px-1 py-0.5 font-semibold">{complaint.details || '-'}</div>
                 </Section>
-                <div className="border-l-2 border-black bg-white flex flex-col">
+                <div className="bg-white flex flex-col">
                     <div className="shrink-0 h-[4mm] border-b border-black bg-slate-200 px-1 py-0.5 text-[6.4px] font-black uppercase">Dokumen</div>
                     <CheckRow label="Waranti" checked={Boolean(complaint.warranty_file)} />
                     <CheckRow label="Resit" checked={Boolean(complaint.receipt_file)} />
                     <CheckRow label="Barang" />
                     <CheckRow label="Lengkap" checked={Boolean(customer?.full_name && customer?.contact_no && customer?.address)} />
-                    {/* Filler to extend the vertical line */}
-                    <div className="flex-1 grid grid-cols-[1fr_10mm]">
-                        <span className="border-t border-black"></span>
-                        <span className="border-t border-l border-black"></span>
-                    </div>
                 </div>
             </div>
+
+            <Section title="Semakan / Catatan Terkini" className="flex-1">
+                <div className="flex-1 flex flex-col">
+                    {Array.from({ length: 3 }).map((_, index) => {
+                        const remark = remarks[index];
+                        return (
+                            <div key={index} className="flex-1 border-b border-black last:border-b-0 px-1 py-0.5 flex flex-col justify-start">
+                                <Line label="Pemeriksaan" value={remark ? (remark.checking || '-') : ''} />
+                                <Line label="Transport" value={remark ? (remark.note_transport || '-') : ''} />
+                                <Line label="Catatan" value={remark ? (remark.remark || '-') : ''} />
+                                <Line label="Juruteknik" value={remark ? (technician ? `${technician.name} (${technician.department})` : '-') : ''} />
+                            </div>
+                        );
+                    })}
+                </div>
+            </Section>
 
             <Section title="Rekod Tindakan" className="shrink-0">
                 <table className="w-full border-collapse text-[6.6px]">
