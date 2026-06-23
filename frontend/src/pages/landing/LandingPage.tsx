@@ -53,18 +53,9 @@ export default function LandingPage() {
             <div className="w-full max-w-sm flex flex-col gap-6">
 
                 <Link
-                    to="/admin"
-                    className={`animate-fade-in flex items-center justify-center gap-3 border-2 border-white rounded-full py-4 font-semibold uppercase bg-indigo-600 hover:bg-indigo-500 transition-all duration-300 transform hover:scale-105 active:scale-95 ${isLoaded ? '' : 'opacity-0'}`}
-                    style={{ animationDelay: '0.3s' }}
-                >
-                    <i className="fa-solid fa-user-gear"></i>
-                    {t('landing.admin_tech')}
-                </Link>
-
-                <Link
                     to="/users"
                     className={`animate-fade-in flex items-center justify-center gap-3 border-2 border-white rounded-full py-4 font-semibold uppercase bg-blue-600 hover:bg-blue-500 transition-all duration-300 transform hover:scale-105 active:scale-95 ${isLoaded ? '' : 'opacity-0'}`}
-                    style={{ animationDelay: '0.35s' }}
+                    style={{ animationDelay: '0.3s' }}
                 >
                     <i className="fa-solid fa-user"></i>
                     {t('landing.user')}
@@ -73,7 +64,7 @@ export default function LandingPage() {
                 <Link
                     to="/users/register"
                     className={`animate-fade-in flex items-center justify-center gap-3 border-2 border-white rounded-full py-4 font-semibold uppercase bg-sky-600 hover:bg-sky-500 transition-all duration-300 transform hover:scale-105 active:scale-95 ${isLoaded ? '' : 'opacity-0'}`}
-                    style={{ animationDelay: '0.38s' }}
+                    style={{ animationDelay: '0.35s' }}
                 >
                     <i className="fa-solid fa-user-plus"></i>
                     {t('landing.register')}
@@ -84,7 +75,7 @@ export default function LandingPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`animate-fade-in flex items-center justify-center gap-3 border-2 border-white rounded-full py-4 font-semibold uppercase bg-green-600 hover:bg-green-500 transition-all duration-300 transform hover:scale-105 active:scale-95 ${isLoaded ? '' : 'opacity-0'}`}
-                    style={{ animationDelay: '0.4s' }}
+                    style={{ animationDelay: '0.38s' }}
                 >
                     <i className="fa-brands fa-whatsapp"></i>
                     {t('landing.whatsapp')}
@@ -127,6 +118,15 @@ export default function LandingPage() {
                     <i className="fa-solid fa-location-dot"></i>
                     {t('landing.location')}
                 </a>
+
+                <Link
+                    to="/admin"
+                    className={`animate-fade-in flex items-center justify-center gap-3 border-2 border-white rounded-full py-4 font-semibold uppercase bg-indigo-600 hover:bg-indigo-500 transition-all duration-300 transform hover:scale-105 active:scale-95 ${isLoaded ? '' : 'opacity-0'}`}
+                    style={{ animationDelay: '0.9s' }}
+                >
+                    <i className="fa-solid fa-user-gear"></i>
+                    {t('landing.admin_tech')}
+                </Link>
 
             </div>
 
