@@ -174,9 +174,9 @@ function ReceiptCopy({ complaint, remarks, copyLabel }: { complaint: Complaint; 
                     <h1 className="text-[12px] font-black uppercase tracking-normal">PTA SERVICES - E-CARE</h1>
                     <p className="text-[7.5px] font-bold">BORANG KERJA ADUAN KEROSAKAN</p>
                     <p className="text-[6.8px]">Pusat Servis Barangan Elektrik</p>
-                    <p className="text-[5.5px] leading-[1.2] mt-0.5">
+                    <p className="text-[5.5px] font-bold leading-[1.2] mt-0.5">
                         Lot 709 Kompleks Permint, 22200 Kg. Raja, Besut, Terengganu.<br />
-                        Tel: 096958843
+                        Tel : 09-6958843
                     </p>
                 </div>
                 <div className="flex flex-col justify-center items-end px-2 text-[6.8px]">
