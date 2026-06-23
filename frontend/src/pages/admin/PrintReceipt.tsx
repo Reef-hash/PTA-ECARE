@@ -232,7 +232,7 @@ function ReceiptCopy({ complaint, remarks, copyLabel }: { complaint: Complaint; 
                                 <Line label="Pemeriksaan" value={remark ? (remark.checking || '-') : ''} />
                                 <Line label="Transport" value={remark ? (remark.note_transport || '-') : ''} />
                                 <Line label="Catatan" value={remark ? (remark.remark || '-') : ''} />
-                                <Line label="Juruteknik" value={remark ? (technician ? `${technician.name} (${technician.department})` : '-') : ''} />
+                                <Line label="Remark by" value={remark ? (remark.source === 'Admin' ? 'Admin' : (technician ? `${technician.name} (${technician.department})` : '-')) : ''} />
                             </div>
                         );
                     })}
