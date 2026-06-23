@@ -4,7 +4,8 @@ import { validate } from '../middleware/validate.js';
 import {
     createTechnicianSchema,
     updateTechnicianSchema,
-    updateUserStatusSchema
+    updateUserStatusSchema,
+    createUserSchema
 } from '../utils/schemas.js';
 import {
     getStats,
@@ -18,6 +19,7 @@ import {
     getUsers,
     getUser,
     updateUserStatus,
+    createUser,
     getAdminProfile,
     updateAdminProfile,
     updateAdminPassword,
@@ -51,6 +53,7 @@ router.delete('/technicians/:id', deleteTechnician);
 // Users
 router.get('/users', getUsers);
 router.get('/users/:id', getUser);
+router.post('/users', validate(createUserSchema), createUser);
 router.put('/users/:id/status', validate(updateUserStatusSchema), updateUserStatus);
 
 export default router;

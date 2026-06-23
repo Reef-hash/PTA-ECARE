@@ -116,6 +116,17 @@ export const updateUserStatusSchema = z.object({
     status: z.enum(['Active', 'Inactive', 'Suspended']),
 });
 
+export const createUserSchema = z.object({
+    full_name: z.string().min(2, 'Nama mestilah sekurang-kurangnya 2 aksara'),
+    ic_number: z.string().length(12, 'No IC mestilah 12 digit').regex(/^\d+$/, 'No IC hanya mengandungi digit'),
+    email: z.string().email('E-mel tidak sah').optional().or(z.literal('')),
+    contact_no: z.string().min(10, 'No telefon tidak sah'),
+    contact_no_2: z.string().min(10, 'No telefon 2 tidak sah'),
+    address: z.string().min(5, 'Alamat diperlukan'),
+    state: z.string().optional(),
+    password: z.string().min(6, 'Kata laluan mestilah sekurang-kurangnya 6 aksara'),
+});
+
 // Master data schemas
 export const categorySchema = z.object({
     name: z.string().min(1, 'Name is required'),

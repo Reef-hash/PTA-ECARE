@@ -555,3 +555,129 @@ export const updateAdminPassword = async (req: Request, res: Response): Promise<
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+// Create user (admin registers customer account)
+export const createUser = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { full_name, ic_number, email, contact_no, contact_no_2, address, state, password } = req.body;
+
+        const normalizedEmail = email ? email.trim().toLowerCase() : '';
+
+        // Validate email domain if provided
+        if (normalizedEmail && !(await isEmailAllowed(normalizedEmail))) {
+            res.status(400).json({ error: 'Sila gunakan alamat e-mel yang sah. Domain e-mel ini tidak dibenarkan.' });
+            return;
+        }
+
+        // Check IC number duplicate
+        const { data: existingIC } = await supabaseAdmin
+            .from('users')
+            .select('id')
+            .eq('ic_number', ic_number);
+
+        if (existingIC && existingIC.length > 0) {
+            res.status(400).json({ error: 'No IC ini telah didaftarkan.' });
+            return;
+        }
+
+        // Check email duplicate (if provided)
+        if (normalizedEmail) {
+            const { data: existingEmail } = await supabaseAdmin
+                .from('users')
+                .select('id')
+                .eq('email', normalizedEmail);
+
+            if (existingEmail && existingEmail.length > 0) {
+                res.status(400).json({ error: 'E-mel ini telah didaftarkan oleh pengguna lain.' });
+                return;
+            }
+        }
+
+        const password_hash = await bcrypt.hash(password, 10);
+        let userId: string;
+
+        if (normalizedEmail) {
+            // With email: create Supabase Auth user
+            const { data: authResult, error: authError } = await supabaseAdmin.auth.admin.createUser({
+                email: normalizedEmail,
+                password,
+                email_confirm: true,
+                user_metadata: {
+                    full_name,
+                    ic_number,
+                    contact_no,
+                    address
+                }
+            });
+
+            if (authError || !authResult.user) {
+                const msg = authError?.message || '';
+                if (msg.includes('already') || msg.includes('exists')) {
+                    res.status(400).json({ error: 'E-mel ini telah didaftarkan di sistem auth.' });
+                    return;
+                }
+                res.status(400).json({ error: msg || 'Gagal mencipta akaun auth.' });
+                return;
+            }
+            userId = authResult.user.id;
+        } else {
+            // Without email: generate UUID (no Supabase Auth entry)
+            const { randomUUID } = await import('crypto');
+            userId = randomUUID();
+        }
+
+        // Insert into users table — status Active (admin-created, no OTP needed)
+        const { data: newUser, error: insertError } = await supabaseAdmin
+            .from('users')
+            .insert({
+                id: userId,
+                full_name,
+                ic_number,
+                email: normalizedEmail || null,
+                contact_no,
+                contact_no_2: contact_no_2 || null,
+                address,
+                state: state || null,
+                password_hash,
+                status: 'Active',
+                email_verified: !!normalizedEmail,
+                auth_provider: 'password'
+            })
+            .select()
+            .single();
+
+        if (insertError || !newUser) {
+            console.error('Insert user failed:', insertError);
+            res.status(500).json({ error: 'Gagal mencipta rekod pengguna.' });
+            return;
+        }
+
+        // Send welcome email if email provided
+        if (normalizedEmail) {
+            try {
+                const welcomeHtml = buildNotificationEmailHtml(
+                    full_name,
+                    'Selamat Datang ke E-CARE',
+                    `Akaun pelanggan anda telah didaftarkan oleh pentadbir.\n\nAnda boleh log masuk menggunakan:\n• No IC: ${ic_number}\n• Kata Laluan: (seperti yang ditetapkan oleh pentadbir)\n\nSila tukar kata laluan anda selepas log masuk pertama.`,
+                    undefined,
+                    'no_link'
+                );
+                await sendEmail(normalizedEmail, 'Selamat Datang ke E-CARE', welcomeHtml);
+                console.log(`[ADMIN-CREATE-USER] Welcome email sent to ${normalizedEmail}`);
+            } catch (emailError) {
+                console.error('[ADMIN-CREATE-USER] Failed to send welcome email:', emailError);
+            }
+        }
+
+        const { password_hash: _, ...userWithoutPassword } = newUser;
+        res.status(201).json({
+            message: normalizedEmail
+                ? 'Pelanggan berjaya didaftarkan. E-mel selamat datang telah dihantar.'
+                : 'Pelanggan berjaya didaftarkan (tanpa e-mel).',
+            user: userWithoutPassword
+        });
+    } catch (error) {
+        console.error('Create user error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
