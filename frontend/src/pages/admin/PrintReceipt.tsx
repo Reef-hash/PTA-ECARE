@@ -61,7 +61,7 @@ export default function PrintReceipt() {
             <style>{`
                 @page {
                     size: A4 landscape;
-                    margin: 5mm;
+                    margin: 4mm;
                 }
 
                 @media print {
@@ -81,8 +81,8 @@ export default function PrintReceipt() {
                     }
 
                     .print-stage {
-                        width: 287mm !important;
-                        height: 200mm !important;
+                        width: 289mm !important;
+                        height: 202mm !important;
                         margin: 0 !important;
                         padding: 0 !important;
                         background: #fff !important;
@@ -91,18 +91,18 @@ export default function PrintReceipt() {
                     }
 
                     .print-grid {
-                        width: 287mm !important;
-                        height: 200mm !important;
+                        width: 289mm !important;
+                        height: 202mm !important;
                         display: grid !important;
                         grid-template-columns: 1fr 1fr !important;
-                        gap: 5mm !important;
+                        gap: 3mm !important;
                         break-inside: avoid !important;
                         page-break-inside: avoid !important;
                     }
 
                     .receipt-copy {
-                        width: 141mm !important;
-                        height: 200mm !important;
+                        width: 143mm !important;
+                        height: 202mm !important;
                         overflow: hidden !important;
                         break-inside: avoid !important;
                         page-break-inside: avoid !important;
@@ -137,24 +137,24 @@ function ReceiptCopy({ complaint, remarks, copyLabel }: { complaint: Complaint; 
     const latestRemark = remarks[remarks.length - 1];
 
     return (
-        <section className="receipt-copy border-2 border-black bg-white text-[9.5px] leading-tight">
-            <header className="grid grid-cols-[27mm_1fr_34mm] border-b-2 border-black">
-                <div className="flex items-center justify-center border-r-2 border-black p-1.5">
-                    <img src={logo} alt="PTA Services" className="max-h-[18mm] max-w-[24mm] object-contain" />
+        <section className="receipt-copy border-2 border-black bg-white text-[8px] leading-[1.12]">
+            <header className="grid h-[21mm] grid-cols-[25mm_1fr_34mm] border-b-2 border-black">
+                <div className="flex items-center justify-center border-r-2 border-black p-1">
+                    <img src={logo} alt="PTA Services" className="max-h-[16mm] max-w-[22mm] object-contain" />
                 </div>
-                <div className="text-center px-1.5 py-2">
-                    <h1 className="text-[15px] font-black uppercase tracking-normal">PTA SERVICES - E-CARE</h1>
-                    <p className="text-[10px] font-bold">BORANG KERJA ADUAN KEROSAKAN</p>
-                    <p className="text-[9px]">Pusat Servis Barangan Elektrik</p>
+                <div className="text-center px-1 py-1.5">
+                    <h1 className="text-[13px] font-black uppercase tracking-normal">PTA SERVICES - E-CARE</h1>
+                    <p className="text-[8.5px] font-bold">BORANG KERJA ADUAN KEROSAKAN</p>
+                    <p className="text-[7.5px]">Pusat Servis Barangan Elektrik</p>
                 </div>
-                <div className="text-[8.5px]">
+                <div className="text-[7.5px]">
                     <TopBox label="No." value={complaint.report_number} strong />
                     <TopBox label="Tarikh" value={formatDate(complaint.created_at)} />
                     <TopBox label="Status" value={getStatusLabel(complaint.status)} last />
                 </div>
             </header>
 
-            <div className="border-b-2 border-black px-2 py-1 text-center text-[9px] font-bold uppercase">{copyLabel}</div>
+            <div className="h-[5mm] border-b-2 border-black px-2 py-0.5 text-center text-[7.5px] font-bold uppercase">{copyLabel}</div>
 
             <Section title="Maklumat Pelanggan">
                 <InfoGrid>
@@ -179,12 +179,12 @@ function ReceiptCopy({ complaint, remarks, copyLabel }: { complaint: Complaint; 
             </Section>
 
             <Section title="Aduan / Kerosakan">
-                <div className="min-h-[20mm] whitespace-pre-wrap px-1.5 py-1 font-semibold">{complaint.details || '-'}</div>
+                <div className="h-[16mm] overflow-hidden whitespace-pre-wrap px-1 py-0.5 font-semibold">{complaint.details || '-'}</div>
             </Section>
 
-            <div className="grid grid-cols-[1fr_36mm] border-b-2 border-black">
+            <div className="grid h-[24mm] grid-cols-[1fr_34mm] border-b-2 border-black overflow-hidden">
                 <Section title="Semakan / Catatan Terkini" flush>
-                    <div className="min-h-[24mm] px-1.5 py-1">
+                    <div className="h-[19mm] overflow-hidden px-1 py-0.5">
                         <Line label="Pemeriksaan" value={latestRemark?.checking} />
                         <Line label="Transport" value={latestRemark?.note_transport} />
                         <Line label="Catatan" value={latestRemark?.remark} />
@@ -192,7 +192,7 @@ function ReceiptCopy({ complaint, remarks, copyLabel }: { complaint: Complaint; 
                     </div>
                 </Section>
                 <div className="border-l-2 border-black">
-                    <div className="border-b border-black bg-slate-200 px-1 py-1 text-[8.5px] font-black uppercase">Dokumen</div>
+                    <div className="h-[5mm] border-b border-black bg-slate-200 px-1 py-0.5 text-[7px] font-black uppercase">Dokumen</div>
                     <CheckRow label="Waranti" checked={Boolean(complaint.warranty_file)} />
                     <CheckRow label="Resit" checked={Boolean(complaint.receipt_file)} />
                     <CheckRow label="Barang" />
@@ -201,7 +201,7 @@ function ReceiptCopy({ complaint, remarks, copyLabel }: { complaint: Complaint; 
             </div>
 
             <Section title="Rekod Tindakan">
-                <table className="w-full border-collapse text-[8.5px]">
+                <table className="w-full border-collapse text-[7.2px]">
                     <thead>
                         <tr>
                             <Th className="w-[7mm] text-center">Bil</Th>
@@ -215,7 +215,7 @@ function ReceiptCopy({ complaint, remarks, copyLabel }: { complaint: Complaint; 
                         {Array.from({ length: 3 }).map((_, index) => {
                             const remark = remarks[index];
                             return (
-                                <tr key={index} className="h-[8mm] align-top">
+                                <tr key={index} className="h-[5.8mm] align-top">
                                     <Td className="text-center">{index + 1}</Td>
                                     <Td>{remark ? formatDate(remark.created_at) : ''}</Td>
                                     <Td>{remark?.source || ''}</Td>
@@ -228,13 +228,13 @@ function ReceiptCopy({ complaint, remarks, copyLabel }: { complaint: Complaint; 
                 </table>
             </Section>
 
-            <div className="grid grid-cols-3 text-[8.5px]">
+            <div className="grid h-[18mm] grid-cols-3 overflow-hidden text-[7px]">
                 <SignBox title="Diterima Oleh" />
                 <SignBox title="Pelanggan" name={customer?.full_name} />
                 <SignBox title="Juruteknik" name={technician?.name} last />
             </div>
 
-            <footer className="border-t border-black px-1.5 py-1 text-[7.5px]">
+            <footer className="h-[4mm] border-t border-black px-1 py-0.5 text-[6.5px]">
                 Dicetak: {formatDateTime(new Date().toISOString())}
             </footer>
         </section>
@@ -244,21 +244,21 @@ function ReceiptCopy({ complaint, remarks, copyLabel }: { complaint: Complaint; 
 function Section({ title, children, flush = false }: { title: string; children: React.ReactNode; flush?: boolean }) {
     return (
         <section className={flush ? '' : 'border-b-2 border-black'}>
-            <h2 className="border-b border-black bg-slate-200 px-1.5 py-1 text-[8.5px] font-black uppercase">{title}</h2>
+            <h2 className="h-[5mm] border-b border-black bg-slate-200 px-1 py-0.5 text-[7px] font-black uppercase">{title}</h2>
             {children}
         </section>
     );
 }
 
 function InfoGrid({ children }: { children: React.ReactNode }) {
-    return <div className="grid grid-cols-[19mm_1fr_18mm_1fr]">{children}</div>;
+    return <div className="grid grid-cols-[18mm_1fr_17mm_1fr]">{children}</div>;
 }
 
 function Info({ label, value, wide = false, tall = false }: { label: string; value?: string | number | null; wide?: boolean; tall?: boolean }) {
     return (
         <>
-            <div className="border-r border-b border-black bg-slate-50 px-1.5 py-1 font-bold">{label}</div>
-            <div className={`border-b border-black px-1.5 py-1 font-semibold ${wide ? 'col-span-3' : ''} ${tall ? 'min-h-[16mm] whitespace-pre-wrap' : ''}`}>
+            <div className="h-[5.5mm] border-r border-b border-black bg-slate-50 px-1 py-0.5 font-bold">{label}</div>
+            <div className={`h-[5.5mm] overflow-hidden border-b border-black px-1 py-0.5 font-semibold ${wide ? 'col-span-3' : ''} ${tall ? 'h-[11mm] whitespace-pre-wrap' : ''}`}>
                 {value || '-'}
             </div>
         </>
@@ -268,8 +268,8 @@ function Info({ label, value, wide = false, tall = false }: { label: string; val
 function TopBox({ label, value, strong = false, last = false }: { label: string; value: string; strong?: boolean; last?: boolean }) {
     return (
         <div className={`grid grid-cols-[12mm_1fr] ${last ? '' : 'border-b border-black'}`}>
-            <span className="border-r border-black px-1 py-1 font-bold">{label}</span>
-            <span className={`px-1 py-1 ${strong ? 'text-[10px] font-black' : 'font-semibold'}`}>{value}</span>
+            <span className="h-[7mm] border-r border-black px-1 py-0.5 font-bold">{label}</span>
+            <span className={`h-[7mm] overflow-hidden px-1 py-0.5 ${strong ? 'text-[8px] font-black' : 'font-semibold'}`}>{value}</span>
         </div>
     );
 }
@@ -285,8 +285,8 @@ function Line({ label, value }: { label: string; value?: string | null }) {
 function CheckRow({ label, checked = false }: { label: string; checked?: boolean }) {
     return (
         <div className="grid grid-cols-[1fr_10mm] border-b border-black last:border-b-0">
-            <span className="px-1 py-1 font-semibold">{label}</span>
-            <span className="border-l border-black px-1 py-1 text-center font-black">{checked ? '/' : ''}</span>
+            <span className="h-[4.75mm] px-1 py-0.5 font-semibold">{label}</span>
+            <span className="h-[4.75mm] border-l border-black px-1 py-0.5 text-center font-black">{checked ? '/' : ''}</span>
         </div>
     );
 }
@@ -301,11 +301,11 @@ function Td({ children, className = '' }: { children: React.ReactNode; className
 
 function SignBox({ title, name, last = false }: { title: string; name?: string | null; last?: boolean }) {
     return (
-        <div className={`min-h-[22mm] px-1.5 py-1 ${last ? '' : 'border-r-2 border-black'}`}>
+        <div className={`h-[18mm] px-1 py-0.5 ${last ? '' : 'border-r-2 border-black'}`}>
             <p className="font-black uppercase">{title}</p>
-            <div className="h-[10mm]"></div>
+            <div className="h-[6mm]"></div>
             <div className="border-t border-black pt-0.5">
-                <p className="min-h-[8px] truncate font-semibold uppercase">{name || ' '}</p>
+                <p className="h-[7px] truncate font-semibold uppercase">{name || ' '}</p>
                 <p>Tarikh:</p>
             </div>
         </div>
