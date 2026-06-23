@@ -294,26 +294,8 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
 
         if (status === 'pending') {
             if (technicians) {
-                return JSON.stringify({
-                    key: 'job_assigned_msg', // "You have been assigned..." - Wait, this is 'Forwarded To' context.
-                    // Notification keys provided:
-                    // job_assigned_msg: "You have been assigned..." (Wrong context for Admin View)
-                    // status_update_msg: "Complaint ... is now {status}"
-
-                    // Actually, the user wants 'Cantik' like TechDashboard?
-                    // TechDashboard uses 'status_msg.forwarded_to'.
-                    // The "Antigravity" parser uses 'notification' namespace.
-
-                    // IF I want to use the parser, I must use 'notification' keys.
-                    // 'notif_processing_body' exists.
-                    // 'notif_completed_body' exists.
-                    // Is there 'notif_assigned_body'? No.
-
-                    // The user's request is to use `parseNotificationMessage`.
-                    // If I can't find a notification key, I should fallback to existing.
-
-                    // Let's stick to 'in_process' and 'closed' which have Keys.
-                });
+                // Fallback to manual translation text below for admin 'Assigned to Tech' view
+                return null;
             }
             return JSON.stringify({
                 key: 'new_complaint_msg', // "New complaint from..."
