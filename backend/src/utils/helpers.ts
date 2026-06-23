@@ -6,7 +6,7 @@ export async function generateReportNumber(): Promise<string> {
     const { data, error } = await supabaseAdmin
         .from('complaints')
         .select('report_number')
-        .like('report_number', 'A%')  // Only get reports starting with A
+        .like('report_number', 'PTAS%')  // Only get reports starting with PTAS
         .order('report_number', { ascending: false })
         .limit(1);
 
@@ -16,7 +16,7 @@ export async function generateReportNumber(): Promise<string> {
     }
 
     let nextNumber = 1;
-    let letterPrefix = 'A';
+    let letterPrefix = 'PTAS';
 
     if (data && data.length > 0) {
         const lastReport = data[0].report_number;
