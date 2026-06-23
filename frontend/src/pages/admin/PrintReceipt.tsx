@@ -173,7 +173,7 @@ function ReceiptCopy({ complaint, remarks, copyLabel }: { complaint: Complaint; 
                     <p className="text-[7.5px] font-bold">BORANG KERJA ADUAN KEROSAKAN</p>
                     <p className="text-[6.8px]">Pusat Servis Barangan Elektrik</p>
                 </div>
-                <div className="text-[6.8px]">
+                <div className="border-l-2 border-black text-[6.8px]">
                     <TopBox label="No." value={complaint.report_number} strong />
                     <TopBox label="Tarikh" value={formatDate(complaint.created_at)} />
                     <TopBox label="Status" value={getStatusLabel(complaint.status)} last />
