@@ -93,7 +93,7 @@ export default function PrintReceipt() {
                 /* ===== PRINT STYLES ===== */
                 @page {
                     size: A4 landscape;
-                    margin: 0;
+                    margin: 5mm;
                 }
 
                 @media print {
@@ -103,15 +103,9 @@ export default function PrintReceipt() {
                         print-color-adjust: exact !important;
                     }
 
-                    html, body, #root, #root > div {
-                        width: 297mm !important;
-                        height: 210mm !important;
-                        max-height: 210mm !important;
+                    body {
                         margin: 0 !important;
                         padding: 0 !important;
-                        background: #fff !important;
-                        overflow: hidden !important;
-                        min-height: 0 !important;
                     }
 
                     .print-toolbar {
@@ -119,39 +113,25 @@ export default function PrintReceipt() {
                     }
 
                     .print-root {
-                        position: absolute !important;
-                        top: 0 !important;
-                        left: 0 !important;
-                        width: 297mm !important;
-                        height: 210mm !important;
-                        max-height: 210mm !important;
                         margin: 0 !important;
-                        padding: 10mm 5mm !important;
+                        padding: 0 !important;
                         border: none !important;
                         box-shadow: none !important;
-                        background: #fff !important;
-                        overflow: hidden !important;
+                        max-width: none !important;
+                        width: auto !important;
                     }
 
                     .print-flex {
-                        width: 100% !important;
-                        height: 190mm !important;
                         display: flex !important;
                         flex-direction: row !important;
                         flex-wrap: nowrap !important;
                         gap: 5mm !important;
-                        overflow: hidden !important;
                     }
 
                     .receipt-copy {
-                        flex: 0 0 140mm !important;
                         width: 140mm !important;
-                        height: 190mm !important;
-                        max-height: 190mm !important;
-                        margin: 0 !important;
-                        padding: 0 !important;
+                        flex-shrink: 0 !important;
                         overflow: hidden !important;
-                        page-break-inside: avoid !important;
                     }
                 }
             `}</style>
