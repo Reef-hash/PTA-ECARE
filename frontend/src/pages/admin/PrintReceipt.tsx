@@ -163,7 +163,6 @@ export default function PrintReceipt() {
 function ReceiptCopy({ complaint, remarks, copyLabel }: { complaint: Complaint; remarks: PrintRemark[]; copyLabel: string }) {
     const customer = complaint.users;
     const technician = complaint.technicians;
-    const latestRemark = remarks[remarks.length - 1];
 
     return (
         <section className="receipt-copy flex flex-col h-[190mm] border-2 border-black bg-white text-[7.4px] leading-[1.08]">
