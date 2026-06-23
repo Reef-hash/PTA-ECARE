@@ -247,7 +247,7 @@ function ReceiptCopy({ complaint, remarks, copyLabel }: { complaint: Complaint; 
                         <tr>
                             <Th className="w-[7mm] text-center">Bil</Th>
                             <Th className="w-[18mm]">Tarikh</Th>
-                            <Th className="w-[19mm]">Oleh</Th>
+                            <Th className="w-[24mm]">Di catat oleh</Th>
                             <Th>Catatan</Th>
                             <Th className="w-[20mm]">Status</Th>
                         </tr>
