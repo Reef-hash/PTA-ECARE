@@ -20,6 +20,7 @@ export const getStats = async (req: Request, res: Response): Promise<void> => {
             in_process: 0,
             closed: 0,
             not_forwarded: 0,
+            assigned: 0,
             cancelled: 0,
         };
 
@@ -29,6 +30,7 @@ export const getStats = async (req: Request, res: Response): Promise<void> => {
             if (c.status === 'closed') stats.closed++;
             if (c.status === 'cancelled') stats.cancelled++;
             if (c.status === 'pending' && !c.assigned_to) stats.not_forwarded++;
+            if (c.status === 'pending' && c.assigned_to) stats.assigned++;
         });
 
         res.json({ stats });

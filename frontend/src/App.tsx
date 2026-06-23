@@ -204,6 +204,14 @@ function App() {
                 }
             />
             <Route
+                path="/admin/job-assigned"
+                element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                        <AllComplaints status="job_assigned" />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
                 path="/admin/closed"
                 element={
                     <ProtectedRoute allowedRoles={['admin']}>

@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { parseNotificationMessage } from '../../utils/notificationParser';
 
 interface AllComplaintsProps {
-    status?: 'all' | 'pending' | 'in_process' | 'closed' | 'not_forwarded' | 'cancelled';
+    status?: 'all' | 'pending' | 'in_process' | 'closed' | 'not_forwarded' | 'job_assigned' | 'cancelled';
 }
 
 interface Technician {
@@ -43,6 +43,7 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
             case 'in_process': return t('complaint_list.title_in_process');
             case 'closed': return t('complaint_list.title_closed');
             case 'not_forwarded': return t('complaint_list.title_not_forwarded');
+            case 'job_assigned': return t('complaint_list.title_job_assigned');
             case 'cancelled': return t('complaint_list.title_cancelled');
             default: return t('complaint_list.title_all');
         }
@@ -408,7 +409,7 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                                 <option value="in_process">{t('admin_users.status_in_process') || 'In Process'}</option>
                                 <option value="closed">{t('admin_users.status_closed') || 'Closed'}</option>
                                 <option value="assigned">{t('table.assigned') || 'Assigned'}</option>
-                                <option value="not_assigned">{t('complaint_list.not_assigned') || 'Not Assigned'}</option>
+                                <option value="not_assigned">{t('complaint_list.not_assigned') || 'Job Not Assigned'}</option>
                                 <option value="cancelled">{t('admin_users.status_cancelled') || 'Cancelled'}</option>
                             </select>
                         </div>

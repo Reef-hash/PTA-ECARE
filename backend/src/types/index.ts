@@ -195,7 +195,6 @@ export interface AddRemarkRequest {
 export interface ForwardComplaintRequest {
     technician_id: string;
 }
-
 export interface JwtPayload {
     id: string;
     role: 'user' | 'admin' | 'technician';
@@ -209,6 +208,8 @@ export interface DashboardStats {
     in_process: number;
     closed: number;
     not_forwarded: number;
+    assigned: number;
+    cancelled: number;
 }
 
 export interface TechnicianStats {

@@ -174,6 +174,7 @@ export interface DashboardStats {
     in_process: number;
     closed: number;
     not_forwarded: number;
+    assigned: number;
     cancelled: number;
 }
 

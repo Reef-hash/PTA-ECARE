@@ -72,6 +72,8 @@ export const getComplaints = async (req: Request, res: Response): Promise<void> 
         if (status && status !== 'all') {
             if (status === 'not_forwarded') {
                 query = query.eq('status', 'pending').is('assigned_to', null);
+            } else if (status === 'job_assigned') {
+                query = query.eq('status', 'pending').not('assigned_to', 'is', null);
             } else {
                 query = query.eq('status', status);
             }
