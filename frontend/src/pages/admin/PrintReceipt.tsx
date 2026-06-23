@@ -224,12 +224,17 @@ function ReceiptCopy({ complaint, remarks, copyLabel }: { complaint: Complaint; 
                         <Line label="Juruteknik" value={technician ? `${technician.name} (${technician.department})` : '-'} />
                     </div>
                 </Section>
-                <div className="border-l-2 border-black bg-white">
-                    <div className="h-[4mm] border-b border-black bg-slate-200 px-1 py-0.5 text-[6.4px] font-black uppercase">Dokumen</div>
+                <div className="border-l-2 border-black bg-white flex flex-col">
+                    <div className="shrink-0 h-[4mm] border-b border-black bg-slate-200 px-1 py-0.5 text-[6.4px] font-black uppercase">Dokumen</div>
                     <CheckRow label="Waranti" checked={Boolean(complaint.warranty_file)} />
                     <CheckRow label="Resit" checked={Boolean(complaint.receipt_file)} />
                     <CheckRow label="Barang" />
                     <CheckRow label="Lengkap" checked={Boolean(customer?.full_name && customer?.contact_no && customer?.address)} />
+                    {/* Filler to extend the vertical line */}
+                    <div className="flex-1 grid grid-cols-[1fr_10mm]">
+                        <span className="border-t border-black"></span>
+                        <span className="border-t border-l border-black"></span>
+                    </div>
                 </div>
             </div>
 
@@ -317,7 +322,7 @@ function Line({ label, value }: { label: string; value?: string | null }) {
 
 function CheckRow({ label, checked = false }: { label: string; checked?: boolean }) {
     return (
-        <div className="grid grid-cols-[1fr_10mm] border-b border-black last:border-b-0">
+        <div className="shrink-0 grid grid-cols-[1fr_10mm] border-b border-black last:border-b-0">
             <span className="h-[4.25mm] px-1 py-0.5 font-semibold">{label}</span>
             <span className="h-[4.25mm] border-l border-black px-1 py-0.5 text-center font-black">{checked ? '/' : ''}</span>
         </div>
