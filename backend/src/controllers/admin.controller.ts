@@ -352,6 +352,34 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
     }
 };
 
+// Delete single user
+export const deleteUser = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { id } = req.params;
+
+        const { error } = await supabaseAdmin
+            .from('users')
+            .delete()
+            .eq('id', id);
+
+        // Best effort delete from Supabase Auth
+        await supabaseAdmin.auth.admin.deleteUser(id).catch(e => console.error('Auth delete user error (ignored):', e));
+
+        if (error) {
+            if (error.code === '23503') { // Foreign key constraint violation
+                res.status(400).json({ error: 'Tidak boleh padam pengguna ini kerana mereka mempunyai rekod aduan yang berkaitan.' });
+                return;
+            }
+            throw error;
+        }
+
+        res.json({ message: 'User deleted' });
+    } catch (error) {
+        console.error('Delete user error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
 // Get all users
 export const getUsers = async (req: Request, res: Response): Promise<void> => {
     try {

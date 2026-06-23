@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Search, UserCheck, UserX, UserPlus, X, Eye, EyeOff } from 'lucide-react';
+import { Search, UserCheck, UserX, UserPlus, X, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
@@ -50,6 +50,18 @@ export default function Users() {
             toast.success(t('admin_users.status_updated'));
         } catch (error: any) {
             toast.error(error.response?.data?.error || t('admin_users.status_error'));
+        }
+    };
+
+    const handleDeleteUser = async (userId: string) => {
+        if (!window.confirm('Adakah anda pasti untuk memadam pelanggan ini? Tindakan ini tidak boleh diundur.')) return;
+        
+        try {
+            await api.delete(`/admin/users/${userId}`);
+            setUsers(users.filter(u => u.id !== userId));
+            toast.success('Pelanggan berjaya dipadam.');
+        } catch (error: any) {
+            toast.error(error.response?.data?.error || 'Gagal memadam pelanggan.');
         }
     };
 
@@ -224,12 +236,19 @@ export default function Users() {
                                                 {user.status !== 'Suspended' && (
                                                     <button
                                                         onClick={() => handleStatusChange(user.id, 'Suspended')}
-                                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                        className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
                                                         title={t('admin_users.confirm_suspend')}
                                                     >
                                                         <UserX className="w-4 h-4" />
                                                     </button>
                                                 )}
+                                                <button
+                                                    onClick={() => handleDeleteUser(user.id)}
+                                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                    title="Padam Pelanggan"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>

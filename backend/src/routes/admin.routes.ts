@@ -20,6 +20,7 @@ import {
     getUser,
     updateUserStatus,
     createUser,
+    deleteUser,
     getAdminProfile,
     updateAdminProfile,
     updateAdminPassword,
@@ -55,5 +56,6 @@ router.get('/users', getUsers);
 router.get('/users/:id', getUser);
 router.post('/users', validate(createUserSchema), createUser);
 router.put('/users/:id/status', validate(updateUserStatusSchema), updateUserStatus);
+router.delete('/users/:id', deleteUser);
 
 export default router;
