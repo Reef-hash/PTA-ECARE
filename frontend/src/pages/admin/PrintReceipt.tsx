@@ -57,11 +57,43 @@ export default function PrintReceipt() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-100 text-black">
+        <div>
             <style>{`
+                /* ===== SCREEN STYLES ===== */
+                .print-toolbar {
+                    background: #fff;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                    padding: 16px 24px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+
+                .print-root {
+                    max-width: 1120px;
+                    margin: 24px auto;
+                    padding: 20px;
+                    background: #fff;
+                    border: 1px solid #e2e8f0;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+                }
+
+                .print-flex {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 20px;
+                }
+
+                @media (min-width: 1024px) {
+                    .print-flex {
+                        flex-direction: row;
+                    }
+                }
+
+                /* ===== PRINT STYLES ===== */
                 @page {
                     size: A4 landscape;
-                    margin: 0 !important;
+                    margin: 0;
                 }
 
                 @media print {
@@ -71,54 +103,49 @@ export default function PrintReceipt() {
                         print-color-adjust: exact !important;
                     }
 
-                    html,
-                    body,
-                    #root {
+                    html, body, #root, #root > div {
                         width: 297mm !important;
                         height: 210mm !important;
+                        max-height: 210mm !important;
                         margin: 0 !important;
                         padding: 0 !important;
                         background: #fff !important;
                         overflow: hidden !important;
-                    }
-
-                    .min-h-screen {
                         min-height: 0 !important;
-                        height: 210mm !important;
-                        overflow: hidden !important;
-                        box-sizing: border-box !important;
                     }
 
-                    .no-print {
+                    .print-toolbar {
                         display: none !important;
                     }
 
-                    .print-stage {
-                        box-sizing: border-box !important; /* 210mm TERMASUK padding */
+                    .print-root {
+                        position: absolute !important;
+                        top: 0 !important;
+                        left: 0 !important;
                         width: 297mm !important;
-                        max-width: 297mm !important;
                         height: 210mm !important;
+                        max-height: 210mm !important;
                         margin: 0 !important;
                         padding: 10mm 5mm !important;
-                        background: #fff !important;
+                        border: none !important;
                         box-shadow: none !important;
-                        display: flex !important;
-                        flex-direction: row !important;
-                        flex-wrap: nowrap !important;
-                        justify-content: center !important;
-                        align-items: flex-start !important;
-                        gap: 5mm !important;
+                        background: #fff !important;
                         overflow: hidden !important;
                     }
 
-                    .print-grid {
-                        display: contents !important;
+                    .print-flex {
+                        width: 100% !important;
+                        height: 190mm !important;
+                        display: flex !important;
+                        flex-direction: row !important;
+                        flex-wrap: nowrap !important;
+                        gap: 5mm !important;
+                        overflow: hidden !important;
                     }
 
                     .receipt-copy {
                         flex: 0 0 140mm !important;
                         width: 140mm !important;
-                        max-width: 140mm !important;
                         height: 190mm !important;
                         max-height: 190mm !important;
                         margin: 0 !important;
@@ -129,7 +156,7 @@ export default function PrintReceipt() {
                 }
             `}</style>
 
-            <div className="no-print bg-white shadow-sm px-6 py-4 flex justify-between items-center">
+            <div className="print-toolbar">
                 <Link to={`/admin/complaint/${id}`} className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900">
                     <ArrowLeft className="w-4 h-4" />
                     Kembali
@@ -140,12 +167,12 @@ export default function PrintReceipt() {
                 </button>
             </div>
 
-            <main className="print-stage mx-auto my-6 w-[1120px] max-w-[calc(100vw-32px)] bg-white p-5 shadow-xl border border-slate-200">
-                <div className="print-grid grid grid-cols-1 gap-5 lg:grid-cols-2">
+            <div className="print-root">
+                <div className="print-flex">
                     <ReceiptCopy complaint={complaint} remarks={remarks} copyLabel="Salinan Pelanggan" />
                     <ReceiptCopy complaint={complaint} remarks={remarks} copyLabel="Salinan Pejabat" />
                 </div>
-            </main>
+            </div>
         </div>
     );
 }
