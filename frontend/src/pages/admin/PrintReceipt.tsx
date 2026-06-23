@@ -179,18 +179,11 @@ function ReceiptCopy({ complaint, remarks, copyLabel }: { complaint: Complaint; 
                         Tel: 096958843
                     </p>
                 </div>
-                <div className="flex flex-col justify-center text-[6.8px] px-2 gap-1.5">
-                    <div className="flex justify-between">
-                        <span className="font-bold">No.</span>
-                        <span className="font-black text-[7.2px]">{complaint.report_number}</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="font-bold">Tarikh</span>
-                        <span className="font-semibold">{formatDate(complaint.created_at)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="font-bold">Status</span>
-                        <span className="font-semibold">{getStatusLabel(complaint.status)}</span>
+                <div className="flex flex-col justify-center items-end px-2 text-[6.8px]">
+                    <div className="grid grid-cols-[auto_auto_auto] gap-x-1 gap-y-1.5 text-right whitespace-nowrap">
+                        <span className="font-bold">No Report</span><span>:</span><span className="font-black text-[7.2px] text-left">{complaint.report_number}</span>
+                        <span className="font-bold">Tarikh</span><span>:</span><span className="font-semibold text-left">{formatDate(complaint.created_at)}</span>
+                        <span className="font-bold">Status</span><span>:</span><span className="font-semibold text-left">{getStatusLabel(complaint.status)}</span>
                     </div>
                 </div>
             </header>
