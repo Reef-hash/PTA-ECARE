@@ -171,10 +171,14 @@ function ReceiptCopy({ complaint, remarks, copyLabel }: { complaint: Complaint; 
                 <div className="flex items-center justify-center border-r-2 border-black p-1">
                     <img src={logo} alt="PTA Services" className="max-h-[14mm] max-w-[20mm] object-contain" />
                 </div>
-                <div className="flex flex-col items-center justify-center px-1">
+                <div className="flex flex-col items-center justify-center px-1 text-center">
                     <h1 className="text-[12px] font-black uppercase tracking-normal">PTA SERVICES - E-CARE</h1>
                     <p className="text-[7.5px] font-bold">BORANG KERJA ADUAN KEROSAKAN</p>
                     <p className="text-[6.8px]">Pusat Servis Barangan Elektrik</p>
+                    <p className="text-[5.5px] leading-[1.2] mt-0.5">
+                        Lot 709 Kompleks Permint, 22200 Kg. Raja, Besut, Terengganu.<br />
+                        Tel: 096958843
+                    </p>
                 </div>
                 <div className="border-l-2 border-black text-[6.8px]">
                     <TopBox label="No." value={complaint.report_number} strong />
