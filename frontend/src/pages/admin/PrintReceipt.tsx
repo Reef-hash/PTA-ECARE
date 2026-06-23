@@ -168,7 +168,7 @@ function ReceiptCopy({ complaint, remarks, copyLabel }: { complaint: Complaint; 
                 <div className="flex items-center justify-center border-r-2 border-black p-1">
                     <img src={logo} alt="PTA Services" className="max-h-[14mm] max-w-[20mm] object-contain" />
                 </div>
-                <div className="text-center px-1 py-1.5">
+                <div className="flex flex-col items-center justify-center px-1">
                     <h1 className="text-[12px] font-black uppercase tracking-normal">PTA SERVICES - E-CARE</h1>
                     <p className="text-[7.5px] font-bold">BORANG KERJA ADUAN KEROSAKAN</p>
                     <p className="text-[6.8px]">Pusat Servis Barangan Elektrik</p>
