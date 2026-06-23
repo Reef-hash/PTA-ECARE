@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Search, Filter, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { Search, Filter, ChevronLeft, ChevronRight, Eye, Printer } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 import { Complaint } from '../../types';
@@ -337,6 +337,15 @@ export default function TechComplaints() {
                                                         title={t('technician_dashboard.click_to_view') || 'View'}
                                                     >
                                                         <Eye className="w-4 h-4" />
+                                                    </Link>
+                                                    <Link
+                                                        to={`/admin/print/${complaint.id}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                        title="Cetak Resit"
+                                                    >
+                                                        <Printer className="w-4 h-4" />
                                                     </Link>
                                                 </div>
                                             </td>
