@@ -61,69 +61,63 @@ export default function PrintReceipt() {
             <style>{`
                 @page {
                     size: A4 landscape;
-                    margin: 5mm;
+                    margin: 0; /* Remove @page margin to maximize space */
                 }
 
                 @media print {
-                    * {
-                        box-shadow: none !important;
-                    }
-
-                    html,
-                    body,
-                    #root {
-                        width: 297mm;
-                        height: 210mm;
-                        margin: 0 !important;
-                        background: #fff !important;
-                        overflow: hidden !important;
-                    }
-
-                    body {
-                        -webkit-print-color-adjust: exact;
-                        print-color-adjust: exact;
-                    }
-
-                    .print-stage {
-                        width: 287mm !important;
-                        height: 190mm !important;
+                    html, body {
+                        width: 100% !important;
+                        height: 100% !important;
                         margin: 0 !important;
                         padding: 0 !important;
-                        background: #fff !important;
-                        box-shadow: none !important;
                         overflow: hidden !important;
-                        page-break-before: avoid !important;
-                        page-break-after: avoid !important;
-                        page-break-inside: avoid !important;
-                        break-before: avoid !important;
-                        break-after: avoid !important;
-                        break-inside: avoid !important;
+                        background: #fff !important;
+                        box-sizing: border-box !important;
                     }
 
-                    .print-grid {
-                        width: 287mm !important;
-                        height: 190mm !important;
-                        display: grid !important;
-                        grid-template-columns: 1fr 1fr !important;
-                        gap: 3mm !important;
-                        break-inside: avoid !important;
-                        page-break-inside: avoid !important;
-                        page-break-before: avoid !important;
+                    #root, .min-h-screen {
+                        width: 100% !important;
+                        height: 100% !important;
+                        min-height: 0 !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        overflow: hidden !important;
+                        box-sizing: border-box !important;
+                    }
+
+                    .no-print {
+                        display: none !important;
+                    }
+
+                    .print-page {
+                        width: 100% !important;
+                        height: auto !important; /* Biar ia ikut kandungan, jangan paksa 190mm kalau ia melebihi ruang Chrome */
+                        max-height: 100vh !important;
+                        margin: 0 !important;
+                        padding: 5mm !important; /* Letak margin di dalam supaya tidak terpotong */
+                        border: none !important;
+                        box-shadow: none !important;
+                        display: flex !important;
+                        flex-direction: row !important;
+                        flex-wrap: nowrap !important;
+                        gap: 5mm !important;
+                        overflow: hidden !important;
                         page-break-after: avoid !important;
-                        break-before: avoid !important;
-                        break-after: avoid !important;
+                        page-break-before: avoid !important;
+                        page-break-inside: avoid !important;
                     }
 
                     .receipt-copy {
-                        width: 142mm !important;
-                        height: 190mm !important;
+                        width: 50% !important;
+                        height: fit-content !important; /* Ikut tinggi kandungan supaya tidak ada ruang kosong di bawah yang terpaksa pergi ke page 2 */
                         overflow: hidden !important;
-                        break-inside: avoid !important;
                         page-break-inside: avoid !important;
-                        page-break-before: avoid !important;
-                        page-break-after: avoid !important;
-                        break-before: avoid !important;
-                        break-after: avoid !important;
+                        margin: 0 !important;
+                    }
+
+                    * {
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
                     }
                 }
             `}</style>
@@ -139,11 +133,9 @@ export default function PrintReceipt() {
                 </button>
             </div>
 
-            <main className="print-stage mx-auto my-6 w-[1120px] max-w-[calc(100vw-32px)] bg-white p-5 shadow-xl border border-slate-200">
-                <div className="print-grid grid grid-cols-1 gap-5 lg:grid-cols-2">
-                    <ReceiptCopy complaint={complaint} remarks={remarks} copyLabel="Salinan Pelanggan" />
-                    <ReceiptCopy complaint={complaint} remarks={remarks} copyLabel="Salinan Pejabat" />
-                </div>
+            <main className="print-page mx-auto my-6 w-[1120px] max-w-[calc(100vw-32px)] bg-white p-5 shadow-xl border border-slate-200 flex flex-col lg:flex-row gap-5">
+                <ReceiptCopy complaint={complaint} remarks={remarks} copyLabel="Salinan Pelanggan" />
+                <ReceiptCopy complaint={complaint} remarks={remarks} copyLabel="Salinan Pejabat" />
             </main>
         </div>
     );
