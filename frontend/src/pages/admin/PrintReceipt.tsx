@@ -66,7 +66,7 @@ export default function PrintReceipt() {
 
                 @media print {
                     * {
-                        box-sizing: border-box !important;
+                        box-shadow: none !important;
                         -webkit-print-color-adjust: exact !important;
                         print-color-adjust: exact !important;
                     }
@@ -99,7 +99,6 @@ export default function PrintReceipt() {
                         padding: 10mm 5mm !important;
                         background: #fff !important;
                         box-shadow: none !important;
-                        border: none !important;
                         display: flex !important;
                         flex-direction: row !important;
                         flex-wrap: nowrap !important;
