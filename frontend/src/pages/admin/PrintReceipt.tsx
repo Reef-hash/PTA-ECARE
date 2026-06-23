@@ -65,11 +65,15 @@ export default function PrintReceipt() {
                 }
 
                 @media print {
+                    * {
+                        box-shadow: none !important;
+                    }
+
                     html,
                     body,
                     #root {
                         width: 297mm;
-                        min-height: 210mm;
+                        height: 210mm;
                         margin: 0 !important;
                         background: #fff !important;
                         overflow: hidden !important;
@@ -83,29 +87,47 @@ export default function PrintReceipt() {
                     .print-stage {
                         width: 289mm !important;
                         height: 202mm !important;
+                        position: fixed !important;
+                        inset: 0 auto auto 0 !important;
                         margin: 0 !important;
                         padding: 0 !important;
                         background: #fff !important;
                         box-shadow: none !important;
                         overflow: hidden !important;
+                        page-break-before: avoid !important;
+                        page-break-after: avoid !important;
+                        page-break-inside: avoid !important;
+                        break-before: avoid !important;
+                        break-after: avoid !important;
+                        break-inside: avoid !important;
                     }
 
                     .print-grid {
                         width: 289mm !important;
-                        height: 202mm !important;
+                        height: 196mm !important;
                         display: grid !important;
                         grid-template-columns: 1fr 1fr !important;
                         gap: 3mm !important;
+                        transform: scale(0.94) !important;
+                        transform-origin: top left !important;
                         break-inside: avoid !important;
                         page-break-inside: avoid !important;
+                        page-break-before: avoid !important;
+                        page-break-after: avoid !important;
+                        break-before: avoid !important;
+                        break-after: avoid !important;
                     }
 
                     .receipt-copy {
                         width: 143mm !important;
-                        height: 202mm !important;
+                        height: 196mm !important;
                         overflow: hidden !important;
                         break-inside: avoid !important;
                         page-break-inside: avoid !important;
+                        page-break-before: avoid !important;
+                        page-break-after: avoid !important;
+                        break-before: avoid !important;
+                        break-after: avoid !important;
                     }
                 }
             `}</style>
