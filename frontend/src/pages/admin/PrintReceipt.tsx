@@ -130,6 +130,9 @@ export default function PrintReceipt() {
 
                     .receipt-copy {
                         width: 140mm !important;
+                        height: 190mm !important;
+                        display: flex !important;
+                        flex-direction: column !important;
                         flex-shrink: 0 !important;
                         overflow: hidden !important;
                     }
@@ -163,8 +166,8 @@ function ReceiptCopy({ complaint, remarks, copyLabel }: { complaint: Complaint; 
     const latestRemark = remarks[remarks.length - 1];
 
     return (
-        <section className="receipt-copy border-2 border-black bg-white text-[7.4px] leading-[1.08]">
-            <header className="grid h-[19mm] grid-cols-[24mm_1fr_32mm] border-b-2 border-black">
+        <section className="receipt-copy flex flex-col h-[190mm] border-2 border-black bg-white text-[7.4px] leading-[1.08]">
+            <header className="shrink-0 grid h-[19mm] grid-cols-[24mm_1fr_32mm] border-b-2 border-black">
                 <div className="flex items-center justify-center border-r-2 border-black p-1">
                     <img src={logo} alt="PTA Services" className="max-h-[14mm] max-w-[20mm] object-contain" />
                 </div>
@@ -180,44 +183,44 @@ function ReceiptCopy({ complaint, remarks, copyLabel }: { complaint: Complaint; 
                 </div>
             </header>
 
-            <div className="h-[4mm] border-b-2 border-black px-2 py-0.5 text-center text-[6.8px] font-bold uppercase">{copyLabel}</div>
+            <div className="shrink-0 h-[4mm] border-b-2 border-black px-2 py-0.5 text-center text-[6.8px] font-bold uppercase">{copyLabel}</div>
 
-            <Section title="Maklumat Pelanggan">
+            <Section title="Maklumat Pelanggan" className="shrink-0">
                 <InfoGrid>
-                    <Info label="Nama" value={customer?.full_name} wide />
+                    <Info label="Nama" value={customer?.full_name} wide lastInRow />
                     <Info label="No. IC" value={customer?.ic_number} />
-                    <Info label="Telefon" value={customer?.contact_no} />
+                    <Info label="Telefon" value={customer?.contact_no} lastInRow />
                     <Info label="Telefon 2" value={customer?.contact_no_2} />
-                    <Info label="Negeri" value={customer?.state} />
-                    <Info label="Alamat" value={customer?.address} wide tall />
+                    <Info label="Negeri" value={customer?.state} lastInRow />
+                    <Info label="Alamat" value={customer?.address} wide tall lastInRow />
                 </InfoGrid>
             </Section>
 
-            <Section title="Maklumat Barangan">
+            <Section title="Maklumat Barangan" className="shrink-0">
                 <InfoGrid>
                     <Info label="Kategori" value={complaint.categories?.name} />
-                    <Info label="Jenis" value={complaint.subcategory} />
+                    <Info label="Jenis" value={complaint.subcategory} lastInRow />
                     <Info label="Jenama" value={complaint.brand_name} />
-                    <Info label="Model" value={complaint.model_no} />
+                    <Info label="Model" value={complaint.model_no} lastInRow />
                     <Info label="Waranti" value={complaint.complaint_type} />
-                    <Info label="Lokasi Beli" value={complaint.state} />
+                    <Info label="Lokasi Beli" value={complaint.state} lastInRow />
                 </InfoGrid>
             </Section>
 
-            <Section title="Aduan / Kerosakan">
-                <div className="h-[13mm] overflow-hidden whitespace-pre-wrap px-1 py-0.5 font-semibold">{complaint.details || '-'}</div>
+            <Section title="Aduan / Kerosakan" className="shrink-0">
+                <div className="h-[20mm] overflow-hidden whitespace-pre-wrap px-1 py-0.5 font-semibold">{complaint.details || '-'}</div>
             </Section>
 
-            <div className="grid h-[21mm] grid-cols-[1fr_33mm] border-b-2 border-black overflow-hidden">
-                <Section title="Semakan / Catatan Terkini" flush>
-                    <div className="h-[17mm] overflow-hidden px-1 py-0.5">
+            <div className="flex-1 grid grid-cols-[1fr_33mm] border-b-2 border-black overflow-hidden">
+                <Section title="Semakan / Catatan Terkini" flush className="h-full">
+                    <div className="flex-1 overflow-hidden px-1 py-0.5 flex flex-col">
                         <Line label="Pemeriksaan" value={latestRemark?.checking} />
                         <Line label="Transport" value={latestRemark?.note_transport} />
                         <Line label="Catatan" value={latestRemark?.remark} />
                         <Line label="Juruteknik" value={technician ? `${technician.name} (${technician.department})` : '-'} />
                     </div>
                 </Section>
-                <div className="border-l-2 border-black">
+                <div className="border-l-2 border-black bg-white">
                     <div className="h-[4mm] border-b border-black bg-slate-200 px-1 py-0.5 text-[6.4px] font-black uppercase">Dokumen</div>
                     <CheckRow label="Waranti" checked={Boolean(complaint.warranty_file)} />
                     <CheckRow label="Resit" checked={Boolean(complaint.receipt_file)} />
@@ -226,7 +229,7 @@ function ReceiptCopy({ complaint, remarks, copyLabel }: { complaint: Complaint; 
                 </div>
             </div>
 
-            <Section title="Rekod Tindakan">
+            <Section title="Rekod Tindakan" className="shrink-0">
                 <table className="w-full border-collapse text-[6.6px]">
                     <thead>
                         <tr>
@@ -254,23 +257,23 @@ function ReceiptCopy({ complaint, remarks, copyLabel }: { complaint: Complaint; 
                 </table>
             </Section>
 
-            <div className="grid h-[15mm] grid-cols-3 overflow-hidden text-[6.3px]">
+            <div className="shrink-0 grid h-[15mm] grid-cols-3 overflow-hidden text-[6.3px]">
                 <SignBox title="Diterima Oleh" />
                 <SignBox title="Pelanggan" name={customer?.full_name} />
                 <SignBox title="Juruteknik" name={technician?.name} last />
             </div>
 
-            <footer className="h-[3mm] border-t border-black px-1 py-0.5 text-[5.8px]">
+            <footer className="shrink-0 h-[3mm] border-t border-black px-1 py-0.5 text-[5.8px]">
                 Dicetak: {formatDateTime(new Date().toISOString())}
             </footer>
         </section>
     );
 }
 
-function Section({ title, children, flush = false }: { title: string; children: React.ReactNode; flush?: boolean }) {
+function Section({ title, children, flush = false, className = '' }: { title: string; children: React.ReactNode; flush?: boolean; className?: string }) {
     return (
-        <section className={flush ? '' : 'border-b-2 border-black'}>
-            <h2 className="h-[4mm] border-b border-black bg-slate-200 px-1 py-0.5 text-[6.4px] font-black uppercase">{title}</h2>
+        <section className={`flex flex-col ${flush ? '' : 'border-b-2 border-black'} ${className}`}>
+            <h2 className="shrink-0 h-[4mm] border-b border-black bg-slate-200 px-1 py-0.5 text-[6.4px] font-black uppercase">{title}</h2>
             {children}
         </section>
     );
@@ -280,11 +283,11 @@ function InfoGrid({ children }: { children: React.ReactNode }) {
     return <div className="grid grid-cols-[18mm_1fr_17mm_1fr]">{children}</div>;
 }
 
-function Info({ label, value, wide = false, tall = false }: { label: string; value?: string | number | null; wide?: boolean; tall?: boolean }) {
+function Info({ label, value, wide = false, tall = false, lastInRow = false }: { label: string; value?: string | number | null; wide?: boolean; tall?: boolean; lastInRow?: boolean }) {
     return (
         <>
             <div className="h-[4.8mm] border-r border-b border-black bg-slate-50 px-1 py-0.5 font-bold">{label}</div>
-            <div className={`h-[4.8mm] overflow-hidden border-b border-black px-1 py-0.5 font-semibold ${wide ? 'col-span-3' : ''} ${tall ? 'h-[9.6mm] whitespace-pre-wrap' : ''}`}>
+            <div className={`h-[4.8mm] overflow-hidden border-b border-black px-1 py-0.5 font-semibold ${lastInRow ? '' : 'border-r'} ${wide ? 'col-span-3' : ''} ${tall ? 'h-[9.6mm] whitespace-pre-wrap' : ''}`}>
                 {value || '-'}
             </div>
         </>
