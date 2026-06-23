@@ -167,7 +167,7 @@ function ReceiptCopy({ complaint, remarks, copyLabel }: { complaint: Complaint; 
     return (
         <section className="receipt-copy flex flex-col h-[190mm] border-2 border-black bg-white text-[7.4px] leading-[1.08]">
             <header className="shrink-0 grid h-[19mm] grid-cols-[24mm_1fr_32mm] border-b-2 border-black">
-                <div className="flex items-center justify-center border-r-2 border-black p-1">
+                <div className="flex items-center justify-center p-1">
                     <img src={logo} alt="PTA Services" className="max-h-[14mm] max-w-[20mm] object-contain" />
                 </div>
                 <div className="flex flex-col items-center justify-center px-1 text-center">
@@ -179,10 +179,19 @@ function ReceiptCopy({ complaint, remarks, copyLabel }: { complaint: Complaint; 
                         Tel: 096958843
                     </p>
                 </div>
-                <div className="border-l-2 border-black text-[6.8px]">
-                    <TopBox label="No." value={complaint.report_number} strong />
-                    <TopBox label="Tarikh" value={formatDate(complaint.created_at)} />
-                    <TopBox label="Status" value={getStatusLabel(complaint.status)} last />
+                <div className="flex flex-col justify-center text-[6.8px] px-2 gap-1.5">
+                    <div className="flex justify-between">
+                        <span className="font-bold">No.</span>
+                        <span className="font-black text-[7.2px]">{complaint.report_number}</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span className="font-bold">Tarikh</span>
+                        <span className="font-semibold">{formatDate(complaint.created_at)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span className="font-bold">Status</span>
+                        <span className="font-semibold">{getStatusLabel(complaint.status)}</span>
+                    </div>
                 </div>
             </header>
 
@@ -301,15 +310,6 @@ function Info({ label, value, wide = false, tall = false, lastInRow = false }: {
                 {value || '-'}
             </div>
         </>
-    );
-}
-
-function TopBox({ label, value, strong = false, last = false }: { label: string; value: string; strong?: boolean; last?: boolean }) {
-    return (
-        <div className={`grid grid-cols-[12mm_1fr] ${last ? '' : 'border-b border-black'}`}>
-            <span className="h-[6.3mm] border-r border-black px-1 py-0.5 font-bold">{label}</span>
-            <span className={`h-[6.3mm] overflow-hidden px-1 py-0.5 ${strong ? 'text-[7.2px] font-black' : 'font-semibold'}`}>{value}</span>
-        </div>
     );
 }
 
