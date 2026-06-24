@@ -1198,7 +1198,7 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
         // Get current assignment and report details
         const { data: complaint } = await supabaseAdmin
             .from('complaints')
-            .select('assigned_to, report_number, user_id, users(name, full_name, email)')
+            .select('assigned_to, report_number, user_id, users(full_name, email)')
             .eq('id', id)
             .single();
 
