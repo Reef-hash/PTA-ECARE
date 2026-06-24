@@ -83,7 +83,7 @@ export interface Complaint {
     details: string;
     warranty_file: string | null;
     receipt_file: string | null;
-    status: 'pending' | 'in_process' | 'closed' | 'cancelled';
+    status: 'pending' | 'in_process' | 'closed' | 'cancelled' | 'incomplete' | 'ready_pickup';
     report_number: string;
     assigned_to: string | null;
     created_at: string;
@@ -96,7 +96,7 @@ export interface Complaint {
 export interface ComplaintRemark {
     id: number;
     complaint_id: number;
-    status: 'pending' | 'in_process' | 'closed' | 'cancelled' | null;
+    status: 'pending' | 'in_process' | 'closed' | 'cancelled' | 'incomplete' | 'ready_pickup' | null;
     note_transport: string | null;
     checking: string | null;
     remark: string | null;
@@ -108,7 +108,7 @@ export interface TechnicianRemark {
     id: number;
     complaint_id: number;
     remark: string | null;
-    status: 'pending' | 'in_process' | 'closed' | 'cancelled' | null;
+    status: 'pending' | 'in_process' | 'closed' | 'cancelled' | 'incomplete' | 'ready_pickup' | null;
     note_transport: string | null;
     checking: string | null;
     remark_by: string | null;
@@ -128,7 +128,7 @@ export interface ForwardHistory {
 // Auth types
 export interface AuthUser {
     id: string;
-    role: 'user' | 'admin' | 'technician';
+    role: 'user' | 'admin' | 'technician' | 'main_technician';
     full_name?: string;
     admin_name?: string;
     name?: string;
@@ -141,7 +141,7 @@ export interface LoginCredentials {
     ic_number?: string;
     username?: string;
     password: string;
-    role: 'user' | 'admin' | 'technician';
+    role: 'user' | 'admin' | 'technician' | 'main_technician';
 }
 
 export interface RegisterData {

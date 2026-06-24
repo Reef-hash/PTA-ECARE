@@ -51,8 +51,8 @@ router.put('/:id', requireRole('admin', 'technician'), updateComplaint);
 // Add remark (admin/technician)
 router.post('/:id/remark', requireRole('admin', 'technician'), validate(addRemarkSchema), addRemark);
 
-// Forward to technician (admin only)
-router.post('/:id/forward', requireRole('admin'), validate(forwardComplaintSchema), forwardComplaint);
+// Forward to technician (admin, main_technician)
+router.post('/:id/forward', requireRole('admin', 'main_technician'), validate(forwardComplaintSchema), forwardComplaint);
 
 // Cancel complaint (user only, pending status only)
 router.delete('/:id/cancel', requireRole('user'), cancelComplaint);

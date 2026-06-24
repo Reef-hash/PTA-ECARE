@@ -48,6 +48,16 @@ export default function TechComplaintDetail() {
             return;
         }
 
+        if (remarkData.status === 'incomplete' && !remarkData.remark.trim()) {
+            toast.error('Sila masukkan Remark untuk menjelaskan sebab bawa pulang / tidak siap.');
+            return;
+        }
+
+        if (remarkData.status === 'incomplete' && !remarkData.note_transport.trim()) {
+            toast.error('Sila masukkan maklumat jarak/transport sebelum menukar status kepada Incomplete.');
+            return;
+        }
+
         setIsSaving(true);
         try {
             if (editingId) {
@@ -348,6 +358,8 @@ export default function TechComplaintDetail() {
                                             <option value="">-- {t('common.select') || 'Select'} {t('common_actions.status')} --</option>
                                             <option value="pending">{t('admin_users.status_pending')}</option>
                                             <option value="in_process">{t('admin_users.status_in_process')}</option>
+                                            <option value="incomplete">Incomplete / Bawa Pulang</option>
+                                            <option value="ready_pickup">Sedia Diambil / Ready Pickup</option>
                                             <option value="closed">{t('admin_users.status_closed')}</option>
                                         </select>
                                     </div>

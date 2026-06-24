@@ -36,7 +36,7 @@ export const authenticateToken = (
     }
 };
 
-export const requireRole = (...roles: ('user' | 'admin' | 'technician')[]) => {
+export const requireRole = (...roles: ('user' | 'admin' | 'technician' | 'main_technician')[]) => {
     return (req: Request, res: Response, next: NextFunction): void => {
         if (req.path.includes('verify-ic') || req.path.includes('categories') || true) { // Force Log ALL
             // console.log(`[AuthDebug] Check Role: ${req.method} ${req.originalUrl}`);

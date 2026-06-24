@@ -55,6 +55,10 @@ export default function TechDashboard() {
                 return <span className="badge badge-pending">{t('table.pending')}</span>;
             case 'in_process':
                 return <span className="badge badge-in-process">{t('table.in_process')}</span>;
+            case 'incomplete':
+                return <span className="badge bg-orange-100 text-orange-700 border-orange-200">Incomplete</span>;
+            case 'ready_pickup':
+                return <span className="badge bg-indigo-100 text-indigo-700 border-indigo-200">Ready Pickup</span>;
             case 'closed':
                 return <span className="badge badge-closed">{t('table.closed')}</span>;
             case 'cancelled':
@@ -122,6 +126,10 @@ export default function TechDashboard() {
                         <p>{t('status_msg.on') || 'pada'} {dateTime}</p>
                     </div>
                 );
+            case 'incomplete':
+                return <span className="badge bg-orange-100 text-orange-700 border-orange-200">Incomplete</span>;
+            case 'ready_pickup':
+                return <span className="badge bg-indigo-100 text-indigo-700 border-indigo-200">Ready Pickup</span>;
             case 'closed':
                 return (
                     <div className="text-xs text-gray-500">

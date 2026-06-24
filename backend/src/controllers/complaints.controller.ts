@@ -591,6 +591,15 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                 const reportNumber = complaintData.report_number;
                 const formattedDate = formatNotificationDate(new Date());
                 const isTransitionFromInProcessToComplete = previousStatus === 'in_process' && status === 'closed';
+                const isTransitionToIncomplete = previousStatus !== 'incomplete' && status === 'incomplete';
+                const isTransitionFromIncompleteToComplete = previousStatus === 'incomplete' && status === 'closed';
+
+                // Fetch customer details if we need to email them
+                const { data: customerData } = await supabaseAdmin
+                    .from('users')
+                    .select('name, email')
+                    .eq('id', complaintData.user_id)
+                    .single();
 
                 // Notify Admins
                 if (status === 'in_process' || status === 'closed') {
@@ -620,21 +629,61 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                 }
 
                 // Special Admin Email for Requirement 3: technician updates status from in_process to complete
-                if (isTransitionFromInProcessToComplete) {
+                if (isTransitionFromInProcessToComplete || isTransitionFromIncompleteToComplete) {
                     try {
                         const adminEmail = 'ptaservicedept@gmail.com';
                         const subject = `Aduan Selesai: ${reportNumber}`;
                         const emailHtml = buildNotificationEmailHtml(
                             'Administrator',
                             subject,
-                            `Juruteknik ${techName} telah mengemaskini status aduan ${reportNumber} daripada 'Dalam Proses' kepada 'Selesai' pada ${new Date().toLocaleDateString('ms-MY')} jam ${new Date().toLocaleTimeString('ms-MY')}.`,
+                            `Juruteknik ${techName} telah mengemaskini status aduan ${reportNumber} daripada '${previousStatus}' kepada 'Selesai' pada ${new Date().toLocaleDateString('ms-MY')} jam ${new Date().toLocaleTimeString('ms-MY')}.`,
                             parseInt(id, 10),
                             'admin'
                         );
                         await sendEmail(adminEmail, subject, emailHtml);
-                        console.log(`[STATUS UPDATE EMAIL (addRemark)] Admin email sent to ${adminEmail} for complaint ${reportNumber}`);
+                        
+                        // Notify Customer as well
+                        if (customerData?.email) {
+                            const custHtml = buildNotificationEmailHtml(
+                                customerData.name,
+                                subject,
+                                `Aduan anda (${reportNumber}) telah selesai dibaiki oleh juruteknik ${techName}.`,
+                                parseInt(id, 10),
+                                'user'
+                            );
+                            await sendEmail(customerData.email, subject, custHtml);
+                        }
                     } catch (emailErr) {
-                        console.error('Failed to send transition email to admin:', emailErr);
+                        console.error('Failed to send transition email to admin/customer:', emailErr);
+                    }
+                }
+
+                // New Email requirement: Transition to Incomplete
+                if (isTransitionToIncomplete) {
+                    try {
+                        const adminEmail = 'ptaservicedept@gmail.com';
+                        const mainTechEmail = 'technicianasign@gmail.com';
+                        const subject = `Aduan Bawa Pulang (Incomplete): ${reportNumber}`;
+                        
+                        const adminHtml = buildNotificationEmailHtml(
+                            'Administrator', subject,
+                            `Juruteknik ${techName} telah menukar status aduan ${reportNumber} kepada 'Incomplete / Bawa Pulang' dengan sebab: "${remark || 'Tiada catatan'}". Maklumat transport: ${note_transport || '-'}`,
+                            parseInt(id, 10), 'admin'
+                        );
+                        await sendEmail(adminEmail, subject, adminHtml);
+                        await sendEmail(mainTechEmail, subject, adminHtml);
+
+                        // Notify Customer
+                        if (customerData?.email) {
+                            const custHtml = buildNotificationEmailHtml(
+                                customerData.name, subject,
+                                `Aduan anda (${reportNumber}) tidak dapat diselesaikan di rumah dan perlu dibawa pulang ke kedai oleh juruteknik. Sebab: "${remark || 'Tiada catatan'}".`,
+                                parseInt(id, 10), 'user'
+                            );
+                            await sendEmail(customerData.email, subject, custHtml);
+                        }
+                    } catch (err) {
+                        console.error('Failed to send incomplete notification emails:', err);
                     }
                 }
 
@@ -1143,11 +1192,13 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
         const { id } = req.params;
         const { technician_id, status } = req.body;
         const adminId = req.user?.id;
+        const forwarderRole = req.user?.role; // Track who forwarded it
 
+        // Get current assignment and report details
         // Get current assignment and report details
         const { data: complaint } = await supabaseAdmin
             .from('complaints')
-            .select('assigned_to, report_number, user_id, users(full_name)')
+            .select('assigned_to, report_number, user_id, users(name, full_name, email)')
             .eq('id', id)
             .single();
 
@@ -1183,7 +1234,7 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
         // Guard Logic: Ensure ID belongs to a valid technician before notifying
         const { data: techExists } = await supabaseAdmin
             .from('technicians')
-            .select('id, name')
+            .select('id, name, email')
             .eq('id', technician_id)
             .single();
 
@@ -1246,6 +1297,44 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
                 'status_update_detailed',
                 parseInt(id, 10)
             );
+        }
+
+        // Email Notifications for Forward Job
+        try {
+            const adminEmail = 'ptaservicedept@gmail.com';
+            const subject = `Agihan Tugasan Aduan: ${complaint.report_number}`;
+            const customerName = (complaint.users as any)?.full_name || (complaint.users as any)?.name || 'Pelanggan';
+            const customerEmail = (complaint.users as any)?.email;
+
+            // 1. Email to Assigned Technician
+            if (techExists.email) {
+                const techHtml = buildNotificationEmailHtml(
+                    techExists.name, subject,
+                    `Satu tugasan aduan (${complaint.report_number}) telah diagihkan kepada anda oleh pihak pengurusan. Sila semak aplikasi E-CARE untuk maklumat lanjut.`,
+                    parseInt(id, 10), 'technician'
+                );
+                await sendEmail(techExists.email, subject, techHtml);
+            }
+
+            // 2. Email to Admin
+            const adminHtml = buildNotificationEmailHtml(
+                'Administrator', subject,
+                `Tugasan aduan (${complaint.report_number}) telah berjaya diagihkan kepada juruteknik ${techExists.name}.`,
+                parseInt(id, 10), 'admin'
+            );
+            await sendEmail(adminEmail, subject, adminHtml);
+
+            // 3. Email to Customer
+            if (customerEmail) {
+                const custHtml = buildNotificationEmailHtml(
+                    customerName, subject,
+                    `Aduan anda (${complaint.report_number}) telah diagihkan kepada juruteknik kami (${techExists.name}) untuk tindakan selanjutnya.`,
+                    parseInt(id, 10), 'user'
+                );
+                await sendEmail(customerEmail, subject, custHtml);
+            }
+        } catch (emailErr) {
+            console.error('Failed to send forward job emails:', emailErr);
         }
 
         // NOTIFICATION: Status Updates (if status changed explicitly to closed, or generic update)

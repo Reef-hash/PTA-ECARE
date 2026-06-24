@@ -1151,6 +1151,22 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             if (!data || data.length === 0) { res.status(401).json({ error: 'Invalid username or password' }); return; }
             user = data[0];
             tokenPayload = { id: user.id, role: 'technician', username: user.username };
+        } else if (role === 'main_technician') {
+            if (!username) { res.status(400).json({ error: 'Username/Email is required' }); return; }
+            // Try matching either username or email
+            const { data } = await supabaseAdmin.from('technicians').select('*').or(`username.ilike.${username},email.ilike.${username}`);
+            if (!data || data.length === 0) { res.status(401).json({ error: 'Invalid credentials' }); return; }
+            
+            user = data[0];
+            
+            // Only allow specific email to be main technician
+            if (user.email !== 'technicianasign@gmail.com') {
+                res.status(401).json({ error: 'Invalid credentials' }); return;
+            }
+            
+            tokenPayload = { id: user.id, role: 'main_technician', username: user.username };
+        } else {
+            res.status(400).json({ error: 'Invalid role' }); return;
         }
 
         console.log(`[LOGIN] Comparing password for user: ${user?.id}`);

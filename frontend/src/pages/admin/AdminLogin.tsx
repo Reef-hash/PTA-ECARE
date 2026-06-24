@@ -34,6 +34,8 @@ export default function AdminLogin() {
         if (isAuthenticated) {
             if (role === 'admin') {
                 window.location.href = '/admin/dashboard';
+            } else if (role === 'main_technician') {
+                window.location.href = '/main-tech/dashboard';
             } else if (role === 'technician') {
                 window.location.href = '/admin/technician/dashboard';
             }
@@ -84,20 +86,46 @@ export default function AdminLogin() {
                 return;
             }
 
-            // Admin login failed (not activation), try technician
+            // Admin login failed (not activation), try main_technician
             try {
                 const response = await authService.login({
                     username: formData.username,
                     password: formData.password,
-                    role: 'technician',
+                    role: 'main_technician',
                 });
 
-                console.log('Technician login success:', response);
+                console.log('Main Technician login success:', response);
 
-                login(response.token, response.user, 'technician');
-                window.location.href = '/admin/technician/dashboard';
+                login(response.token, response.user, 'main_technician');
+                window.location.href = '/main-tech/dashboard';
                 return;
-            } catch (techError: any) {
+            } catch (mainTechError: any) {
+                if (mainTechError.response?.data?.requires_activation) {
+                    toast.success('Kod OTP pengaktifan akaun diperlukan.');
+                    setPendingActivation({
+                        email: mainTechError.response.data.email,
+                        username: mainTechError.response.data.username,
+                        role: 'main_technician' as any
+                    });
+                    setCooldown(60);
+                    setIsLoading(false);
+                    return;
+                }
+
+                // Main Technician failed, try regular technician
+                try {
+                    const response = await authService.login({
+                        username: formData.username,
+                        password: formData.password,
+                        role: 'technician',
+                    });
+
+                    console.log('Technician login success:', response);
+
+                    login(response.token, response.user, 'technician');
+                    window.location.href = '/admin/technician/dashboard';
+                    return;
+                } catch (techError: any) {
                 console.log('Technician login failed:', techError);
                 if (techError.response?.data?.requires_activation) {
                     toast.success('Kod OTP pengaktifan akaun diperlukan.');
@@ -110,8 +138,9 @@ export default function AdminLogin() {
                     setIsLoading(false);
                     return;
                 }
-                // Both failed - show error
-                toast.error(techError.response?.data?.error || t('login.failed'));
+                    // All failed - show error
+                    toast.error(techError.response?.data?.error || t('login.failed'));
+                }
             }
         } finally {
             setIsLoading(false);
@@ -139,6 +168,8 @@ export default function AdminLogin() {
             
             if (pendingActivation.role === 'admin') {
                 window.location.href = '/admin/dashboard';
+            } else if (pendingActivation.role === 'main_technician' as any) {
+                window.location.href = '/main-tech/dashboard';
             } else {
                 window.location.href = '/admin/technician/dashboard';
             }

@@ -40,11 +40,16 @@ import PrintReceipt from './pages/admin/PrintReceipt';
 import SettingsPage from './pages/admin/Settings';
 import AdminProfile from './pages/admin/AdminProfile';
 import DebugAuth from './pages/DebugAuth';
+import AdminMainTechQueue from './pages/admin/AdminMainTechQueue';
 
 // Technician pages
 import TechDashboard from './pages/technician/TechDashboard';
 import TechComplaints from './pages/technician/TechComplaints';
 import TechComplaintDetail from './pages/technician/TechComplaintDetail';
+
+// Main Tech pages
+import MainTechDashboard from './pages/main_technician/MainTechDashboard';
+import SearchComplaint from './pages/main_technician/SearchComplaint';
 
 // Shared pages
 import NotificationsPage from './pages/NotificationsPage';
@@ -82,6 +87,9 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode;
         }
         if (role === 'technician') {
             return <Navigate to="/admin/technician/dashboard" replace />;
+        }
+        if (role === 'main_technician') {
+            return <Navigate to="/main-tech/dashboard" replace />;
         }
     }
 
@@ -232,6 +240,14 @@ function App() {
                 element={
                     <ProtectedRoute allowedRoles={['admin']}>
                         <AdminComplaintDetail />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/admin/main-tech-queue"
+                element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                        <AdminMainTechQueue />
                     </ProtectedRoute>
                 }
             />
