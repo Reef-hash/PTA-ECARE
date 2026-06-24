@@ -70,12 +70,12 @@ export const addRemarkSchema = z.object({
     note_transport: z.string().optional(),
     checking: z.string().optional(),
     remark: z.string().optional(),
-    status: z.enum(['pending', 'in_process', 'closed']).optional(),
+    status: z.enum(['pending', 'in_process', 'closed', 'cancelled', 'incomplete', 'ready_pickup']).optional(),
 });
 
 export const forwardComplaintSchema = z.object({
     technician_id: z.string().uuid('Invalid technician ID'),
-    status: z.enum(['pending', 'in_process', 'closed']).optional(),
+    status: z.enum(['pending', 'in_process', 'closed', 'cancelled', 'incomplete', 'ready_pickup']).optional(),
 });
 
 // User schemas
