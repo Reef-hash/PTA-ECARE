@@ -18,7 +18,7 @@ interface MainTechLayoutProps {
 }
 
 export default function MainTechLayout({ children }: MainTechLayoutProps) {
-    const { logout } = useAuth();
+    const { logout, user } = useAuth();
     const { t } = useTranslation();
     const location = useLocation();
     const navigate = useNavigate();
@@ -33,6 +33,11 @@ export default function MainTechLayout({ children }: MainTechLayoutProps) {
     const handleLogout = () => {
         logout();
         navigate('/admin');
+    };
+
+    const getUserName = () => {
+        const u = user as any;
+        return u?.name || u?.username || u?.admin_name || u?.full_name || 'Main Technician';
     };
 
     return (
@@ -120,8 +125,8 @@ export default function MainTechLayout({ children }: MainTechLayoutProps) {
                                 <User className="w-5 h-5" />
                             </div>
                             <div className="text-left flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-gray-900 truncate">Main Technician</p>
-                                <p className="text-xs text-gray-500 truncate">Sistem Pengagihan</p>
+                                <p className="text-sm font-semibold text-gray-900 truncate">{getUserName()}</p>
+                                <p className="text-xs text-gray-500 truncate">MAIN TECHNICIAN</p>
                             </div>
                         </button>
 
