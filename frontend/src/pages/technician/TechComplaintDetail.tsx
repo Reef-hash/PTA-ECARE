@@ -74,7 +74,13 @@ export default function TechComplaintDetail() {
             setEditingId(null);
             loadComplaint();
         } catch (error: any) {
-            toast.error(error.response?.data?.error || t('technician_dashboard.error_save_remark'));
+            const errResponse = error.response?.data;
+            if (errResponse?.details && Array.isArray(errResponse.details)) {
+                const detailsStr = errResponse.details.map((d: any) => `${d.field}: ${d.message}`).join(', ');
+                toast.error(`Validation failed: ${detailsStr}`);
+            } else {
+                toast.error(errResponse?.error || t('technician_dashboard.error_save_remark'));
+            }
         } finally {
             setIsSaving(false);
         }

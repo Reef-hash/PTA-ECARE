@@ -70,7 +70,10 @@ export const addRemarkSchema = z.object({
     note_transport: z.string().optional(),
     checking: z.string().optional(),
     remark: z.string().optional(),
-    status: z.enum(['pending', 'in_process', 'closed', 'cancelled', 'incomplete', 'ready_pickup']).optional(),
+    status: z.union([
+        z.enum(['pending', 'in_process', 'closed', 'cancelled', 'incomplete', 'ready_pickup']),
+        z.literal('')
+    ]).optional(),
 });
 
 export const forwardComplaintSchema = z.object({
