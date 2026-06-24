@@ -407,6 +407,49 @@ function App() {
                 }
             />
 
+            {/* Main Technician Routes */}
+            <Route path="/main-tech" element={<AdminLogin />} />
+            <Route
+                path="/main-tech/dashboard"
+                element={
+                    <ProtectedRoute allowedRoles={['main_technician']}>
+                        <MainTechDashboard />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/main-tech/search"
+                element={
+                    <ProtectedRoute allowedRoles={['main_technician']}>
+                        <SearchComplaint />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/main-tech/profile"
+                element={
+                    <ProtectedRoute allowedRoles={['main_technician']}>
+                        <AdminProfile />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/main-tech/notifications"
+                element={
+                    <ProtectedRoute allowedRoles={['main_technician']}>
+                        <NotificationsPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/main-tech/complaint/:id"
+                element={
+                    <ProtectedRoute allowedRoles={['main_technician']}>
+                        <AdminComplaintDetail />
+                    </ProtectedRoute>
+                }
+            />
+
             {/* Catch all */}
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

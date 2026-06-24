@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Clock, Wrench, Search, AlertTriangle, Eye } from 'lucide-react';
+import { Wrench, AlertTriangle, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
@@ -8,7 +7,6 @@ import { Complaint } from '../../types';
 import toast from 'react-hot-toast';
 
 export default function AdminMainTechQueue() {
-    const { t } = useTranslation();
     const [complaints, setComplaints] = useState<Complaint[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -120,9 +118,9 @@ export default function AdminMainTechQueue() {
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <div className="text-sm font-medium text-gray-900">{complaint.customer?.name || '-'}</div>
-                                                    <div className="text-xs text-gray-500 mt-1 max-w-[200px] truncate" title={complaint.customer?.address}>
-                                                        {complaint.customer?.address || '-'}
+                                                    <div className="text-sm font-medium text-gray-900">{complaint.users?.full_name || '-'}</div>
+                                                    <div className="text-xs text-gray-500 mt-1 max-w-[200px] truncate" title={complaint.users?.address}>
+                                                        {complaint.users?.address || '-'}
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">

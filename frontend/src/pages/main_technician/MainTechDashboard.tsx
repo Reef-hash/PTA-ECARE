@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Clock, Wrench, Search, AlertTriangle, Eye, ArrowRightCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Wrench, AlertTriangle, ArrowRightCircle } from 'lucide-react';
 import MainTechLayout from '../../components/MainTechLayout';
 import api from '../../services/api';
 import { Complaint } from '../../types';
@@ -9,7 +7,6 @@ import toast from 'react-hot-toast';
 import ForwardJobModal from './ForwardJobModal';
 
 export default function MainTechDashboard() {
-    const { t } = useTranslation();
     const [complaints, setComplaints] = useState<Complaint[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, AlertCircle, Wrench, Eye, User, FileText } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Search, AlertCircle, User } from 'lucide-react';
 import MainTechLayout from '../../components/MainTechLayout';
 import api from '../../services/api';
 import { Complaint } from '../../types';

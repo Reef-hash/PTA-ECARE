@@ -91,6 +91,11 @@ export interface Complaint {
     users?: User;
     categories?: Category;
     technicians?: Technician;
+    remarks?: ComplaintRemark[];
+    custom_brand?: string;
+    category_name?: string;
+    customer?: User;
+    model?: string;
 }
 
 export interface ComplaintRemark {
