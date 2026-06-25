@@ -5,8 +5,10 @@ import api from '../../services/api';
 import { Complaint, DashboardStats } from '../../types';
 import toast from 'react-hot-toast';
 import ForwardJobModal from './ForwardJobModal';
+import { useTranslation } from 'react-i18next';
 
 export default function MainTechDashboard() {
+    const { t } = useTranslation();
     const [complaints, setComplaints] = useState<Complaint[]>([]);
     const [stats, setStats] = useState<DashboardStats>({
         total: 0, pending: 0, in_process: 0, closed: 0, not_forwarded: 0, assigned: 0, cancelled: 0, incomplete: 0
@@ -27,7 +29,7 @@ export default function MainTechDashboard() {
             setComplaints(complaintsRes.data.complaints || complaintsRes.data.data || []);
             setStats(statsRes.data.stats);
         } catch (error) {
-            toast.error('Gagal memuatkan data papan pemuka');
+            toast.error(t('common.error_load') || 'Gagal memuatkan data papan pemuka');
         } finally {
             setIsLoading(false);
         }
@@ -58,10 +60,10 @@ export default function MainTechDashboard() {
     };
 
     const statCards = [
-        { label: 'Mesin Bawa Pulang', value: stats.incomplete, icon: AlertCircle, color: 'orange' },
-        { label: 'Belum Diagih', value: stats.not_forwarded, icon: Clock, color: 'red' },
-        { label: 'Telah Diagih', value: stats.assigned, icon: UserCheck, color: 'teal' },
-        { label: 'Selesai', value: stats.closed, icon: CheckCircle, color: 'green' },
+        { label: t('main_tech.dashboard.cards.incomplete'), value: stats.incomplete, icon: AlertCircle, color: 'orange' },
+        { label: t('main_tech.dashboard.cards.not_forwarded'), value: stats.not_forwarded, icon: Clock, color: 'red' },
+        { label: t('main_tech.dashboard.cards.assigned'), value: stats.assigned, icon: UserCheck, color: 'teal' },
+        { label: t('main_tech.dashboard.cards.closed'), value: stats.closed, icon: CheckCircle, color: 'green' },
     ];
 
     const getColorClasses = (color: string) => {
@@ -75,7 +77,7 @@ export default function MainTechDashboard() {
     };
 
     return (
-        <MainTechLayout breadcrumb="Dashboard">
+        <MainTechLayout breadcrumb={t('sidebar.dashboard')}>
             <div className="max-w-7xl mx-auto space-y-6">
                 <div className="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <div className="flex items-center gap-4">
@@ -83,8 +85,8 @@ export default function MainTechDashboard() {
                             <Wrench className="w-6 h-6" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">Pengurusan Mesin Bawa Pulang</h1>
-                            <p className="text-gray-500 mt-1">Senarai aduan yang perlu diagihkan kepada juruteknik kedai</p>
+                            <h1 className="text-2xl font-bold text-gray-900">{t('main_tech.dashboard.title')}</h1>
+                            <p className="text-gray-500 mt-1">{t('main_tech.dashboard.subtitle')}</p>
                         </div>
                     </div>
                 </div>
@@ -115,9 +117,9 @@ export default function MainTechDashboard() {
 
                 <div className="card overflow-hidden">
                     <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                        <h2 className="text-lg font-semibold text-gray-800">Senarai Menunggu Agihan</h2>
+                        <h2 className="text-lg font-semibold text-gray-800">{t('main_tech.dashboard.list_title')}</h2>
                         <span className="badge bg-orange-100 text-orange-700 font-medium px-3 py-1">
-                            {complaints.length} Mesin
+                            {complaints.length}
                         </span>
                     </div>
 
@@ -125,10 +127,10 @@ export default function MainTechDashboard() {
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Laporan</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Juruteknik Asal</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Sebab Bawa Pulang</th>
-                                    <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Tindakan</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('table.report_number')}</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('table.original_technician', 'Juruteknik Asal')}</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('table.incomplete_reason', 'Sebab Bawa Pulang')}</th>
+                                    <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('table.action')}</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
@@ -137,7 +139,7 @@ export default function MainTechDashboard() {
                                         <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
                                             <div className="flex justify-center items-center gap-3">
                                                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-500 border-t-transparent"></div>
-                                                Memuatkan data...
+                                                {t('common.loading')}
                                             </div>
                                         </td>
                                     </tr>
@@ -146,7 +148,7 @@ export default function MainTechDashboard() {
                                         <td colSpan={4} className="px-6 py-12 text-center">
                                             <div className="flex flex-col items-center justify-center text-gray-400">
                                                 <AlertTriangle className="w-12 h-12 mb-3 text-gray-300" />
-                                                <p className="text-lg font-medium text-gray-600">Tiada tugas tertunggak</p>
+                                                <p className="text-lg font-medium text-gray-600">{t('main_tech.dashboard.empty')}</p>
                                             </div>
                                         </td>
                                     </tr>

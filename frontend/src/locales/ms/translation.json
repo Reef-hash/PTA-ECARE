@@ -517,5 +517,26 @@
         "error_username_required": "Nama pengguna diperlukan",
         "placeholder_username": "Masukkan nama pengguna",
         "placeholder_email": "Masukkan emel"
+    },
+    "main_tech": {
+        "dashboard": {
+            "title": "Pengurusan Mesin Bawa Pulang",
+            "subtitle": "Senarai aduan yang perlu diagihkan kepada juruteknik kedai",
+            "list_title": "Senarai Menunggu Agihan",
+            "empty": "Tiada tugas tertunggak",
+            "cards": {
+                "incomplete": "Mesin Bawa Pulang",
+                "not_forwarded": "Belum Diagih",
+                "assigned": "Telah Diagih",
+                "closed": "Selesai"
+            }
+        },
+        "layout": {
+            "sidebar": {
+                "dashboard": "Senarai Bawa Pulang",
+                "search": "Semak Aduan (IC)"
+            },
+            "title": "PANEL JURUTEKNIK UTAMA"
+        }
     }
 }

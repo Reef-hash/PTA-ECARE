@@ -29,8 +29,8 @@ export default function MainTechLayout({ children, breadcrumb }: MainTechLayoutP
     const [showDropdown, setShowDropdown] = useState(false);
 
     const menuItems = [
-        { path: '/main-tech/dashboard', label: 'Senarai Bawa Pulang', icon: LayoutDashboard },
-        { path: '/main-tech/search', label: 'Semak Aduan (IC)', icon: Search },
+        { path: '/main-tech/dashboard', label: t('main_tech.layout.sidebar.dashboard'), icon: LayoutDashboard },
+        { path: '/main-tech/search', label: t('main_tech.layout.sidebar.search'), icon: Search },
     ];
 
     const handleLogout = () => {
@@ -54,7 +54,7 @@ export default function MainTechLayout({ children, breadcrumb }: MainTechLayoutP
                     <div className="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center text-white font-bold text-xs">
                         MT
                     </div>
-                    <h1 className="text-sm font-bold truncate text-gray-800">MAIN TECH PANEL</h1>
+                    <h1 className="text-sm font-bold truncate text-gray-800">{t('main_tech.layout.title')}</h1>
                 </div>
                 <LanguageSwitcher className="text-gray-600 flex-shrink-0 !px-1 !py-1 !text-xs" />
             </div>
@@ -88,7 +88,7 @@ export default function MainTechLayout({ children, breadcrumb }: MainTechLayoutP
                         <img src="/ecare-logo.png" alt="E-CARE Logo" className="w-12 h-12 rounded-full shadow-md" />
                         <div>
                             <h1 className="font-bold text-gray-800 text-lg">E-CARE</h1>
-                            <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">MAIN TECH PANEL</p>
+                            <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">{t('main_tech.layout.title')}</p>
                         </div>
                     </Link>
 

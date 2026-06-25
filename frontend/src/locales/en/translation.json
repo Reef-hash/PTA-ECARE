@@ -517,5 +517,26 @@
         "error_username_required": "Username is required",
         "placeholder_username": "Enter username",
         "placeholder_email": "Enter email"
+    },
+    "main_tech": {
+        "dashboard": {
+            "title": "Incomplete Machines Management",
+            "subtitle": "List of complaints that need to be distributed to shop technicians",
+            "list_title": "Pending Distribution List",
+            "empty": "No pending tasks",
+            "cards": {
+                "incomplete": "Incomplete Machines",
+                "not_forwarded": "Not Assigned",
+                "assigned": "Assigned",
+                "closed": "Completed"
+            }
+        },
+        "layout": {
+            "sidebar": {
+                "dashboard": "Incomplete List",
+                "search": "Check Complaint (IC)"
+            },
+            "title": "MAIN TECH PANEL"
+        }
     }
 }
