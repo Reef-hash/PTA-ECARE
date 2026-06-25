@@ -22,9 +22,9 @@ export default function ForwardJobModal({ complaint, onClose, onSuccess }: Forwa
 
     const fetchTechnicians = async () => {
         try {
-            const response = await api.get('/technicians');
+            const response = await api.get('/admin/technicians');
             // Filter active technicians, optionally exclude the original technician
-            const activeTechs = (response.data.data || response.data || []).filter((t: Technician) => t.is_active);
+            const activeTechs = (response.data.technicians || []).filter((t: Technician) => t.is_active);
             setTechnicians(activeTechs);
         } catch (error) {
             toast.error('Gagal memuatkan senarai juruteknik');

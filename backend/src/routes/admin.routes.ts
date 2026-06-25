@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticateToken, requireAdmin, requireTechnician } from '../middleware/auth.js';
+import { authenticateToken, requireAdmin, requireTechnician, requireRole } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import {
     createTechnicianSchema,
@@ -31,10 +31,13 @@ const router = Router();
 // All routes require authentication
 router.use(authenticateToken);
 
-// Shared routes (Admin & Technician)
+// Shared routes (Admin & Technician & Main Technician)
 router.get('/profile', requireTechnician, getAdminProfile);
 router.put('/profile', requireTechnician, updateAdminProfile);
 router.put('/profile/password', requireTechnician, updateAdminPassword);
+
+// Allow main_technician to get technicians for forward job
+router.get('/technicians', requireRole('admin', 'main_technician'), getTechnicians);
 
 // Admin Only Routes
 router.use(requireAdmin);
@@ -44,7 +47,6 @@ router.get('/stats', getStats);
 router.get('/technician-stats', getTechnicianStats);
 
 // Technicians
-router.get('/technicians', getTechnicians);
 router.get('/technicians/:id', getTechnician);
 router.post('/technicians', validate(createTechnicianSchema), createTechnician);
 router.put('/technicians/:id', validate(updateTechnicianSchema), updateTechnician);
