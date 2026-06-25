@@ -137,7 +137,10 @@
         "status": "Status",
         "action": "Action",
         "date": "Date",
-        "assigned": "Assigned"
+        "assigned": "Assigned",
+        "report_number": "Report No",
+        "original_technician": "Original Technician",
+        "incomplete_reason": "Incomplete Reason"
     },
     "complaint_form": {
         "full_name": "Full Name",

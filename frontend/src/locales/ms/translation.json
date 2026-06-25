@@ -137,7 +137,10 @@
         "status": "Status",
         "action": "Tindakan",
         "date": "Tarikh",
-        "assigned": "Diagihkan"
+        "assigned": "Diagihkan",
+        "report_number": "No Laporan",
+        "original_technician": "Juruteknik Asal",
+        "incomplete_reason": "Sebab Bawa Pulang"
     },
     "complaint_form": {
         "full_name": "Nama Penuh",
