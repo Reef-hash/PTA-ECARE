@@ -55,7 +55,6 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
         { path: '/admin/not-processed', label: t('sidebar.not_processed'), icon: Clock },
         { path: '/admin/in-progress', label: t('sidebar.in_process'), icon: AlertTriangle },
         { path: '/admin/not-forwarded', label: t('sidebar.not_forwarded'), icon: Forward },
-        { path: '/admin/main-tech-queue', label: 'Main Tech Queue', icon: AlertTriangle },
         { path: '/admin/job-assigned', label: t('sidebar.job_assigned'), icon: UserCheck },
         { path: '/admin/closed', label: t('sidebar.closed'), icon: CheckCircle },
         { path: '/admin/cancelled', label: t('sidebar.cancelled'), icon: XCircle },
@@ -64,6 +63,7 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
     const managementItems = [
         { path: '/admin/technicians', label: t('sidebar.technicians'), icon: UserCog },
         { path: '/admin/users', label: t('sidebar.users'), icon: Users },
+        { path: '/admin/main-tech-queue', label: 'Main Tech Queue', icon: AlertTriangle },
     ];
 
     const masterItems = [
