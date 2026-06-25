@@ -17,6 +17,7 @@ export default function AdminDashboard() {
         not_forwarded: 0,
         assigned: 0,
         cancelled: 0,
+        incomplete: 0,
     });
     const [technicianStats, setTechnicianStats] = useState<TechnicianStats[]>([]);
     const [isLoading, setIsLoading] = useState(true);
