@@ -51,9 +51,35 @@ export default function MainTechLayout({ children }: MainTechLayoutProps) {
                     <div className="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center text-white font-bold text-xs">
                         MT
                     </div>
-                    <h1 className="text-sm font-bold truncate text-gray-800">MAIN TECH PANEL</h1>
+                    <h1 className="text-sm font-bold truncate text-gray-800">MAIN TECH</h1>
                 </div>
-                <LanguageSwitcher className="text-gray-600 flex-shrink-0 !px-1 !py-1 !text-xs" />
+                
+                <div className="flex items-center gap-2">
+                    <LanguageSwitcher className="text-gray-600 flex-shrink-0 !px-1 !py-1 !text-xs" />
+                    
+                    {/* Mobile Profile Dropdown */}
+                    <div className="relative">
+                        <button 
+                            onClick={() => setShowDropdown(!showDropdown)}
+                            className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center flex-shrink-0"
+                        >
+                            <User className="w-4 h-4" />
+                        </button>
+
+                        {showDropdown && (
+                            <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden py-1 z-50 animate-fade-in">
+                                <Link to="/main-tech/profile" className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                    <Settings className="w-4 h-4 text-gray-400" />
+                                    {t('common_actions.profile_settings')}
+                                </Link>
+                                <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 w-full text-left">
+                                    <LogOut className="w-4 h-4 text-red-400" />
+                                    {t('common_actions.logout')}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
 
             {/* Sidebar Overlay */}
@@ -115,34 +141,6 @@ export default function MainTechLayout({ children }: MainTechLayoutProps) {
                         })}
                     </nav>
 
-                    {/* Bottom Profile Area */}
-                    <div className="mt-auto pt-4 relative">
-                        <button 
-                            onClick={() => setShowDropdown(!showDropdown)}
-                            className="flex items-center gap-3 w-full hover:bg-gray-50 p-2 rounded-xl transition-colors"
-                        >
-                            <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center flex-shrink-0">
-                                <User className="w-5 h-5" />
-                            </div>
-                            <div className="text-left flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-gray-900 truncate">{getUserName()}</p>
-                                <p className="text-xs text-gray-500 truncate">MAIN TECHNICIAN</p>
-                            </div>
-                        </button>
-
-                        {showDropdown && (
-                            <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden py-1 z-50 animate-fade-in">
-                                <Link to="/main-tech/profile" className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                                    <Settings className="w-4 h-4 text-gray-400" />
-                                    {t('common_actions.profile_settings')}
-                                </Link>
-                                <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 w-full text-left">
-                                    <LogOut className="w-4 h-4 text-red-400" />
-                                    {t('common_actions.logout')}
-                                </button>
-                            </div>
-                        )}
-                    </div>
                 </div>
             </aside>
 
@@ -153,6 +151,35 @@ export default function MainTechLayout({ children }: MainTechLayoutProps) {
                     <h2 className="text-xl font-bold text-gray-800 tracking-tight">Pengurusan Utama</h2>
                     <div className="flex items-center gap-6">
                         <LanguageSwitcher />
+                        
+                        {/* Profile Dropdown */}
+                        <div className="relative">
+                            <button 
+                                onClick={() => setShowDropdown(!showDropdown)}
+                                className="flex items-center gap-3 hover:bg-gray-50 p-2 rounded-xl transition-colors"
+                            >
+                                <div className="text-right hidden sm:block">
+                                    <p className="text-sm font-semibold text-gray-900">{getUserName()}</p>
+                                    <p className="text-xs text-gray-500">MAIN TECHNICIAN</p>
+                                </div>
+                                <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center flex-shrink-0">
+                                    <User className="w-5 h-5" />
+                                </div>
+                            </button>
+
+                            {showDropdown && (
+                                <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden py-1 z-50 animate-fade-in">
+                                    <Link to="/main-tech/profile" className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                        <Settings className="w-4 h-4 text-gray-400" />
+                                        {t('common_actions.profile_settings')}
+                                    </Link>
+                                    <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 w-full text-left">
+                                        <LogOut className="w-4 h-4 text-red-400" />
+                                        {t('common_actions.logout')}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </header>
 
