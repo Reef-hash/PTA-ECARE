@@ -33,9 +33,13 @@ export const sendEmail = async (to: string, subject: string, html: string) => {
 
         const info = await transporter.sendMail({
             from: `"${smtp.fromName}" <${smtp.fromEmail}>`,
+            replyTo: smtp.fromEmail,
             to,
             subject,
             html,
+            headers: {
+                'X-Entity-Ref-ID': Date.now().toString(),
+            }
         });
         console.log(`Email sent: ${info.messageId}`);
     } catch (error: any) {

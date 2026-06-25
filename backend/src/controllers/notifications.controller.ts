@@ -218,7 +218,14 @@ export const buildNotificationEmailHtml = (name: string, title: string, message:
             buttonText = 'Buka Portal E-CARE';
     }
 
-    return `
+    return `<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f8fafc;">
     <div style="font-family: 'Segoe UI', Arial, sans-serif; background-color: #f8fafc; padding: 40px 0; width: 100%;">
         <div style="max-width: 600px; background-color: #ffffff; margin: 0 auto; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0;">
             <div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: #ffffff; padding: 40px 20px; text-align: center;">
@@ -243,12 +250,13 @@ export const buildNotificationEmailHtml = (name: string, title: string, message:
                 <p style="font-size: 11px; color: #94a3b8; margin: 0;">Hantaran automatik sistem e-Care. Sila abaikan jika anda tersilap menerima emel ini.</p>
             </div>
             <div style="background-color: #f1f5f9; padding: 30px; text-align: center; font-size: 12px; color: #64748b;">
-                <p style="margin: 0 0 5px 0;">© 2026 <strong style="color: #1e3a8a;">DFKTVETMARABESUT</strong>. All rights reserved.</p>
+                <p style="margin: 0 0 5px 0;">© 2026 <strong style="color: #1e3a8a;">DFKTVETMARABESUT</strong>. Hak cipta terpelihara.</p>
                 <p style="margin: 0;">Besut, Terengganu, Malaysia</p>
             </div>
         </div>
     </div>
-    `;
+</body>
+</html>`;
 };
 
 // Internal helper to create notification
