@@ -181,6 +181,7 @@ export interface DashboardStats {
     not_forwarded: number;
     assigned: number;
     cancelled: number;
+    incomplete: number;
 }
 
 export interface TechnicianStats {

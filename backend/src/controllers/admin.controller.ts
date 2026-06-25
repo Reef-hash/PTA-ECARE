@@ -22,6 +22,7 @@ export const getStats = async (req: Request, res: Response): Promise<void> => {
             not_forwarded: 0,
             assigned: 0,
             cancelled: 0,
+            incomplete: 0,
         };
 
         (allComplaints || []).forEach((c: any) => {
@@ -29,6 +30,7 @@ export const getStats = async (req: Request, res: Response): Promise<void> => {
             if (c.status === 'in_process') stats.in_process++;
             if (c.status === 'closed') stats.closed++;
             if (c.status === 'cancelled') stats.cancelled++;
+            if (c.status === 'incomplete') stats.incomplete++;
             if (c.status === 'pending' && !c.assigned_to) stats.not_forwarded++;
             if (c.status === 'pending' && c.assigned_to) stats.assigned++;
         });

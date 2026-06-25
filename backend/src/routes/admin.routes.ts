@@ -36,14 +36,14 @@ router.get('/profile', requireTechnician, getAdminProfile);
 router.put('/profile', requireTechnician, updateAdminProfile);
 router.put('/profile/password', requireTechnician, updateAdminPassword);
 
-// Allow main_technician to get technicians for forward job
+// Allow main_technician to get technicians for forward job and stats
 router.get('/technicians', requireRole('admin', 'main_technician'), getTechnicians);
+router.get('/stats', requireRole('admin', 'main_technician'), getStats);
 
 // Admin Only Routes
 router.use(requireAdmin);
 
 // Dashboard
-router.get('/stats', getStats);
 router.get('/technician-stats', getTechnicianStats);
 
 // Technicians

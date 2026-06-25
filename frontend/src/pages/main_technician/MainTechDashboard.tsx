@@ -1,26 +1,33 @@
 import { useEffect, useState } from 'react';
-import { Wrench, AlertTriangle, ArrowRightCircle } from 'lucide-react';
+import { Wrench, AlertTriangle, ArrowRightCircle, AlertCircle, Clock, UserCheck, CheckCircle } from 'lucide-react';
 import MainTechLayout from '../../components/MainTechLayout';
 import api from '../../services/api';
-import { Complaint } from '../../types';
+import { Complaint, DashboardStats } from '../../types';
 import toast from 'react-hot-toast';
 import ForwardJobModal from './ForwardJobModal';
 
 export default function MainTechDashboard() {
     const [complaints, setComplaints] = useState<Complaint[]>([]);
+    const [stats, setStats] = useState<DashboardStats>({
+        total: 0, pending: 0, in_process: 0, closed: 0, not_forwarded: 0, assigned: 0, cancelled: 0, incomplete: 0
+    });
     const [isLoading, setIsLoading] = useState(true);
     const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
 
     useEffect(() => {
-        loadComplaints();
+        loadDashboardData();
     }, []);
 
-    const loadComplaints = async () => {
+    const loadDashboardData = async () => {
         try {
-            const response = await api.get('/complaints?status=incomplete');
-            setComplaints(response.data.complaints || response.data.data || []);
+            const [complaintsRes, statsRes] = await Promise.all([
+                api.get('/complaints?status=incomplete'),
+                api.get('/admin/stats')
+            ]);
+            setComplaints(complaintsRes.data.complaints || complaintsRes.data.data || []);
+            setStats(statsRes.data.stats);
         } catch (error) {
-            toast.error('Gagal memuatkan senarai Bawa Pulang');
+            toast.error('Gagal memuatkan data papan pemuka');
         } finally {
             setIsLoading(false);
         }
@@ -47,10 +54,24 @@ export default function MainTechDashboard() {
 
     const handleForwardSuccess = () => {
         setSelectedComplaint(null);
-        loadComplaints(); // reload the list, it should disappear from incomplete if forwarded?
-        // Wait, forwarding means assigning it to someone and changing status to 'pending' or keeping 'incomplete'?
-        // Usually, forwarding assigns it to a new tech. Status might stay 'incomplete' or change to 'pending'. 
-        // We will keep it in the queue until the new tech updates it, or we can just fetch again.
+        loadDashboardData(); // reload the list
+    };
+
+    const statCards = [
+        { label: 'Mesin Bawa Pulang', value: stats.incomplete, icon: AlertCircle, color: 'orange' },
+        { label: 'Belum Diagih', value: stats.not_forwarded, icon: Clock, color: 'red' },
+        { label: 'Telah Diagih', value: stats.assigned, icon: UserCheck, color: 'teal' },
+        { label: 'Selesai', value: stats.closed, icon: CheckCircle, color: 'green' },
+    ];
+
+    const getColorClasses = (color: string) => {
+        const colors: Record<string, { bg: string; icon: string; border: string }> = {
+            orange: { bg: 'bg-orange-100', icon: 'text-orange-600', border: 'border-l-orange-500' },
+            red: { bg: 'bg-red-100', icon: 'text-red-600', border: 'border-l-red-500' },
+            teal: { bg: 'bg-teal-100', icon: 'text-teal-600', border: 'border-l-teal-500' },
+            green: { bg: 'bg-green-100', icon: 'text-green-600', border: 'border-l-green-500' },
+        };
+        return colors[color] || colors.orange;
     };
 
     return (
@@ -66,6 +87,30 @@ export default function MainTechDashboard() {
                             <p className="text-gray-500 mt-1">Senarai aduan yang perlu diagihkan kepada juruteknik kedai</p>
                         </div>
                     </div>
+                </div>
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    {statCards.map((card) => {
+                        const Icon = card.icon;
+                        const colors = getColorClasses(card.color);
+                        return (
+                            <div
+                                key={card.label}
+                                className={`bg-white rounded-xl shadow-sm border border-gray-100 p-5 ${colors.border} border-l-4`}
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-gray-500 text-xs uppercase font-medium">{card.label}</p>
+                                        <p className="text-2xl font-bold text-gray-800 mt-1">{card.value}</p>
+                                    </div>
+                                    <div className={`w-10 h-10 ${colors.bg} rounded-lg flex items-center justify-center`}>
+                                        <Icon className={`w-5 h-5 ${colors.icon}`} />
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
 
                 <div className="card overflow-hidden">
