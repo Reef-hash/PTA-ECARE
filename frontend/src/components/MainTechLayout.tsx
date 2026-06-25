@@ -7,7 +7,6 @@ import {
     LogOut,
     Menu,
     X,
-    User,
     Settings,
     ChevronDown,
     ArrowLeft
