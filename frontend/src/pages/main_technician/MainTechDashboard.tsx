@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Wrench, AlertTriangle, ArrowRightCircle, AlertCircle, Clock, UserCheck, CheckCircle } from 'lucide-react';
+import { Wrench, AlertTriangle, ArrowRightCircle, AlertCircle, Clock, UserCheck, CheckCircle, Eye } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import MainTechLayout from '../../components/MainTechLayout';
 import api from '../../services/api';
 import { Complaint, DashboardStats } from '../../types';
@@ -15,19 +16,30 @@ export default function MainTechDashboard() {
     });
     const [isLoading, setIsLoading] = useState(true);
     const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
+    const [activeFilter, setActiveFilter] = useState('incomplete');
 
     useEffect(() => {
-        loadDashboardData();
+        loadStats();
     }, []);
 
-    const loadDashboardData = async () => {
+    useEffect(() => {
+        loadComplaints();
+    }, [activeFilter]);
+
+    const loadStats = async () => {
         try {
-            const [complaintsRes, statsRes] = await Promise.all([
-                api.get('/complaints?status=incomplete'),
-                api.get('/admin/stats')
-            ]);
-            setComplaints(complaintsRes.data.complaints || complaintsRes.data.data || []);
-            setStats(statsRes.data.stats);
+            const res = await api.get('/admin/stats');
+            setStats(res.data.stats);
+        } catch (error) {
+            console.error('Failed to load stats', error);
+        }
+    };
+
+    const loadComplaints = async () => {
+        setIsLoading(true);
+        try {
+            const response = await api.get(`/complaints?status=${activeFilter}`);
+            setComplaints(response.data.complaints || response.data.data || []);
         } catch (error) {
             toast.error(t('common.error_load') || 'Gagal memuatkan data papan pemuka');
         } finally {
@@ -56,14 +68,15 @@ export default function MainTechDashboard() {
 
     const handleForwardSuccess = () => {
         setSelectedComplaint(null);
-        loadDashboardData(); // reload the list
+        loadStats();
+        loadComplaints();
     };
 
     const statCards = [
-        { label: t('main_tech.dashboard.cards.incomplete'), value: stats.incomplete, icon: AlertCircle, color: 'orange' },
-        { label: t('main_tech.dashboard.cards.not_forwarded'), value: stats.not_forwarded, icon: Clock, color: 'red' },
-        { label: t('main_tech.dashboard.cards.assigned'), value: stats.assigned, icon: UserCheck, color: 'teal' },
-        { label: t('main_tech.dashboard.cards.closed'), value: stats.closed, icon: CheckCircle, color: 'green' },
+        { label: t('main_tech.dashboard.cards.incomplete'), value: stats.incomplete, icon: AlertCircle, color: 'orange', filter: 'incomplete' },
+        { label: t('main_tech.dashboard.cards.not_forwarded'), value: stats.not_forwarded, icon: Clock, color: 'red', filter: 'not_forwarded' },
+        { label: t('main_tech.dashboard.cards.assigned'), value: stats.assigned, icon: UserCheck, color: 'teal', filter: 'job_assigned' },
+        { label: t('main_tech.dashboard.cards.closed'), value: stats.closed, icon: CheckCircle, color: 'green', filter: 'closed' },
     ];
 
     const getColorClasses = (color: string) => {
@@ -96,29 +109,35 @@ export default function MainTechDashboard() {
                     {statCards.map((card) => {
                         const Icon = card.icon;
                         const colors = getColorClasses(card.color);
+                        const isActive = activeFilter === card.filter;
                         return (
-                            <div
+                            <button
                                 key={card.label}
-                                className={`bg-white rounded-xl shadow-sm border border-gray-100 p-5 ${colors.border} border-l-4`}
+                                onClick={() => setActiveFilter(card.filter)}
+                                className={`text-left w-full rounded-xl shadow-sm border p-5 ${colors.border} border-l-4 transition-all duration-200 ${
+                                    isActive ? 'bg-gray-50 ring-2 ring-indigo-500 border-indigo-500 scale-[1.02]' : 'bg-white border-gray-100 hover:bg-gray-50'
+                                }`}
                             >
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-gray-500 text-xs uppercase font-medium">{card.label}</p>
+                                        <p className={`text-xs uppercase font-medium ${isActive ? 'text-indigo-600' : 'text-gray-500'}`}>{card.label}</p>
                                         <p className="text-2xl font-bold text-gray-800 mt-1">{card.value}</p>
                                     </div>
                                     <div className={`w-10 h-10 ${colors.bg} rounded-lg flex items-center justify-center`}>
                                         <Icon className={`w-5 h-5 ${colors.icon}`} />
                                     </div>
                                 </div>
-                            </div>
+                            </button>
                         );
                     })}
                 </div>
 
                 <div className="card overflow-hidden">
                     <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                        <h2 className="text-lg font-semibold text-gray-800">{t('main_tech.dashboard.list_title')}</h2>
-                        <span className="badge bg-orange-100 text-orange-700 font-medium px-3 py-1">
+                        <h2 className="text-lg font-semibold text-gray-800">
+                            {statCards.find(c => c.filter === activeFilter)?.label || t('main_tech.dashboard.list_title')}
+                        </h2>
+                        <span className={`badge font-medium px-3 py-1 ${getColorClasses(statCards.find(c => c.filter === activeFilter)?.color || 'orange').bg} ${getColorClasses(statCards.find(c => c.filter === activeFilter)?.color || 'orange').icon.replace('text-', 'text-')}`}>
                             {complaints.length}
                         </span>
                     </div>
@@ -155,6 +174,8 @@ export default function MainTechDashboard() {
                                 ) : (
                                     complaints.map((complaint) => {
                                         const details = getIncompleteDetails(complaint);
+                                        const isAssignedTo = complaint.technicians?.name || complaint.assigned_to || 'Tidak Diketahui';
+                                        
                                         return (
                                             <tr key={complaint.id} className="hover:bg-gray-50 transition-colors">
                                                 <td className="px-6 py-4 whitespace-nowrap">
@@ -163,23 +184,41 @@ export default function MainTechDashboard() {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700">
-                                                        {complaint.technicians?.name || 'Tidak Diketahui'}
+                                                        {isAssignedTo}
                                                     </span>
-                                                    <div className="text-xs text-gray-500 mt-1">Jarak: {details.transport}</div>
+                                                    {activeFilter === 'incomplete' && (
+                                                        <div className="text-xs text-gray-500 mt-1">Jarak: {details.transport}</div>
+                                                    )}
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <p className="text-sm text-gray-600 line-clamp-2" title={details.remark}>
-                                                        {details.remark}
-                                                    </p>
+                                                    {activeFilter === 'incomplete' ? (
+                                                        <p className="text-sm text-gray-600 line-clamp-2" title={details.remark}>
+                                                            {details.remark}
+                                                        </p>
+                                                    ) : (
+                                                        <p className="text-sm text-gray-600 line-clamp-2">
+                                                            {complaint.details}
+                                                        </p>
+                                                    )}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                    <button
-                                                        onClick={() => setSelectedComplaint(complaint)}
-                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded transition-colors shadow-sm"
-                                                    >
-                                                        <ArrowRightCircle className="w-3.5 h-3.5" />
-                                                        Forward Job
-                                                    </button>
+                                                    {activeFilter === 'incomplete' ? (
+                                                        <button
+                                                            onClick={() => setSelectedComplaint(complaint)}
+                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded transition-colors shadow-sm"
+                                                        >
+                                                            <ArrowRightCircle className="w-3.5 h-3.5" />
+                                                            Forward Job
+                                                        </button>
+                                                    ) : (
+                                                        <Link
+                                                            to={`/main-tech/complaint/${complaint.id}`}
+                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-medium rounded transition-colors shadow-sm"
+                                                        >
+                                                            <Eye className="w-3.5 h-3.5" />
+                                                            {t('common.view', 'Papar')}
+                                                        </Link>
+                                                    )}
                                                 </td>
                                             </tr>
                                         );
