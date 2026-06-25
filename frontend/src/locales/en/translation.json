@@ -442,7 +442,9 @@
         "password": "Password",
         "phone_no": "Phone No",
         "filter": "Filter",
-        "clear": "Clear Filters"
+        "clear": "Clear Filters",
+        "profile_settings": "Profile Settings",
+        "logout": "Log Out"
     },
     "admin_complaint_detail": {
         "title": "Complaint Details",

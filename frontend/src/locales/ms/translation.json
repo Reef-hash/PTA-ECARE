@@ -442,7 +442,9 @@
         "password": "Kata Laluan",
         "phone_no": "No Telefon",
         "filter": "Tapis",
-        "clear": "Padam Tapis"
+        "clear": "Padam Tapis",
+        "profile_settings": "Tetapan Profil",
+        "logout": "Log Keluar"
     },
     "admin_complaint_detail": {
         "title": "Maklumat Aduan",
