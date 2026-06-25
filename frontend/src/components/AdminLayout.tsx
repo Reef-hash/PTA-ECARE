@@ -41,7 +41,7 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
-    const [complaintsOpen, setComplaintsOpen] = useState(true);
+    const [complaintsOpen, setComplaintsOpen] = useState(false);
     const [masterOpen, setMasterOpen] = useState(false);
 
     const isTechnician = role === 'technician';
