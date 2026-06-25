@@ -583,7 +583,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
             // Fetch complaint details for report number and user_id (if not already fetched context)
             const { data: complaintData } = await supabaseAdmin
                 .from('complaints')
-                .select('user_id, report_number')
+                .select('user_id, report_number, subcategory')
                 .eq('id', id)
                 .single();
 
@@ -667,17 +667,24 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                         
                         const adminHtml = buildNotificationEmailHtml(
                             'Administrator', subject,
-                            `Juruteknik ${techName} telah menukar status aduan ${reportNumber} kepada 'Incomplete / Bawa Pulang' dengan sebab: "${remark || 'Tiada catatan'}". Maklumat transport: ${note_transport || '-'}`,
+                            `Juruteknik telah update status progress repair kerosakan untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`,
                             parseInt(id, 10), 'admin'
                         );
                         await sendEmail(adminEmail, subject, adminHtml);
-                        await sendEmail(mainTechEmail, subject, adminHtml);
+
+                        const mainTechHtml = buildNotificationEmailHtml(
+                            'Main Technician', subject,
+                            `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`,
+                            parseInt(id, 10), 'admin'
+                        );
+                        await sendEmail(mainTechEmail, subject, mainTechHtml);
 
                         // Notify Customer
                         if (customerData?.email) {
+                            const subcategoryName = complaintData.subcategory || 'kerosakan';
                             const custHtml = buildNotificationEmailHtml(
                                 customerData.name, subject,
-                                `Aduan anda (${reportNumber}) tidak dapat diselesaikan di rumah dan perlu dibawa pulang ke kedai oleh juruteknik. Sebab: "${remark || 'Tiada catatan'}".`,
+                                `${reportNumber} aduan anda telah update status progress repair kerosakan ${subcategoryName} oleh juruteknik kami (${techName}). Sila tekan semak aduan untuk lihat lebih lanjut.`,
                                 parseInt(id, 10), 'user'
                             );
                             await sendEmail(customerData.email, subject, custHtml);
