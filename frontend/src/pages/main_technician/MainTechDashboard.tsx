@@ -18,7 +18,7 @@ export default function MainTechDashboard() {
     const loadComplaints = async () => {
         try {
             const response = await api.get('/complaints?status=incomplete');
-            setComplaints(response.data.data || response.data || []);
+            setComplaints(response.data.complaints || response.data.data || []);
         } catch (error) {
             toast.error('Gagal memuatkan senarai Bawa Pulang');
         } finally {

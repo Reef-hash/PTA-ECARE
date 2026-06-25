@@ -41,14 +41,7 @@ export default function ForwardJobModal({ complaint, onClose, onSuccess }: Forwa
 
         setIsLoading(true);
         try {
-            // Re-assign the complaint to the selected technician.
-            await api.put(`/complaints/${complaint.id}/assign`, { technician_id: selectedTech });
-            
-            // Also add a remark that it was forwarded from Main Tech?
-            // Since there's an email notification requirement, this could be handled in the backend 
-            // inside the assign endpoint or a specific forward endpoint.
-            // But we will use the assign endpoint which handles sending assignment emails.
-            // Wait, I will create a specific endpoint `/complaints/:id/forward` for this to trigger the correct email logic.
+            // Forward the complaint to the selected technician
             await api.post(`/complaints/${complaint.id}/forward`, { technician_id: selectedTech });
 
             toast.success('Tugasan berjaya diagihkan');

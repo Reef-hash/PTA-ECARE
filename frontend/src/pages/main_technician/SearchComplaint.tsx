@@ -26,11 +26,12 @@ export default function SearchComplaint() {
         
         try {
             // Find complaints by customer IC
-            // the endpoint could be /complaints?ic_number=... or a specific search endpoint
-            const response = await api.get(`/complaints?ic_number=${icNumber.trim()}`);
-            setComplaints(response.data.data || response.data || []);
+            // the endpoint could be /complaints?search=...
+            const response = await api.get(`/complaints?search=${icNumber.trim()}`);
+            const fetchedComplaints = response.data.complaints || response.data.data || [];
+            setComplaints(fetchedComplaints);
             
-            if ((response.data.data || response.data || []).length === 0) {
+            if (fetchedComplaints.length === 0) {
                 toast.error('Tiada rekod aduan dijumpai untuk No. IC ini');
             }
         } catch (error) {
