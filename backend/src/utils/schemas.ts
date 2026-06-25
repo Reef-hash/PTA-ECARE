@@ -16,7 +16,7 @@ export const loginSchema = z.object({
     ic_number: z.string().optional(),
     username: z.string().optional(),
     password: z.string().min(1, 'Password is required'),
-    role: z.enum(['user', 'admin', 'technician']),
+    role: z.enum(['user', 'admin', 'technician', 'main_technician']),
 }).refine(data => data.ic_number || data.username, {
     message: 'IC number or username is required',
 });
