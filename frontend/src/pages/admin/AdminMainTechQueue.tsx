@@ -18,7 +18,7 @@ export default function AdminMainTechQueue() {
         try {
             // Fetch all complaints, filter for incomplete
             const response = await api.get('/complaints?status=incomplete');
-            setComplaints(response.data.data || response.data || []);
+            setComplaints(response.data.complaints || []);
         } catch (error) {
             toast.error('Gagal memuatkan senarai Bawa Pulang');
         } finally {
