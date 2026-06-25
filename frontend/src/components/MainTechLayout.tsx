@@ -8,16 +8,20 @@ import {
     Menu,
     X,
     User,
-    Settings
+    Settings,
+    ChevronDown,
+    ArrowLeft
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './LanguageSwitcher';
+import NotificationBell from './NotificationBell';
 
 interface MainTechLayoutProps {
     children: ReactNode;
+    breadcrumb?: string;
 }
 
-export default function MainTechLayout({ children }: MainTechLayoutProps) {
+export default function MainTechLayout({ children, breadcrumb }: MainTechLayoutProps) {
     const { logout, user } = useAuth();
     const { t } = useTranslation();
     const location = useLocation();
@@ -51,35 +55,9 @@ export default function MainTechLayout({ children }: MainTechLayoutProps) {
                     <div className="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center text-white font-bold text-xs">
                         MT
                     </div>
-                    <h1 className="text-sm font-bold truncate text-gray-800">MAIN TECH</h1>
+                    <h1 className="text-sm font-bold truncate text-gray-800">MAIN TECH PANEL</h1>
                 </div>
-                
-                <div className="flex items-center gap-2">
-                    <LanguageSwitcher className="text-gray-600 flex-shrink-0 !px-1 !py-1 !text-xs" />
-                    
-                    {/* Mobile Profile Dropdown */}
-                    <div className="relative">
-                        <button 
-                            onClick={() => setShowDropdown(!showDropdown)}
-                            className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center flex-shrink-0"
-                        >
-                            <User className="w-4 h-4" />
-                        </button>
-
-                        {showDropdown && (
-                            <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden py-1 z-50 animate-fade-in">
-                                <Link to="/main-tech/profile" className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                                    <Settings className="w-4 h-4 text-gray-400" />
-                                    {t('common_actions.profile_settings')}
-                                </Link>
-                                <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 w-full text-left">
-                                    <LogOut className="w-4 h-4 text-red-400" />
-                                    {t('common_actions.logout')}
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                </div>
+                <LanguageSwitcher className="text-gray-600 flex-shrink-0 !px-1 !py-1 !text-xs" />
             </div>
 
             {/* Sidebar Overlay */}
@@ -146,35 +124,53 @@ export default function MainTechLayout({ children }: MainTechLayoutProps) {
 
             {/* Main Content */}
             <div className="lg:pl-64 flex flex-col min-h-screen">
-                {/* Desktop Header */}
-                <header className="hidden lg:flex h-16 bg-white shadow-sm items-center justify-between px-8 sticky top-0 z-40 border-b border-gray-200">
-                    <h2 className="text-xl font-bold text-gray-800 tracking-tight">Pengurusan Utama</h2>
-                    <div className="flex items-center gap-6">
-                        <LanguageSwitcher />
+                {/* Header */}
+                <header className="mx-2 sm:mx-6 mt-4 px-2 sm:px-8 py-3 sm:py-4 flex items-center justify-between gap-2 bg-white/50 backdrop-blur-sm rounded-xl">
+                    <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+                        <button
+                            onClick={() => navigate(-1)}
+                            className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors flex-shrink-0"
+                            title={t('common.back') || 'Back'}
+                        >
+                            <ArrowLeft className="w-5 h-5" />
+                        </button>
+                        {breadcrumb && (
+                            <p className="text-xs sm:text-sm text-gray-500 truncate">
+                                <span className="text-gray-400">Pages</span>
+                                <span className="mx-1 sm:mx-2 text-gray-400">/</span>
+                                <span className="font-medium text-gray-700">{breadcrumb}</span>
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="flex items-center gap-1 sm:gap-4 flex-shrink-0">
+                        <LanguageSwitcher className="hidden sm:flex" />
+                        <NotificationBell />
                         
-                        {/* Profile Dropdown */}
+                        {/* User Profile - Top Right */}
                         <div className="relative">
                             <button 
                                 onClick={() => setShowDropdown(!showDropdown)}
-                                className="flex items-center gap-3 hover:bg-gray-50 p-2 rounded-xl transition-colors"
+                                className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100"
                             >
                                 <div className="text-right hidden sm:block">
-                                    <p className="text-sm font-semibold text-gray-900">{getUserName()}</p>
+                                    <p className="text-sm font-semibold text-gray-700">{getUserName()}</p>
                                     <p className="text-xs text-gray-500">MAIN TECHNICIAN</p>
                                 </div>
-                                <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center flex-shrink-0">
-                                    <User className="w-5 h-5" />
+                                <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold shadow-md">
+                                    {getUserName().charAt(0).toUpperCase()}
                                 </div>
+                                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
                             </button>
 
                             {showDropdown && (
-                                <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden py-1 z-50 animate-fade-in">
-                                    <Link to="/main-tech/profile" className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                                        <Settings className="w-4 h-4 text-gray-400" />
+                                <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 animate-fade-in z-50">
+                                    <Link to="/main-tech/profile" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                        <Settings className="w-4 h-4" />
                                         {t('common_actions.profile_settings')}
                                     </Link>
-                                    <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 w-full text-left">
-                                        <LogOut className="w-4 h-4 text-red-400" />
+                                    <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors w-full text-left">
+                                        <LogOut className="w-4 h-4" />
                                         {t('common_actions.logout')}
                                     </button>
                                 </div>

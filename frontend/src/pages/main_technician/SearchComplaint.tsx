@@ -68,7 +68,7 @@ export default function SearchComplaint() {
     };
 
     return (
-        <MainTechLayout>
+        <MainTechLayout breadcrumb="Semak Aduan (IC)">
             <div className="max-w-5xl mx-auto space-y-6">
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <div className="flex items-center gap-4 mb-6">

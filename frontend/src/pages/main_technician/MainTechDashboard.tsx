@@ -54,7 +54,7 @@ export default function MainTechDashboard() {
     };
 
     return (
-        <MainTechLayout>
+        <MainTechLayout breadcrumb="Dashboard">
             <div className="max-w-7xl mx-auto space-y-6">
                 <div className="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <div className="flex items-center gap-4">
