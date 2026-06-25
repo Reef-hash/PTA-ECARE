@@ -26,24 +26,38 @@ export default function AdminMainTechQueue() {
         }
     };
 
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('ms-MY', {
-            year: 'numeric', month: 'short', day: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-        });
+    const formatDate = (dateString?: string) => {
+        if (!dateString) return '-';
+        try {
+            return new Date(dateString).toLocaleDateString('ms-MY', {
+                year: 'numeric', month: 'short', day: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        } catch (e) {
+            return '-';
+        }
     };
 
     // Helper to extract the latest remark and transport details
     const getIncompleteDetails = (complaint: Complaint) => {
-        if (!complaint.remarks || complaint.remarks.length === 0) return { remark: '-', transport: '-' };
-        const sorted = [...complaint.remarks].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        // Find the remark that caused the incomplete status
-        const incompleteRemark = sorted.find(r => r.status === 'incomplete') || sorted[0];
+        if (!complaint.remarks || !Array.isArray(complaint.remarks) || complaint.remarks.length === 0) return { remark: '-', transport: '-' };
         
-        return {
-            remark: incompleteRemark.remark || '-',
-            transport: incompleteRemark.note_transport || '-'
-        };
+        try {
+            const sorted = [...complaint.remarks].sort((a, b) => {
+                const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+                const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+                return dateB - dateA;
+            });
+            // Find the remark that caused the incomplete status
+            const incompleteRemark = sorted.find(r => r.status === 'incomplete') || sorted[0];
+            
+            return {
+                remark: incompleteRemark?.remark || '-',
+                transport: incompleteRemark?.note_transport || '-'
+            };
+        } catch (e) {
+            return { remark: '-', transport: '-' };
+        }
     };
 
     return (
