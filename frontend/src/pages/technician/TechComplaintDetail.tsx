@@ -450,6 +450,7 @@ export default function TechComplaintDetail() {
                                                         {remark.type === 'tech' && (
                                                             <div className="flex gap-2">
                                                                 <button
+                                                                    type="button"
                                                                     onClick={() => {
                                                                         console.log('Edit clicked for remark:', remark);
                                                                         handleEditRemark(remark as any);
@@ -460,6 +461,7 @@ export default function TechComplaintDetail() {
                                                                     Edit
                                                                 </button>
                                                                 <button
+                                                                    type="button"
                                                                     onClick={() => {
                                                                         console.log('Delete clicked for remark:', remark);
                                                                         handleDeleteRemark(remark.id);
