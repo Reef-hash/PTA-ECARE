@@ -236,6 +236,14 @@ function App() {
                 }
             />
             <Route
+                path="/admin/incomplete-bawa-pulang"
+                element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                        <AllComplaints status="incomplete" />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
                 path="/admin/complaint/:id"
                 element={
                     <ProtectedRoute allowedRoles={['admin']}>

@@ -124,6 +124,7 @@
         "in_process": "Dalam Proses",
         "closed": "Selesai",
         "cancelled": "Dibatalkan",
+        "incomplete": "Bawa Pulang",
         "technician_stats": "Statistik Juruteknik",
         "no_technicians": "Tiada juruteknik"
     },
@@ -205,6 +206,7 @@
         "title_not_forwarded": "Aduan Job Belum Diagih",
         "title_job_assigned": "Aduan Sudah Diagih",
         "title_cancelled": "Aduan Dibatalkan",
+        "title_incomplete": "Aduan Bawa Pulang",
         "search_placeholder": "Cari no laporan, no IC, nama, tarikh...",
         "no_complaints": "Tiada aduan dijumpai",
         "not_assigned": "Job Belum Diagih",

@@ -124,6 +124,7 @@
         "in_process": "In Process",
         "closed": "Complete",
         "cancelled": "Cancelled",
+        "incomplete": "Brought Back",
         "technician_stats": "Technician Statistics",
         "no_technicians": "No technicians found"
     },
@@ -205,6 +206,7 @@
         "title_not_forwarded": "Job Not Assigned Complaints",
         "title_job_assigned": "Job Assigned Complaints",
         "title_cancelled": "Cancelled Complaints",
+        "title_incomplete": "Incomplete / Brought Back",
         "search_placeholder": "Search report no, IC, name, date...",
         "no_complaints": "No complaints found",
         "not_assigned": "Job Not Assigned",

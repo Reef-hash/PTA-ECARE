@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { parseNotificationMessage } from '../../utils/notificationParser';
 
 interface AllComplaintsProps {
-    status?: 'all' | 'pending' | 'in_process' | 'closed' | 'not_forwarded' | 'job_assigned' | 'cancelled';
+    status?: 'all' | 'pending' | 'in_process' | 'closed' | 'not_forwarded' | 'job_assigned' | 'cancelled' | 'incomplete';
 }
 
 interface Technician {
@@ -45,6 +45,7 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
             case 'not_forwarded': return t('complaint_list.title_not_forwarded');
             case 'job_assigned': return t('complaint_list.title_job_assigned');
             case 'cancelled': return t('complaint_list.title_cancelled');
+            case 'incomplete': return t('complaint_list.title_incomplete');
             default: return t('complaint_list.title_all');
         }
     };
@@ -233,6 +234,8 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                 return <span className="badge badge-in-process">{t('table.in_process')}</span>;
             case 'closed':
                 return <span className="badge badge-closed">{t('table.closed')}</span>;
+            case 'incomplete':
+                return <span className="badge bg-amber-100 text-amber-700 border-amber-200">{t('dashboard.incomplete') || 'Bawa Pulang'}</span>;
             case 'cancelled':
                 return <span className="badge bg-purple-100 text-purple-700">{t('dashboard.cancelled') || 'Dibatalkan'}</span>;
             default:

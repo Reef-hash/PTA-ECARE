@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Clock, AlertTriangle, Forward, CheckCircle, Users, XCircle, UserCheck } from 'lucide-react';
+import { FileText, Clock, AlertTriangle, Forward, CheckCircle, Users, XCircle, UserCheck, PackageOpen } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 import { DashboardStats, TechnicianStats } from '../../types';
@@ -59,6 +59,7 @@ export default function AdminDashboard() {
         { label: t('dashboard.job_assigned'), value: stats.assigned, icon: UserCheck, color: 'teal', path: '/admin/job-assigned' },
         { label: t('dashboard.completed'), value: stats.closed, icon: CheckCircle, color: 'green', path: '/admin/closed' },
         { label: t('dashboard.cancelled'), value: stats.cancelled, icon: XCircle, color: 'purple', path: '/admin/cancelled' },
+        { label: t('dashboard.incomplete'), value: stats.incomplete, icon: PackageOpen, color: 'amber', path: '/admin/incomplete-bawa-pulang' },
     ];
 
     const getColorClasses = (color: string) => {
@@ -70,6 +71,7 @@ export default function AdminDashboard() {
             green: { bg: 'bg-green-100', icon: 'text-green-600', border: 'border-l-green-500' },
             teal: { bg: 'bg-teal-100', icon: 'text-teal-600', border: 'border-l-teal-500' },
             purple: { bg: 'bg-purple-100', icon: 'text-purple-600', border: 'border-l-purple-500' },
+            amber: { bg: 'bg-amber-100', icon: 'text-amber-600', border: 'border-l-amber-500' },
         };
         return colors[color] || colors.blue;
     };
@@ -77,7 +79,7 @@ export default function AdminDashboard() {
     return (
         <AdminLayout title="Dashboard" breadcrumb="Dashboard">
             {/* Stats Grid */}
-            <div className="flex overflow-x-auto pb-4 gap-4 sm:grid sm:grid-cols-2 lg:grid-cols-7 mb-8 sm:pb-0 remove-scrolling">
+            <div className="flex overflow-x-auto pb-4 gap-4 sm:grid sm:grid-cols-2 lg:grid-cols-8 mb-8 sm:pb-0 remove-scrolling">
                 {statCards.map((card) => {
                     const Icon = card.icon;
                     const colors = getColorClasses(card.color);
