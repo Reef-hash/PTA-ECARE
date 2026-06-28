@@ -475,11 +475,24 @@ export default function TechComplaintDetail() {
                                                 </div>
 
                                                 {remark.status && (
-                                                    <p className="text-sm mb-1"><strong>{t('common_actions.status')}:</strong> {remark.status === 'pending' ? t('admin_users.status_pending') : remark.status === 'in_process' ? t('admin_users.status_in_process') : t('admin_users.status_closed')}</p>
+                                                    <p className="text-sm mb-1"><strong>{t('common_actions.status')}:</strong> {remark.status === 'pending' ? t('admin_users.status_pending') : remark.status === 'in_process' ? t('admin_users.status_in_process') : remark.status === 'incomplete' ? 'Incomplete / Bawa Pulang' : remark.status === 'ready_pickup' ? 'Sedia Diambil / Ready Pickup' : remark.status === 'cancelled' ? 'Dibatalkan' : t('admin_users.status_closed')}</p>
                                                 )}
-                                                {remark.remark && <p className="text-gray-700">{remark.remark}</p>}
-                                                {remark.note_transport && <p className="text-sm text-gray-600 mt-1"><strong>{t('technician_dashboard.label_transport_note')}:</strong> {remark.note_transport}</p>}
-                                                {remark.checking && <p className="text-sm text-gray-600 mt-1"><strong>{t('technician_dashboard.label_checking')}:</strong> {remark.checking}</p>}
+                                                {/* Special display for Incomplete / Bawa Pulang */}
+                                                {remark.status === 'incomplete' ? (
+                                                    <div className="mt-2 bg-orange-50 border border-orange-200 rounded-lg p-3 space-y-1.5">
+                                                        <p className="text-sm text-orange-800"><strong>🔧 Juruteknik:</strong> {remark.type === 'tech' && (remark as any).technicians?.name ? (remark as any).technicians.name : '-'}</p>
+                                                        <p className="text-sm text-orange-800"><strong>📍 Lokasi:</strong> {complaint?.users?.address || '-'}</p>
+                                                        <p className="text-sm text-orange-800"><strong>📅 Tarikh:</strong> {formatDate(remark.created_at)}</p>
+                                                        <p className="text-sm text-orange-800"><strong>📝 Sebab Bawa Pulang:</strong> {remark.remark || '-'}</p>
+                                                        {remark.note_transport && <p className="text-sm text-orange-800"><strong>🚗 Transport Note:</strong> {remark.note_transport}</p>}
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        {remark.remark && <p className="text-gray-700">{remark.remark}</p>}
+                                                        {remark.note_transport && <p className="text-sm text-gray-600 mt-1"><strong>{t('technician_dashboard.label_transport_note')}:</strong> {remark.note_transport}</p>}
+                                                        {remark.checking && <p className="text-sm text-gray-600 mt-1"><strong>{t('technician_dashboard.label_checking')}:</strong> {remark.checking}</p>}
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
                                     ))}
