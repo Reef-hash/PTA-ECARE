@@ -356,4 +356,4 @@ INSERT INTO states (name, description) VALUES
 -- ============================================
 
 INSERT INTO admins (username, password_hash, admin_name, email, contact_number) VALUES
-('admin', '$2b$10$8K1MqJ6qGq1JW5lW5Kz5XuYz3UxWJHK8v0RAEMYwjvL1G.6xkWyai', 'System Administrator', 'ptaservicedept@gmail.com', 0123456789);
+('admin', '$2b$10$8K1MqJ6qGq1JW5lW5Kz5XuYz3UxWJHK8v0RAEMYwjvL1G.6xkWyai', 'System Administrator', 'adminecare.ptasssb@gmail.com', 0123456789);

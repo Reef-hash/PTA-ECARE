@@ -288,9 +288,9 @@ export const resetTechnicianPassword = async (req: Request, res: Response): Prom
             }
         }
 
-        // Send email notification to admin at ptaservicedept@gmail.com
+        // Send email notification to admin at adminecare.ptasssb@gmail.com
         try {
-            const adminEmail = 'ptaservicedept@gmail.com';
+            const adminEmail = 'adminecare.ptasssb@gmail.com';
             const subject = 'Notifikasi Penetapan Semula Kata Laluan Juruteknik';
             const message = `Anda telah berjaya menetapkan semula kata laluan baharu untuk Juruteknik <strong>${techRow.name || techRow.username}</strong>.\n\nKata Laluan Baharu: ${new_password}`;
             const emailHtml = buildNotificationEmailHtml(

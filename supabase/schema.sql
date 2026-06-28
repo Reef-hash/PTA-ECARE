@@ -370,7 +370,7 @@ INSERT INTO states (name, description) VALUES
 -- ============================================
 
 INSERT INTO admins (username, password_hash, admin_name, email, contact_number) VALUES
-('admin', '$2b$10$YourHashedPasswordHere', 'System Administrator', 'ptaservicedept@gmail.com', 0123456789);
+('admin', '$2b$10$YourHashedPasswordHere', 'System Administrator', 'adminecare.ptasssb@gmail.com', 0123456789);
 
 -- ============================================
 -- ROW LEVEL SECURITY (RLS)

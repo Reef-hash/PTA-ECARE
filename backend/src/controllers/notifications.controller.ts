@@ -308,8 +308,8 @@ export const createNotification = async (
                     .select('email, admin_name')
                     .eq('id', userId)
                     .single();
-                // Ensure all notifications for admin role go to ptaservicedept@gmail.com
-                email = 'ptaservicedept@gmail.com';
+                // Ensure all notifications for admin role go to adminecare.ptasssb@gmail.com
+                email = 'adminecare.ptasssb@gmail.com';
                 name = adminProfile?.admin_name || 'Administrator';
             } else if (role === 'technician') {
                 const { data: techProfile } = await supabaseAdmin

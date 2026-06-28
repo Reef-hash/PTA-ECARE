@@ -631,7 +631,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                 // Special Admin Email for Requirement 3: technician updates status from in_process to complete
                 if (isTransitionFromInProcessToComplete || isTransitionFromIncompleteToComplete) {
                     try {
-                        const adminEmail = 'ptaservicedept@gmail.com';
+                        const adminEmail = 'adminecare.ptasssb@gmail.com';
                         const subject = `Aduan Selesai: ${reportNumber}`;
                         const emailHtml = buildNotificationEmailHtml(
                             'Administrator',
@@ -661,7 +661,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                 // New Email requirement: Transition to Incomplete
                 if (isTransitionToIncomplete) {
                     try {
-                        const adminEmail = 'ptaservicedept@gmail.com';
+                        const adminEmail = 'adminecare.ptasssb@gmail.com';
                         const mainTechEmail = 'technicianasign@gmail.com';
                         const subject = `Aduan Bawa Pulang (Incomplete): ${reportNumber}`;
                         
@@ -1308,7 +1308,7 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
 
         // Email Notifications for Forward Job
         try {
-            const adminEmail = 'ptaservicedept@gmail.com';
+            const adminEmail = 'adminecare.ptasssb@gmail.com';
             const subject = `Agihan Tugasan Aduan: ${complaint.report_number}`;
             const customerName = (complaint.users as any)?.full_name || (complaint.users as any)?.name || 'Pelanggan';
             const customerEmail = (complaint.users as any)?.email;

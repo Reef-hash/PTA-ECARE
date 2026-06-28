@@ -541,7 +541,7 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
             console.error('Failed to send welcome email:', emailError);
         }
 
-        // Notify Admins via DB and Email directly to ptaservicedept@gmail.com
+        // Notify Admins via DB and Email directly to adminecare.ptasssb@gmail.com
         try {
             const { data: admins } = await supabaseAdmin.from('admins').select('id');
             if (admins && admins.length > 0) {
@@ -556,7 +556,7 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
                 await supabaseAdmin.from('notifications').insert(notifications);
             }
 
-            const adminEmail = 'ptaservicedept@gmail.com';
+            const adminEmail = 'adminecare.ptasssb@gmail.com';
             const emailSubject = 'Pendaftaran Pengguna Baru';
             const emailHtml = buildNotificationEmailHtml(
                 'Administrator',
