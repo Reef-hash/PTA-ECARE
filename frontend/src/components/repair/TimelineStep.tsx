@@ -12,11 +12,10 @@ interface TimelineStepProps {
     date: string | null;
     isCurrent: boolean;
     isCompleted: boolean;
-    isLast: boolean;
     remarks?: StepRemark[];
 }
 
-export default function TimelineStep({ label, date, isCurrent, isCompleted, isLast, remarks }: TimelineStepProps) {
+export default function TimelineStep({ label, date, isCurrent, isCompleted, remarks }: TimelineStepProps) {
     const circleColor = isCompleted
         ? 'bg-green-500'
         : isCurrent
@@ -43,16 +42,6 @@ export default function TimelineStep({ label, date, isCurrent, isCompleted, isLa
                     }}
                     transition={{ duration: 0.5, ease: 'easeInOut' }}
                 />
-                {!isLast && (
-                    <motion.div
-                        className={`w-0.5 h-10 ${isCompleted ? 'bg-green-500' : 'bg-gray-200'}`}
-                        initial={false}
-                        animate={{
-                            backgroundColor: isCompleted ? '#22c55e' : '#e5e7eb',
-                        }}
-                        transition={{ duration: 0.5, delay: 0.2 }}
-                    />
-                )}
             </div>
             <motion.div
                 className="ml-4 pb-8"

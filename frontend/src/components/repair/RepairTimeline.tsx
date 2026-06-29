@@ -28,12 +28,14 @@ export default function RepairTimeline({ currentStatus, timeline, stepRemarks }:
             transition={{ duration: 0.4, delay: 0.1 }}
         >
             <h3 className="text-lg font-semibold mb-6">Repair Progress</h3>
-            <div className="flex flex-col">
+            <div className="relative">
+                {/* Single continuous vertical line */}
+                <div className="absolute left-[10px] top-3 bottom-3 w-0.5 bg-gray-200 rounded" />
+
                 {STEP_LABELS.map((step, index) => {
                     const timelineItem = timeline.find((t) => t.status === step.status);
                     const isCompleted = index < currentIndex;
                     const isCurrent = index === currentIndex;
-                    const isLast = index === STEP_LABELS.length - 1;
 
                     return (
                         <TimelineStep
@@ -42,7 +44,6 @@ export default function RepairTimeline({ currentStatus, timeline, stepRemarks }:
                             date={timelineItem?.date || null}
                             isCurrent={isCurrent}
                             isCompleted={isCompleted}
-                            isLast={isLast}
                             remarks={stepRemarks?.[step.status]}
                         />
                     );
