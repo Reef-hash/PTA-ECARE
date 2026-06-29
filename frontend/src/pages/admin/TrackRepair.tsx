@@ -239,13 +239,6 @@ export default function TrackRepair() {
                             <p className="font-medium text-sm">{formatDate(complaint.created_at)}</p>
                         </div>
                     </div>
-
-                    {complaint.details && (
-                        <div className="mt-4 pt-4 border-t">
-                            <p className="text-xs text-gray-500 mb-1">Defect Details</p>
-                            <p className="text-gray-700 text-sm whitespace-pre-wrap">{complaint.details}</p>
-                        </div>
-                    )}
                 </div>
 
                 {/* Repair Timeline Stepper with Remarks */}
