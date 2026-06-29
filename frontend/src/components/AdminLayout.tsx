@@ -92,7 +92,7 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
     return (
         <div className="min-h-screen bg-gray-100 overflow-x-hidden">
             {/* Mobile Header */}
-            <div className="lg:hidden bg-dark-900 text-white p-3 flex items-center gap-2">
+            <div className="lg:hidden bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-3 flex items-center gap-2">
                 <button onClick={() => setSidebarOpen(true)} className="p-1 flex-shrink-0">
                     <Menu className="w-6 h-6" />
                 </button>
