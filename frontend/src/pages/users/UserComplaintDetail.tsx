@@ -147,22 +147,6 @@ export default function UserComplaintDetail() {
                             {getStatusBadge(complaint.status)}
                         </div>
 
-                        {/* Track Repair under status */}
-                        <div className="mb-6 p-4 bg-indigo-50 border border-indigo-100 rounded-lg">
-                            <h3 className="font-semibold mb-2 flex items-center gap-2 text-indigo-800">
-                                <Clock className="w-5 h-5" />
-                                Track Repair
-                            </h3>
-                            <p className="text-sm text-indigo-600 mb-3">View repair progress and history.</p>
-                            <Link
-                                to={`/users/complaint/${id}/track-repair`}
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
-                            >
-                                <Eye className="w-4 h-4" />
-                                View Track Repair
-                            </Link>
-                        </div>
-
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="flex items-start gap-3">
                                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -378,7 +362,21 @@ export default function UserComplaintDetail() {
 
                 {/* Sidebar */}
                 <div className="space-y-6">
-
+                    {/* Track Repair */}
+                    <div className="card">
+                        <h3 className="font-semibold mb-4 flex items-center gap-2">
+                            <Clock className="w-5 h-5" />
+                            Track Repair
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-4">View repair progress and history.</p>
+                        <Link
+                            to={`/users/complaint/${id}/track-repair`}
+                            className="btn-primary w-full flex items-center justify-center gap-2"
+                        >
+                            <Eye className="w-4 h-4" />
+                            View Track Repair
+                        </Link>
+                    </div>
                     {/* Dates */}
                     <div className="card">
                         <h3 className="font-semibold mb-4">{t('common_actions.date')}</h3>
