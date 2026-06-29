@@ -79,7 +79,7 @@ export default function AdminDashboard() {
     return (
         <AdminLayout title="Dashboard" breadcrumb="Dashboard">
             {/* Stats Grid */}
-            <div className="flex overflow-x-auto pb-4 gap-4 sm:grid sm:grid-cols-2 lg:grid-cols-8 mb-8 sm:pb-0 remove-scrolling">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 {statCards.map((card) => {
                     const Icon = card.icon;
                     const colors = getColorClasses(card.color);
@@ -87,7 +87,7 @@ export default function AdminDashboard() {
                         <Link
                             key={card.label}
                             to={card.path}
-                            className={`stat-card flex-shrink-0 w-[calc(100vw-4rem)] sm:w-auto ${colors.border} hover:shadow-lg transition-shadow`}
+                            className={`stat-card ${colors.border} hover:shadow-lg transition-shadow`}
                         >
                             <div className="flex items-center justify-between">
                                 <div>
