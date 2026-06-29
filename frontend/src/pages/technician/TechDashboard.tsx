@@ -173,7 +173,7 @@ export default function TechDashboard() {
     return (
         <AdminLayout title={t('tech_dashboard.title')} breadcrumb={t('tech_dashboard.title')}>
             {/* Stats Grid */}
-            <div className="flex overflow-x-auto pb-4 gap-4 sm:grid sm:grid-cols-3 mb-8 sm:pb-0 remove-scrolling">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 {statCards.map((card) => {
                     const Icon = card.icon;
                     const colors = getColorClasses(card.color);
@@ -181,7 +181,7 @@ export default function TechDashboard() {
                         <Link
                             key={card.label}
                             to={card.path}
-                            className={`stat-card flex-shrink-0 w-64 sm:w-auto ${colors.border} hover:shadow-lg transition-shadow cursor-pointer`}
+                            className={`stat-card ${colors.border} hover:shadow-lg transition-shadow cursor-pointer`}
                         >
                             <div className="flex items-center justify-between">
                                 <div>

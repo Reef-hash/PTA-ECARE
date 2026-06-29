@@ -252,8 +252,8 @@ export default function UserDashboard() {
             </div>
 
             {/* Stats Grid */}
-            <div className="flex overflow-x-auto pb-4 gap-6 md:grid md:grid-cols-5 mb-8 md:pb-0 remove-scrolling">
-                <Link to="/users/complaint-history" className="stat-card flex-shrink-0 w-64 md:w-auto border-l-blue-500 hover:shadow-lg transition-shadow cursor-pointer">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+                <Link to="/users/complaint-history" className="stat-card border-l-blue-500 hover:shadow-lg transition-shadow cursor-pointer">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-gray-500 text-sm">{t('dashboard.total_complaints')}</p>
@@ -265,7 +265,7 @@ export default function UserDashboard() {
                     </div>
                 </Link>
 
-                <Link to="/users/complaint-history?status=pending" className="stat-card flex-shrink-0 w-64 md:w-auto border-l-orange-500 hover:shadow-lg transition-shadow cursor-pointer">
+                <Link to="/users/complaint-history?status=pending" className="stat-card border-l-orange-500 hover:shadow-lg transition-shadow cursor-pointer">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-gray-500 text-sm">{t('dashboard.pending')}</p>
@@ -277,7 +277,7 @@ export default function UserDashboard() {
                     </div>
                 </Link>
 
-                <Link to="/users/complaint-history?status=in_process" className="stat-card flex-shrink-0 w-64 md:w-auto border-l-yellow-500 hover:shadow-lg transition-shadow cursor-pointer">
+                <Link to="/users/complaint-history?status=in_process" className="stat-card border-l-yellow-500 hover:shadow-lg transition-shadow cursor-pointer">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-gray-500 text-sm">{t('dashboard.in_process')}</p>
@@ -289,7 +289,7 @@ export default function UserDashboard() {
                     </div>
                 </Link>
 
-                <Link to="/users/complaint-history?status=closed" className="stat-card flex-shrink-0 w-64 md:w-auto border-l-green-500 hover:shadow-lg transition-shadow cursor-pointer">
+                <Link to="/users/complaint-history?status=closed" className="stat-card border-l-green-500 hover:shadow-lg transition-shadow cursor-pointer">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-gray-500 text-sm">{t('dashboard.closed')}</p>
@@ -301,7 +301,7 @@ export default function UserDashboard() {
                     </div>
                 </Link>
 
-                <Link to="/users/complaint-history?status=cancelled" className="stat-card flex-shrink-0 w-64 md:w-auto border-l-red-500 hover:shadow-lg transition-shadow cursor-pointer">
+                <Link to="/users/complaint-history?status=cancelled" className="stat-card border-l-red-500 hover:shadow-lg transition-shadow cursor-pointer">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-gray-500 text-sm">{t('dashboard.cancelled') || 'Dibatalkan'}</p>
