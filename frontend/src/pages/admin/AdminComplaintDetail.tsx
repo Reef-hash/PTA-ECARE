@@ -525,6 +525,21 @@ export default function AdminComplaintDetail() {
 
                 {/* Sidebar */}
                 <div className="space-y-6">
+                    {/* Track Repair */}
+                    <div className="card">
+                        <h3 className="font-semibold mb-4 flex items-center gap-2">
+                            <Clock className="w-5 h-5" />
+                            Track Repair
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-4">View repair progress and history for this complaint.</p>
+                        <Link
+                            to={`/admin/complaint/${id}/track-repair`}
+                            className="btn-primary w-full flex items-center justify-center gap-2"
+                        >
+                            <Eye className="w-4 h-4" />
+                            View Track Repair
+                        </Link>
+                    </div>
                     {/* Dates */}
                     <div className="card">
                         <h3 className="font-semibold mb-4">{t('admin_complaint_detail.dates')}</h3>
