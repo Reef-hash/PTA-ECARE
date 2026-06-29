@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, MapPin, Search, Eye, Clock } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, MapPin, Search, Eye, Clock, Key } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 import { User, Complaint } from '../../types';
@@ -222,6 +222,44 @@ export default function UserDetails() {
                                 <p className="font-medium text-gray-800 pl-6">{user.contact_no_2}</p>
                             </div>
                         )}
+
+                        {/* 5. Username (IC Number) */}
+                        <div>
+                            <div className="flex items-center gap-2 mb-1">
+                                <Key className="w-4 h-4 text-gray-400" />
+                                <span className="text-gray-500">Username</span>
+                            </div>
+                            <p className="font-medium text-gray-800 pl-6">{user.ic_number}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Password Reset */}
+                <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-amber-100 rounded-lg">
+                                <Key className="w-5 h-5 text-amber-600" />
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-gray-800">Password</h3>
+                                <p className="text-sm text-gray-500">Kata laluan tidak boleh dipaparkan. Anda boleh reset jika perlu.</p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={async () => {
+                                if (!window.confirm('Reset kata laluan untuk pengguna ini?')) return;
+                                try {
+                                    const res = await api.post(`/admin/users/${id}/reset-password`);
+                                    toast.success(`Password baru: ${res.data.new_password}`, { duration: 10000 });
+                                } catch (err: any) {
+                                    toast.error(err.response?.data?.error || 'Gagal reset password');
+                                }
+                            }}
+                            className="btn-primary text-sm px-4 py-2"
+                        >
+                            Reset Password
+                        </button>
                     </div>
                 </div>
 

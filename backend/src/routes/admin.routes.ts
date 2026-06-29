@@ -21,6 +21,7 @@ import {
     updateUserStatus,
     createUser,
     deleteUser,
+    resetUserPassword,
     getAdminProfile,
     updateAdminProfile,
     updateAdminPassword,
@@ -58,6 +59,7 @@ router.get('/users', getUsers);
 router.get('/users/:id', getUser);
 router.post('/users', validate(createUserSchema), createUser);
 router.put('/users/:id/status', validate(updateUserStatusSchema), updateUserStatus);
+router.post('/users/:id/reset-password', resetUserPassword);
 router.delete('/users/:id', deleteUser);
 
 export default router;

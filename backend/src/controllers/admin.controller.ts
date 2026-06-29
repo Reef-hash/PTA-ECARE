@@ -713,3 +713,52 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+// Reset user password
+export const resetUserPassword = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { id } = req.params;
+        const newPassword = Math.random().toString(36).slice(-8) + Math.floor(Math.random() * 100).toString();
+        const password_hash = await bcrypt.hash(newPassword, 10);
+
+        const { data: userRow, error: fetchError } = await supabaseAdmin
+            .from('users')
+            .select('full_name, email, ic_number')
+            .eq('id', id)
+            .single();
+
+        if (fetchError || !userRow) {
+            res.status(404).json({ error: 'User not found' });
+            return;
+        }
+
+        const { error } = await supabaseAdmin
+            .from('users')
+            .update({ password_hash, updated_at: new Date().toISOString() })
+            .eq('id', id);
+
+        if (error) throw error;
+
+        if (userRow.email) {
+            try {
+                const subject = 'Kata Laluan E-CARE Telah Diset Semula';
+                const message = `Kata laluan baharu anda: ${newPassword}\n\nNo IC: ${userRow.ic_number}\n\nSila log masuk menggunakan kata laluan baharu ini.`;
+                const emailHtml = buildNotificationEmailHtml(
+                    userRow.full_name || 'Pengguna',
+                    subject,
+                    message,
+                    undefined,
+                    'no_link'
+                );
+                await sendEmail(userRow.email, subject, emailHtml);
+            } catch (emailErr) {
+                console.error('Failed to send user password reset email:', emailErr);
+            }
+        }
+
+        res.json({ message: 'Password reset successful', new_password: newPassword, ic_number: userRow.ic_number });
+    } catch (error) {
+        console.error('Reset user password error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
