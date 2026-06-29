@@ -230,19 +230,21 @@ export default function TechDashboard() {
                                         <td className="px-4 py-3 text-center text-gray-500 font-medium whitespace-nowrap">
                                             {index + 1}
                                         </td>
-                                        <td className="px-4 py-3 whitespace-nowrap">
-                                            <Link
-                                                to={`/admin/technician/complaint/${complaint.id}`}
-                                                className="text-green-600 hover:text-green-700 font-medium"
-                                            >
-                                                {complaint.report_number}
-                                            </Link>
-                                            <Link
-                                                to={`/admin/technician/complaint/${complaint.id}/track-repair`}
-                                                className="inline-block mt-1 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-2 py-0.5 rounded transition-colors"
-                                            >
-                                                TRACK REPAIR
-                                            </Link>
+                                        <td className="px-4 py-3">
+                                            <div className="flex flex-col gap-1">
+                                                <Link
+                                                    to={`/admin/technician/complaint/${complaint.id}`}
+                                                    className="text-green-600 hover:text-green-700 font-medium"
+                                                >
+                                                    {complaint.report_number}
+                                                </Link>
+                                                <Link
+                                                    to={`/admin/technician/complaint/${complaint.id}/track-repair`}
+                                                    className="text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-2 py-0.5 rounded transition-colors w-fit"
+                                                >
+                                                    TRACK REPAIR
+                                                </Link>
+                                            </div>
                                         </td>
                                         <td className="px-4 py-3 whitespace-nowrap">
                                             <div>
