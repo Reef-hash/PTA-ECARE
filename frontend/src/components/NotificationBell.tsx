@@ -4,7 +4,6 @@ import { Bell } from 'lucide-react';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import toast from 'react-hot-toast';
 
 
 interface Notification {
@@ -246,22 +245,7 @@ export default function NotificationBell() {
 
                 if (hasNewCount || hasNewTopId) {
                     playNotificationSound();
-                    if (latestNotif) {
-                        const translated = getTranslatedNotification(latestNotif);
-                        toast(
-                            <div
-                                onClick={() => {
-                                    toast.dismiss();
-                                    handleClickNotification(latestNotif);
-                                }}
-                                className="cursor-pointer"
-                            >
-                                <p className="font-semibold text-sm">{translated.title}</p>
-                                <p className="text-xs text-gray-600 mt-1">{translated.message}</p>
-                            </div>,
-                            { duration: 5000 }
-                        );
-                    }
+                    if (!isOpen) setIsOpen(true);
                 }
             }
 
