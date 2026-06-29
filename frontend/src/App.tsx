@@ -27,6 +27,7 @@ import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AllComplaints from './pages/admin/AllComplaints';
 import AdminComplaintDetail from './pages/admin/AdminComplaintDetail';
+import TrackRepair from './pages/admin/TrackRepair';
 import Technicians from './pages/admin/Technicians';
 import TechnicianForm from './pages/admin/TechnicianForm';
 import TechnicianDetail from './pages/admin/TechnicianDetail';
@@ -248,6 +249,14 @@ function App() {
                 element={
                     <ProtectedRoute allowedRoles={['admin']}>
                         <AdminComplaintDetail />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/admin/complaint/:id/track-repair"
+                element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                        <TrackRepair />
                     </ProtectedRoute>
                 }
             />
