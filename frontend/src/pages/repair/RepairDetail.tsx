@@ -1,26 +1,12 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { ArrowLeft, User, Wrench, Calendar } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
+import UserLayout from '../../components/UserLayout';
 import RepairTimeline from '../../components/repair/RepairTimeline';
-import { RepairRecord, RepairTimelineItem } from '../../types';
-
-const DUMMY_REPAIR: RepairRecord = {
-    id: 1,
-    customer_name: 'Ahmad Zahid',
-    device_name: 'HP LaserJet Pro MFP',
-    serial_number: 'SN-HP-2024-001',
-    problem: 'Printer tidak mahu hidup, lampu power berkelip-kelip.',
-    technician: 'Ahmad Technician',
-    remark: 'Perlu ganti power supply unit.',
-    estimated_completion: '5 Jul 2026',
-    status: 'IN_PROCESS',
-    created_at: '2026-06-28T10:20:00Z',
-    pending_at: '2026-06-28T10:20:00Z',
-    in_process_at: '2026-06-29T11:10:00Z',
-    in_complete_at: null,
-    completed_at: null,
-};
+import api from '../../services/api';
+import { Complaint, ComplaintRemark, TechnicianRemark, RepairStatus, RepairTimelineItem } from '../../types';
+import { useTranslation } from 'react-i18next';
 
 function formatDate(dateStr: string | null): string | null {
     if (!dateStr) return null;
@@ -35,12 +21,46 @@ function formatDate(dateStr: string | null): string | null {
     });
 }
 
-function buildTimeline(repair: RepairRecord): RepairTimelineItem[] {
+function mapComplaintStatus(status: string): RepairStatus {
+    switch (status) {
+        case 'pending': return 'PENDING';
+        case 'in_process': return 'IN_PROCESS';
+        case 'incomplete': return 'IN_COMPLETE';
+        case 'ready_pickup':
+        case 'closed': return 'COMPLETE';
+        default: return 'PENDING';
+    }
+}
+
+function buildTimelineFromRemarks(remarks: { status: string | null; created_at: string }[]): RepairTimelineItem[] {
+    const statusOrder = ['pending', 'in_process', 'incomplete', 'ready_pickup', 'closed'];
+    const stepMap: Record<string, RepairStatus> = {
+        pending: 'PENDING',
+        in_process: 'IN_PROCESS',
+        incomplete: 'IN_COMPLETE',
+        ready_pickup: 'COMPLETE',
+        closed: 'COMPLETE',
+    };
+
+    const foundDates: Record<string, string | null> = {
+        PENDING: null,
+        IN_PROCESS: null,
+        IN_COMPLETE: null,
+        COMPLETE: null,
+    };
+
+    for (const status of statusOrder) {
+        const remark = remarks.find((r) => r.status === status);
+        if (remark) {
+            foundDates[stepMap[status]] = formatDate(remark.created_at);
+        }
+    }
+
     return [
-        { status: 'PENDING', date: formatDate(repair.pending_at) },
-        { status: 'IN_PROCESS', date: formatDate(repair.in_process_at) },
-        { status: 'IN_COMPLETE', date: formatDate(repair.in_complete_at) },
-        { status: 'COMPLETE', date: formatDate(repair.completed_at) },
+        { status: 'PENDING', date: foundDates['PENDING'] },
+        { status: 'IN_PROCESS', date: foundDates['IN_PROCESS'] },
+        { status: 'IN_COMPLETE', date: foundDates['IN_COMPLETE'] },
+        { status: 'COMPLETE', date: foundDates['COMPLETE'] },
     ];
 }
 
@@ -52,27 +72,85 @@ const STATUS_BADGE: Record<string, { label: string; class: string }> = {
 };
 
 export default function RepairDetail() {
-    const [repair] = useState<RepairRecord>(DUMMY_REPAIR);
-    const [isLoading] = useState(false);
+    const { i18n } = useTranslation();
+    const { id } = useParams();
+    const location = useLocation();
+    const [complaint, setComplaint] = useState<Complaint | null>(null);
+    const [adminRemarks, setAdminRemarks] = useState<ComplaintRemark[]>([]);
+    const [techRemarks, setTechRemarks] = useState<TechnicianRemark[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const isUser = location.pathname.startsWith('/users');
+    const Layout = isUser ? UserLayout : AdminLayout;
+    const backLink = isUser
+        ? `/users/complaint/${id}`
+        : location.pathname.includes('/admin/technician')
+            ? `/admin/technician/complaint/${id}`
+            : `/admin/complaint/${id}`;
+
+    useEffect(() => {
+        loadComplaint();
+    }, [id]);
+
+    const loadComplaint = async () => {
+        try {
+            const response = await api.get(`/complaints/${id}`);
+            setComplaint(response.data.complaint);
+            setAdminRemarks(response.data.adminRemarks);
+            setTechRemarks(response.data.techRemarks);
+        } catch (error) {
+            console.error('Failed to load complaint');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     if (isLoading) {
         return (
-            <AdminLayout title="Repair Detail" breadcrumb="Repair Detail">
+            <Layout title="Repair Detail" breadcrumb="Repair Detail">
                 <div className="flex items-center justify-center h-64">
                     <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent" />
                 </div>
-            </AdminLayout>
+            </Layout>
         );
     }
 
-    const statusInfo = STATUS_BADGE[repair.status] || STATUS_BADGE.PENDING;
-    const timeline = buildTimeline(repair);
+    if (!complaint) {
+        return (
+            <Layout title="Repair Detail" breadcrumb="Repair Detail">
+                <div className="text-center py-12">
+                    <p className="text-gray-500">Repair record not found</p>
+                </div>
+            </Layout>
+        );
+    }
+
+    const currentStatus = mapComplaintStatus(complaint.status);
+    const statusInfo = STATUS_BADGE[currentStatus] || STATUS_BADGE.PENDING;
+
+    const allRemarks = [
+        ...adminRemarks.map(r => ({ ...r, type: 'admin' as const })),
+        ...techRemarks.map(r => ({ ...r, type: 'tech' as const }))
+    ].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+    const timeline = buildTimelineFromRemarks(allRemarks);
+
+    const formatLocaleDate = (dateString: string) => {
+        const locale = i18n.language === 'ms' ? 'ms-MY' : 'en-US';
+        return new Date(dateString).toLocaleDateString(locale, {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    };
 
     return (
-        <AdminLayout title="Repair Detail" breadcrumb="Repair Detail">
+        <Layout title="Repair Detail" breadcrumb="Repair Detail">
             {/* Back Button */}
             <Link
-                to=".."
+                to={backLink}
                 className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-6"
             >
                 <ArrowLeft className="w-4 h-4" />
@@ -86,34 +164,42 @@ export default function RepairDetail() {
                     <div className="card">
                         <div className="flex items-start justify-between mb-6">
                             <div>
-                                <p className="text-sm text-gray-500">Repair No</p>
-                                <h2 className="text-2xl font-bold text-gray-800">
-                                    #{String(repair.id).padStart(6, '0')}
-                                </h2>
+                                <p className="text-sm text-gray-500">Report No.</p>
+                                <h2 className="text-2xl font-bold text-gray-800">{complaint.report_number}</h2>
                             </div>
                             <span className={`badge ${statusInfo.class}`}>{statusInfo.label}</span>
                         </div>
 
-                        {/* Customer & Device */}
-                        <div className="p-4 bg-gray-50 rounded-lg mb-6">
-                            <h3 className="font-semibold mb-3 flex items-center gap-2">
-                                <User className="w-4 h-4" />
-                                Customer
-                            </h3>
-                            <p className="font-medium text-gray-800">{repair.customer_name}</p>
-                        </div>
-
-                        <div className="p-4 bg-gray-50 rounded-lg">
-                            <h3 className="font-semibold mb-3 flex items-center gap-2">
-                                <Wrench className="w-4 h-4" />
-                                Device
-                            </h3>
-                            <p className="font-medium text-gray-800">{repair.device_name}</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="p-4 bg-gray-50 rounded-lg">
+                                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                                    <User className="w-4 h-4" />
+                                    Customer
+                                </h3>
+                                <p className="font-medium text-gray-800">{complaint.users?.full_name || '-'}</p>
+                                <p className="text-xs text-gray-500 mt-1">ID/IC: {complaint.users?.ic_number || '-'}</p>
+                            </div>
+                            <div className="p-4 bg-gray-50 rounded-lg">
+                                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                                    <Wrench className="w-4 h-4" />
+                                    Device
+                                </h3>
+                                <p className="font-medium text-gray-800">{complaint.brand_name} {complaint.model_no ? `(${complaint.model_no})` : ''}</p>
+                                <p className="text-xs text-gray-500 mt-1">{complaint.categories?.name} - {complaint.subcategory}</p>
+                            </div>
                         </div>
                     </div>
 
                     {/* Timeline */}
-                    <RepairTimeline currentStatus={repair.status} timeline={timeline} />
+                    <RepairTimeline currentStatus={currentStatus} timeline={timeline} />
+
+                    {/* Defect Details */}
+                    {complaint.details && (
+                        <div className="card">
+                            <h3 className="font-semibold mb-3">Defect Details</h3>
+                            <p className="text-gray-700 text-sm whitespace-pre-wrap">{complaint.details}</p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Sidebar */}
@@ -122,24 +208,20 @@ export default function RepairDetail() {
                         <h3 className="font-semibold mb-4">Repair Information</h3>
                         <div className="space-y-3 text-sm">
                             <div>
-                                <p className="text-gray-500">Serial Number</p>
-                                <p className="font-medium">{repair.serial_number || '-'}</p>
+                                <p className="text-gray-500">Category</p>
+                                <p className="font-medium">{complaint.categories?.name || '-'}</p>
                             </div>
                             <div>
-                                <p className="text-gray-500">Problem</p>
-                                <p className="font-medium">{repair.problem || '-'}</p>
+                                <p className="text-gray-500">Subcategory</p>
+                                <p className="font-medium">{complaint.subcategory}</p>
+                            </div>
+                            <div>
+                                <p className="text-gray-500">Warranty</p>
+                                <p className="font-medium">{complaint.complaint_type}</p>
                             </div>
                             <div>
                                 <p className="text-gray-500">Technician</p>
-                                <p className="font-medium">{repair.technician || '-'}</p>
-                            </div>
-                            <div>
-                                <p className="text-gray-500">Remark</p>
-                                <p className="font-medium">{repair.remark || '-'}</p>
-                            </div>
-                            <div>
-                                <p className="text-gray-500">Estimated Completion</p>
-                                <p className="font-medium">{repair.estimated_completion || '-'}</p>
+                                <p className="font-medium">{complaint.technicians?.name || 'Not assigned'}</p>
                             </div>
                         </div>
                     </div>
@@ -153,12 +235,16 @@ export default function RepairDetail() {
                         <div className="space-y-3 text-sm">
                             <div>
                                 <p className="text-gray-500">Created</p>
-                                <p className="font-medium">{formatDate(repair.created_at)}</p>
+                                <p className="font-medium">{formatLocaleDate(complaint.created_at)}</p>
+                            </div>
+                            <div>
+                                <p className="text-gray-500">Last Updated</p>
+                                <p className="font-medium">{formatLocaleDate(complaint.updated_at)}</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </AdminLayout>
+        </Layout>
     );
 }
