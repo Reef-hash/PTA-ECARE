@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import { RepairStatus, RepairTimelineItem } from '../../types';
 import TimelineStep from './TimelineStep';
 
@@ -19,7 +20,12 @@ export default function RepairTimeline({ currentStatus, timeline }: RepairTimeli
     const currentIndex = STATUS_ORDER.indexOf(currentStatus);
 
     return (
-        <div className="card">
+        <motion.div
+            className="card"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+        >
             <h3 className="text-lg font-semibold mb-6">Repair Progress</h3>
             <div className="flex flex-col">
                 {STEP_LABELS.map((step, index) => {
@@ -40,6 +46,6 @@ export default function RepairTimeline({ currentStatus, timeline }: RepairTimeli
                     );
                 })}
             </div>
-        </div>
+        </motion.div>
     );
 }
