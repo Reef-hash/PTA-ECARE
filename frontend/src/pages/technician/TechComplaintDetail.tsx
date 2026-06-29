@@ -211,10 +211,17 @@ export default function TechComplaintDetail() {
                                 <p className="text-sm text-gray-500">{t('admin_users.report_no')}</p>
                                 <h2 className="text-2xl font-bold text-gray-800">{complaint.report_number}</h2>
                             </div>
-                            {getStatusBadge(complaint.status)}
+                            <div className="flex flex-col items-end gap-2">
+                                {getStatusBadge(complaint.status)}
+                                <Link
+                                    to={`/admin/technician/complaint/${id}/track-repair`}
+                                    className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-800 border border-indigo-200 rounded-md px-3 py-1 hover:bg-indigo-50 transition-colors"
+                                >
+                                    <Eye className="w-3.5 h-3.5" />
+                                    Track Repair
+                                </Link>
+                            </div>
                         </div>
-
-                        {/* Customer Info */}
                         <div className="p-4 bg-gray-50 rounded-lg mb-6">
                             <h3 className="font-semibold mb-3 flex items-center gap-2">
                                 <User className="w-4 h-4" />
