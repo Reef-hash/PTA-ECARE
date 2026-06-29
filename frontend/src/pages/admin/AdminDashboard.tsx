@@ -89,14 +89,12 @@ export default function AdminDashboard() {
                             to={card.path}
                             className={`stat-card ${colors.border} hover:shadow-lg transition-shadow`}
                         >
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-gray-500 text-xs uppercase font-medium">{card.label}</p>
-                                    <p className="text-2xl font-bold text-gray-800 mt-1">{card.value}</p>
-                                </div>
-                                <div className={`w-10 h-10 ${colors.bg} rounded-lg flex items-center justify-center`}>
+                            <div className="flex flex-col items-center text-center">
+                                <div className={`w-10 h-10 ${colors.bg} rounded-lg flex items-center justify-center mb-2`}>
                                     <Icon className={`w-5 h-5 ${colors.icon}`} />
                                 </div>
+                                <p className="text-2xl font-bold text-gray-800">{card.value}</p>
+                                <p className="text-gray-500 text-xs uppercase font-medium mt-1">{card.label}</p>
                             </div>
                         </Link>
                     );
