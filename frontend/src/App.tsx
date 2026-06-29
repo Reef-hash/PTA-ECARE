@@ -42,6 +42,7 @@ import SettingsPage from './pages/admin/Settings';
 import AdminProfile from './pages/admin/AdminProfile';
 import DebugAuth from './pages/DebugAuth';
 import AdminMainTechQueue from './pages/admin/AdminMainTechQueue';
+import RepairDetail from './pages/repair/RepairDetail';
 
 // Technician pages
 import TechDashboard from './pages/technician/TechDashboard';
@@ -273,6 +274,14 @@ function App() {
                 element={
                     <ProtectedRoute allowedRoles={['admin']}>
                         <AdminMainTechQueue />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/admin/repair/:id"
+                element={
+                    <ProtectedRoute allowedRoles={['admin', 'technician']}>
+                        <RepairDetail />
                     </ProtectedRoute>
                 }
             />

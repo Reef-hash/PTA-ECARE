@@ -195,6 +195,31 @@ export interface TechnicianStats {
     closed: number;
 }
 
+// Repair types
+export type RepairStatus = 'PENDING' | 'IN_PROCESS' | 'IN_COMPLETE' | 'COMPLETE';
+
+export interface RepairRecord {
+    id: number;
+    customer_name: string;
+    device_name: string;
+    serial_number: string | null;
+    problem: string | null;
+    technician: string | null;
+    remark: string | null;
+    estimated_completion: string | null;
+    status: RepairStatus;
+    created_at: string;
+    pending_at: string | null;
+    in_process_at: string | null;
+    in_complete_at: string | null;
+    completed_at: string | null;
+}
+
+export interface RepairTimelineItem {
+    status: RepairStatus;
+    date: string | null;
+}
+
 // API Response types
 export interface ApiResponse<T> {
     data?: T;
