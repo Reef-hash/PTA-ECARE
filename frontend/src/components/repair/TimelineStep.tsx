@@ -72,15 +72,17 @@ export default function TimelineStep({ label, date, isCurrent, isCompleted, isLa
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.3, delay: i * 0.1 }}
                             >
-                                <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center justify-between mb-1">
                                     <span className="text-xs font-medium text-gray-500">by {r.remarkBy}</span>
                                 </div>
-                                {r.remark && <p className="text-sm text-gray-700 mb-1">{r.remark}</p>}
                                 {r.noteTransport && (
                                     <p className="text-xs text-gray-500"><strong>Transport:</strong> {r.noteTransport}</p>
                                 )}
                                 {r.checking && (
                                     <p className="text-xs text-gray-500"><strong>Checking:</strong> {r.checking}</p>
+                                )}
+                                {r.remark && (
+                                    <p className="text-xs text-gray-500"><strong>Remark:</strong> {r.remark}</p>
                                 )}
                             </motion.div>
                         ))}
