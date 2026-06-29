@@ -554,6 +554,12 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                                                 >
                                                     {complaint.report_number}
                                                 </Link>
+                                                <Link
+                                                    to={`/admin/complaint/${complaint.id}/track-repair`}
+                                                    className="inline-block mt-1 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors"
+                                                >
+                                                    TRACK REPAIR
+                                                </Link>
                                             </td>
                                             <td className="px-4 py-3">
                                                 <div>
