@@ -144,16 +144,7 @@ export default function UserComplaintDetail() {
                                 <p className="text-sm text-gray-500">{t('admin_users.report_no')}</p>
                                 <h2 className="text-2xl font-bold text-gray-800">{complaint.report_number}</h2>
                             </div>
-                            <div className="flex flex-col items-end gap-2">
-                                {getStatusBadge(complaint.status)}
-                                <Link
-                                    to={`/users/complaint/${id}/track-repair`}
-                                    className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-800 border border-indigo-200 rounded-md px-3 py-1 hover:bg-indigo-50 transition-colors"
-                                >
-                                    <Eye className="w-3.5 h-3.5" />
-                                    Track Repair
-                                </Link>
-                            </div>
+                            {getStatusBadge(complaint.status)}
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
