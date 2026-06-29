@@ -192,13 +192,6 @@ export default function TechComplaintDetail() {
                     {t('common_actions.back_to_list')}
                 </Link>
                 <Link
-                    to={`/admin/technician/complaint/${id}/track-repair`}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
-                >
-                    <Clock className="w-4 h-4" />
-                    Track Repair
-                </Link>
-                <Link
                     to={`/admin/print/${id}`}
                     target="_blank"
                     className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
@@ -512,6 +505,21 @@ export default function TechComplaintDetail() {
 
                 {/* Sidebar */}
                 <div className="space-y-6">
+                    {/* Track Repair */}
+                    <div className="card">
+                        <h3 className="font-semibold mb-4 flex items-center gap-2">
+                            <Clock className="w-5 h-5" />
+                            Track Repair
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-4">View repair progress and history.</p>
+                        <Link
+                            to={`/admin/technician/complaint/${id}/track-repair`}
+                            className="btn-primary w-full flex items-center justify-center gap-2"
+                        >
+                            <Clock className="w-4 h-4" />
+                            View Track Repair
+                        </Link>
+                    </div>
                     {/* Dates */}
                     <div className="card">
                         <h3 className="font-semibold mb-4">{t('common_actions.date')}</h3>

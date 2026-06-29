@@ -268,6 +268,12 @@ export default function ComplaintHistory() {
                                                 >
                                                     {complaint.report_number}
                                                 </Link>
+                                                <Link
+                                                    to={`/users/complaint/${complaint.id}/track-repair`}
+                                                    className="inline-block mt-1 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-2 py-0.5 rounded transition-colors"
+                                                >
+                                                    TRACK REPAIR
+                                                </Link>
                                             </td>
                                             <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
                                                 {complaint.categories?.name || '-'}
