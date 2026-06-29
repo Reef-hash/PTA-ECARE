@@ -12,10 +12,11 @@ interface TimelineStepProps {
     date: string | null;
     isCurrent: boolean;
     isCompleted: boolean;
+    isLast: boolean;
     remarks?: StepRemark[];
 }
 
-export default function TimelineStep({ label, date, isCurrent, isCompleted, remarks }: TimelineStepProps) {
+export default function TimelineStep({ label, date, isCurrent, isCompleted, isLast, remarks }: TimelineStepProps) {
     const circleColor = isCompleted
         ? 'bg-green-500'
         : isCurrent
@@ -32,9 +33,13 @@ export default function TimelineStep({ label, date, isCurrent, isCompleted, rema
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: 'easeOut' }}
         >
-            <div className="flex flex-col items-center">
+            {/* Single continuous line runs through all steps */}
+            {!isLast && (
+                <div className="absolute left-[10px] top-[10px] bottom-0 w-0.5 bg-gray-200" />
+            )}
+            <div className="flex flex-col items-center z-10">
                 <motion.div
-                    className={`w-5 h-5 rounded-full ${circleColor} z-10`}
+                    className={`w-5 h-5 rounded-full ${circleColor}`}
                     initial={false}
                     animate={{
                         scale: isCurrent ? [1, 1.3, 1] : 1,
@@ -44,7 +49,7 @@ export default function TimelineStep({ label, date, isCurrent, isCompleted, rema
                 />
             </div>
             <motion.div
-                className="ml-4 pb-8"
+                className="ml-4 pb-8 w-full"
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3, delay: 0.1 }}
