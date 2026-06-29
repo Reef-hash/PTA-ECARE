@@ -27,7 +27,7 @@ export default function RepairTimeline({ currentStatus, timeline, stepRemarks }:
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
         >
-            <h3 className="text-lg font-semibold mb-6">Repair Progress</h3>
+            <h3 className="text-lg font-semibold mb-6">Track Repair Progress</h3>
             <div>
                 {STEP_LABELS.map((step, index) => {
                     const timelineItem = timeline.find((t) => t.status === step.status);
