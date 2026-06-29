@@ -8,17 +8,23 @@ interface RepairTimelineProps {
     stepRemarks?: Record<RepairStatus, StepRemark[]>;
 }
 
-const STEP_LABELS: { status: RepairStatus; label: string }[] = [
+const ALL_STEPS: { status: RepairStatus; label: string }[] = [
     { status: 'PENDING', label: 'Pending' },
     { status: 'IN_PROCESS', label: 'In Process' },
     { status: 'IN_COMPLETE', label: 'In Complete / Bawa Pulang' },
     { status: 'COMPLETE', label: 'Complete (Ready to Pickup)' },
 ];
 
-const STATUS_ORDER: RepairStatus[] = ['PENDING', 'IN_PROCESS', 'IN_COMPLETE', 'COMPLETE'];
+function getVisibleSteps(timeline: RepairTimelineItem[]): typeof ALL_STEPS {
+    const hasDate = (s: RepairStatus) => timeline.find((t) => t.status === s)?.date;
+    const inCompleteSkipped = !hasDate('IN_COMPLETE') && hasDate('COMPLETE');
+    return ALL_STEPS.filter((s) => !(inCompleteSkipped && s.status === 'IN_COMPLETE'));
+}
 
 export default function RepairTimeline({ currentStatus, timeline, stepRemarks }: RepairTimelineProps) {
-    const currentIndex = STATUS_ORDER.indexOf(currentStatus);
+    const visibleSteps = getVisibleSteps(timeline);
+    const visibleOrder = visibleSteps.map((s) => s.status);
+    const currentIndex = visibleOrder.indexOf(currentStatus);
 
     return (
         <motion.div
@@ -29,11 +35,11 @@ export default function RepairTimeline({ currentStatus, timeline, stepRemarks }:
         >
             <h3 className="text-lg font-semibold mb-6">Track Repair Progress</h3>
             <div>
-                {STEP_LABELS.map((step, index) => {
+                {visibleSteps.map((step, index) => {
                     const timelineItem = timeline.find((t) => t.status === step.status);
                     const isCompleted = index < currentIndex;
                     const isCurrent = index === currentIndex;
-                    const isLast = index === STEP_LABELS.length - 1;
+                    const isLast = index === visibleSteps.length - 1;
 
                     return (
                         <TimelineStep
