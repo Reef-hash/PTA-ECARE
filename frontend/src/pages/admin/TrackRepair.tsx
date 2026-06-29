@@ -176,31 +176,62 @@ export default function TrackRepair() {
                     <p className="text-gray-500 text-center py-8">No repair records yet</p>
                 ) : (
                     <div className="space-y-4">
-                        {allRemarks.map((remark) => (
-                            <div key={`${remark.type}-${remark.id}`} className="relative pl-6 pb-4 border-l-2 border-gray-200 last:border-0">
-                                <div className={`absolute -left-2 w-4 h-4 rounded-full ${remark.type === 'admin' ? 'bg-indigo-500' : 'bg-green-500'}`}></div>
-                                <div className="bg-gray-50 rounded-lg p-4">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className={`text-xs font-medium px-2 py-1 rounded ${remark.type === 'admin' ? 'bg-indigo-100 text-indigo-700' : 'bg-green-100 text-green-700'}`}>
-                                            {remark.type === 'admin' ? 'Admin' : 'Technician'}
-                                        </span>
-                                        <span className="text-xs text-gray-500">{formatDate(remark.created_at)}</span>
+                        {allRemarks.map((remark) => {
+                            const statusLabel =
+                                remark.status === 'pending' ? 'Pending' :
+                                remark.status === 'in_process' ? 'In Process' :
+                                remark.status === 'incomplete' ? 'Incomplete / Bawa Pulang' :
+                                remark.status === 'ready_pickup' ? 'Ready Pickup' :
+                                remark.status === 'cancelled' ? 'Cancelled' : 'Closed';
+
+                            const remarkByName = remark.type === 'tech'
+                                ? (remark as any).technicians?.name || 'Technician'
+                                : 'Admin';
+
+                            return (
+                                <div key={`${remark.type}-${remark.id}`} className="relative pl-6 pb-4 border-l-2 border-gray-200 last:border-0">
+                                    <div className={`absolute -left-2 w-4 h-4 rounded-full ${remark.type === 'admin' ? 'bg-indigo-500' : 'bg-green-500'}`}></div>
+                                    <div className="bg-gray-50 rounded-lg p-4">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className={`text-xs font-medium px-2 py-1 rounded ${remark.type === 'admin' ? 'bg-indigo-100 text-indigo-700' : 'bg-green-100 text-green-700'}`}>
+                                                {remark.type === 'admin' ? 'Admin' : 'Technician'}
+                                            </span>
+                                            <span className="text-xs text-gray-500">{formatDate(remark.created_at)}</span>
+                                        </div>
+                                        <div className="text-sm space-y-2">
+                                            {remark.status && (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-medium text-gray-600 min-w-[100px]">Status:</span>
+                                                    <span>{statusLabel}</span>
+                                                </div>
+                                            )}
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-medium text-gray-600 min-w-[100px]">Remark By:</span>
+                                                <span>{remarkByName}</span>
+                                            </div>
+                                            {remark.remark && (
+                                                <div>
+                                                    <span className="font-medium text-gray-600">Remark:</span>
+                                                    <p className="text-gray-700 mt-1">{remark.remark}</p>
+                                                </div>
+                                            )}
+                                            {remark.note_transport && (
+                                                <div>
+                                                    <span className="font-medium text-gray-600">Transport Note:</span>
+                                                    <p className="text-gray-700 mt-1">{remark.note_transport}</p>
+                                                </div>
+                                            )}
+                                            {remark.checking && (
+                                                <div>
+                                                    <span className="font-medium text-gray-600">Checking:</span>
+                                                    <p className="text-gray-700 mt-1">{remark.checking}</p>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                    {remark.status && (
-                                        <p className="text-sm mb-1"><strong>Status:</strong> {
-                                            remark.status === 'pending' ? 'Pending' :
-                                            remark.status === 'in_process' ? 'In Process' :
-                                            remark.status === 'incomplete' ? 'Incomplete / Bawa Pulang' :
-                                            remark.status === 'ready_pickup' ? 'Ready Pickup' :
-                                            remark.status === 'cancelled' ? 'Cancelled' : 'Closed'
-                                        }</p>
-                                    )}
-                                    {remark.remark && <p className="text-gray-700 text-sm">{remark.remark}</p>}
-                                    {remark.note_transport && <p className="text-sm text-gray-600 mt-1"><strong>Transport Note:</strong> {remark.note_transport}</p>}
-                                    {remark.checking && <p className="text-sm text-gray-600 mt-1"><strong>Checking:</strong> {remark.checking}</p>}
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>
