@@ -192,6 +192,13 @@ export default function TechComplaintDetail() {
                     {t('common_actions.back_to_list')}
                 </Link>
                 <Link
+                    to={`/admin/technician/complaint/${id}/track-repair`}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                >
+                    <Clock className="w-4 h-4" />
+                    Track Repair
+                </Link>
+                <Link
                     to={`/admin/print/${id}`}
                     target="_blank"
                     className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"

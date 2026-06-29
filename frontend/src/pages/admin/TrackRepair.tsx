@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { ArrowLeft, Clock, Wrench, CheckCircle, AlertTriangle, XCircle, PackageOpen } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
+import UserLayout from '../../components/UserLayout';
 import api from '../../services/api';
 import { Complaint, ComplaintRemark, TechnicianRemark } from '../../types';
 import { useTranslation } from 'react-i18next';
@@ -9,10 +10,15 @@ import { useTranslation } from 'react-i18next';
 export default function TrackRepair() {
     const { t, i18n } = useTranslation();
     const { id } = useParams();
+    const location = useLocation();
     const [complaint, setComplaint] = useState<Complaint | null>(null);
     const [adminRemarks, setAdminRemarks] = useState<ComplaintRemark[]>([]);
     const [techRemarks, setTechRemarks] = useState<TechnicianRemark[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+
+    const isUser = location.pathname.startsWith('/users');
+    const Layout = isUser ? UserLayout : AdminLayout;
+    const backLink = isUser ? `/users/complaint/${id}` : location.pathname.includes('/admin/technician') ? `/admin/technician/complaint/${id}` : `/admin/complaint/${id}`;
 
     useEffect(() => {
         loadComplaint();
@@ -68,21 +74,21 @@ export default function TrackRepair() {
 
     if (isLoading) {
         return (
-            <AdminLayout title="Track Repair" breadcrumb="Track Repair">
+            <Layout title="Track Repair" breadcrumb="Track Repair">
                 <div className="flex items-center justify-center h-64">
                     <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent"></div>
                 </div>
-            </AdminLayout>
+            </Layout>
         );
     }
 
     if (!complaint) {
         return (
-            <AdminLayout title="Track Repair" breadcrumb="Track Repair">
+            <Layout title="Track Repair" breadcrumb="Track Repair">
                 <div className="text-center py-12">
                     <p className="text-gray-500">Complaint not found</p>
                 </div>
-            </AdminLayout>
+            </Layout>
         );
     }
 
@@ -92,10 +98,10 @@ export default function TrackRepair() {
     ].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
     return (
-        <AdminLayout title="Track Repair" breadcrumb="Track Repair">
+        <Layout title="Track Repair" breadcrumb="Track Repair">
             <div className="flex items-center justify-between mb-6">
                 <Link
-                    to="/admin/all-complaints"
+                    to={backLink}
                     className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800"
                 >
                     <ArrowLeft className="w-4 h-4" />
@@ -198,6 +204,6 @@ export default function TrackRepair() {
                     </div>
                 )}
             </div>
-        </AdminLayout>
+        </Layout>
     );
 }

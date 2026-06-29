@@ -110,13 +110,22 @@ export default function UserComplaintDetail() {
     return (
         <UserLayout title={t('user_dashboard.title_details')} breadcrumb={t('user_dashboard.title_details')}>
             {/* Back Button */}
-            <Link
-                to="/users/complaint-history"
-                className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-6"
-            >
-                <ArrowLeft className="w-4 h-4" />
-                {t('user_dashboard.back_to_history')}
-            </Link>
+            <div className="flex items-center justify-between mb-6">
+                <Link
+                    to="/users/complaint-history"
+                    className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    {t('user_dashboard.back_to_history')}
+                </Link>
+                <Link
+                    to={`/users/complaint/${id}/track-repair`}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm"
+                >
+                    <Clock className="w-5 h-5" />
+                    Track Repair
+                </Link>
+            </div>
 
             {/* Cancelled Banner */}
             {complaint.status === 'cancelled' && (

@@ -150,6 +150,14 @@ function App() {
                 }
             />
             <Route
+                path="/users/complaint/:id/track-repair"
+                element={
+                    <ProtectedRoute allowedRoles={['user']}>
+                        <TrackRepair />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
                 path="/users/profile"
                 element={
                     <ProtectedRoute allowedRoles={['user']}>
@@ -420,6 +428,14 @@ function App() {
                 element={
                     <ProtectedRoute allowedRoles={['technician']}>
                         <TechComplaintDetail />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/admin/technician/complaint/:id/track-repair"
+                element={
+                    <ProtectedRoute allowedRoles={['technician']}>
+                        <TrackRepair />
                     </ProtectedRoute>
                 }
             />
