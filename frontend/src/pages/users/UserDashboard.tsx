@@ -356,13 +356,21 @@ export default function UserDashboard() {
                                         <td className="px-4 py-3 text-center text-gray-500 font-medium whitespace-nowrap">
                                             {index + 1}
                                         </td>
-                                        <td className="px-4 py-3 whitespace-nowrap">
-                                            <Link
-                                                to={`/users/complaint/${complaint.id}`}
-                                                className="text-primary-600 hover:text-primary-700 font-medium"
-                                            >
-                                                {complaint.report_number}
-                                            </Link>
+                                        <td className="px-4 py-3">
+                                            <div className="flex flex-col gap-1">
+                                                <Link
+                                                    to={`/users/complaint/${complaint.id}`}
+                                                    className="text-primary-600 hover:text-primary-700 font-medium"
+                                                >
+                                                    {complaint.report_number}
+                                                </Link>
+                                                <Link
+                                                    to={`/users/complaint/${complaint.id}/track-repair`}
+                                                    className="text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-2 py-0.5 rounded transition-colors w-fit"
+                                                >
+                                                    TRACK REPAIR
+                                                </Link>
+                                            </div>
                                         </td>
                                         <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.subcategory}</td>
                                         <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.brand_name}</td>
