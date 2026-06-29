@@ -1,14 +1,22 @@
 import { motion } from 'framer-motion';
 
+export interface StepRemark {
+    remarkBy: string;
+    remark: string | null;
+    noteTransport: string | null;
+    checking: string | null;
+}
+
 interface TimelineStepProps {
     label: string;
     date: string | null;
     isCurrent: boolean;
     isCompleted: boolean;
     isLast: boolean;
+    remarks?: StepRemark[];
 }
 
-export default function TimelineStep({ label, date, isCurrent, isCompleted, isLast }: TimelineStepProps) {
+export default function TimelineStep({ label, date, isCurrent, isCompleted, isLast, remarks }: TimelineStepProps) {
     const circleColor = isCompleted
         ? 'bg-green-500'
         : isCurrent
@@ -59,6 +67,30 @@ export default function TimelineStep({ label, date, isCurrent, isCompleted, isLa
                     <p className={`text-xs ${dateColor} mt-0.5 transition-colors duration-300`}>{date}</p>
                 ) : (
                     <p className="text-xs text-gray-300 mt-0.5 italic">Waiting...</p>
+                )}
+                {remarks && remarks.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                        {remarks.map((r, i) => (
+                            <motion.div
+                                key={i}
+                                className="bg-white border border-gray-100 rounded-lg p-3 shadow-sm"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3, delay: i * 0.1 }}
+                            >
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-xs font-medium text-gray-500">by {r.remarkBy}</span>
+                                </div>
+                                {r.remark && <p className="text-sm text-gray-700 mb-1">{r.remark}</p>}
+                                {r.noteTransport && (
+                                    <p className="text-xs text-gray-500"><strong>Transport:</strong> {r.noteTransport}</p>
+                                )}
+                                {r.checking && (
+                                    <p className="text-xs text-gray-500"><strong>Checking:</strong> {r.checking}</p>
+                                )}
+                            </motion.div>
+                        ))}
+                    </div>
                 )}
             </motion.div>
         </motion.div>

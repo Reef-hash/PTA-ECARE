@@ -7,6 +7,7 @@ import UserLayout from '../../components/UserLayout';
 import RepairTimeline from '../../components/repair/RepairTimeline';
 import api from '../../services/api';
 import { Complaint, ComplaintRemark, TechnicianRemark, RepairStatus, RepairTimelineItem } from '../../types';
+import { StepRemark } from '../../components/repair/TimelineStep';
 import { useTranslation } from 'react-i18next';
 
 export default function TrackRepair() {
@@ -153,6 +154,27 @@ export default function TrackRepair() {
     const currentStatus = mapComplaintStatus(complaint.status);
     const timeline = buildTimelineFromRemarks(allRemarks);
 
+    const statusMap: Record<string, RepairStatus> = {
+        pending: 'PENDING',
+        in_process: 'IN_PROCESS',
+        incomplete: 'IN_COMPLETE',
+        ready_pickup: 'COMPLETE',
+        closed: 'COMPLETE',
+    };
+
+    const stepRemarks: Record<string, StepRemark[]> = {};
+    for (const remark of allRemarks) {
+        const repairStatus = remark.status ? statusMap[remark.status] : null;
+        if (!repairStatus) continue;
+        if (!stepRemarks[repairStatus]) stepRemarks[repairStatus] = [];
+        stepRemarks[repairStatus].push({
+            remarkBy: remark.type === 'tech' ? (remark as any).technicians?.name || 'Technician' : 'Admin',
+            remark: remark.remark,
+            noteTransport: remark.note_transport,
+            checking: remark.checking,
+        });
+    }
+
     return (
         <Layout title="Track Repair" breadcrumb="Track Repair">
             <motion.div
@@ -226,82 +248,8 @@ export default function TrackRepair() {
                     )}
                 </div>
 
-                {/* Repair Timeline Stepper */}
-                <RepairTimeline currentStatus={currentStatus} timeline={timeline} />
-
-                {/* Remark Detail Cards */}
-                {allRemarks.length > 0 && (
-                    <div className="card mt-6">
-                        <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-                            <Clock className="w-5 h-5" />
-                            Remark Details
-                        </h3>
-                        <div className="space-y-4">
-                            {allRemarks.map((remark, index) => {
-                                const statusLabel =
-                                    remark.status === 'pending' ? 'Pending' :
-                                    remark.status === 'in_process' ? 'In Process' :
-                                    remark.status === 'incomplete' ? 'Incomplete / Bawa Pulang' :
-                                    remark.status === 'ready_pickup' ? 'Ready Pickup' :
-                                    remark.status === 'cancelled' ? 'Cancelled' : 'Closed';
-
-                                const remarkByName = remark.type === 'tech'
-                                    ? (remark as any).technicians?.name || 'Technician'
-                                    : 'Admin';
-
-                                return (
-                                    <motion.div
-                                        key={`${remark.type}-${remark.id}`}
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ duration: 0.3, delay: index * 0.05 }}
-                                        className="relative pl-6 border-l-2 border-gray-200 last:border-0 pb-4 last:pb-0"
-                                    >
-                                        <div className={`absolute -left-2 w-4 h-4 rounded-full ${remark.type === 'admin' ? 'bg-indigo-500' : 'bg-green-500'}`}></div>
-                                        <div className="bg-gray-50 rounded-lg p-4">
-                                            <div className="flex items-center justify-between mb-3">
-                                                <span className={`text-xs font-medium px-2 py-1 rounded ${remark.type === 'admin' ? 'bg-indigo-100 text-indigo-700' : 'bg-green-100 text-green-700'}`}>
-                                                    {remark.type === 'admin' ? 'Admin' : 'Technician'}
-                                                </span>
-                                                <span className="text-xs text-gray-500">{formatDate(remark.created_at)}</span>
-                                            </div>
-                                            <div className="text-sm space-y-2">
-                                                {remark.status && (
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-medium text-gray-600 min-w-[100px]">Status:</span>
-                                                        <span>{statusLabel}</span>
-                                                    </div>
-                                                )}
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-medium text-gray-600 min-w-[100px]">Remark By:</span>
-                                                    <span>{remarkByName}</span>
-                                                </div>
-                                                {remark.remark && (
-                                                    <div>
-                                                        <span className="font-medium text-gray-600">Remark:</span>
-                                                        <p className="text-gray-700 mt-1">{remark.remark}</p>
-                                                    </div>
-                                                )}
-                                                {remark.note_transport && (
-                                                    <div>
-                                                        <span className="font-medium text-gray-600">Transport Note:</span>
-                                                        <p className="text-gray-700 mt-1">{remark.note_transport}</p>
-                                                    </div>
-                                                )}
-                                                {remark.checking && (
-                                                    <div>
-                                                        <span className="font-medium text-gray-600">Checking:</span>
-                                                        <p className="text-gray-700 mt-1">{remark.checking}</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
+                {/* Repair Timeline Stepper with Remarks */}
+                <RepairTimeline currentStatus={currentStatus} timeline={timeline} stepRemarks={stepRemarks} />
             </motion.div>
         </Layout>
     );

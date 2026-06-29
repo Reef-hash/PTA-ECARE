@@ -1,10 +1,11 @@
 import { motion } from 'framer-motion';
 import { RepairStatus, RepairTimelineItem } from '../../types';
-import TimelineStep from './TimelineStep';
+import TimelineStep, { StepRemark } from './TimelineStep';
 
 interface RepairTimelineProps {
     currentStatus: RepairStatus;
     timeline: RepairTimelineItem[];
+    stepRemarks?: Record<RepairStatus, StepRemark[]>;
 }
 
 const STEP_LABELS: { status: RepairStatus; label: string }[] = [
@@ -16,7 +17,7 @@ const STEP_LABELS: { status: RepairStatus; label: string }[] = [
 
 const STATUS_ORDER: RepairStatus[] = ['PENDING', 'IN_PROCESS', 'IN_COMPLETE', 'COMPLETE'];
 
-export default function RepairTimeline({ currentStatus, timeline }: RepairTimelineProps) {
+export default function RepairTimeline({ currentStatus, timeline, stepRemarks }: RepairTimelineProps) {
     const currentIndex = STATUS_ORDER.indexOf(currentStatus);
 
     return (
@@ -42,6 +43,7 @@ export default function RepairTimeline({ currentStatus, timeline }: RepairTimeli
                             isCurrent={isCurrent}
                             isCompleted={isCompleted}
                             isLast={isLast}
+                            remarks={stepRemarks?.[step.status]}
                         />
                     );
                 })}
