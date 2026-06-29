@@ -317,7 +317,7 @@ export default function TechComplaints() {
                                                     </Link>
                                                     <Link
                                                         to={`/admin/technician/complaint/${complaint.id}/track-repair`}
-                                                        className="text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-2 py-0.5 rounded transition-colors w-fit"
+                                                        className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
                                                     >
                                                         TRACK REPAIR
                                                     </Link>
