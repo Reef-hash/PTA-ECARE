@@ -86,12 +86,23 @@ export default function AdminComplaintDetail() {
 
         setIsSaving(true);
         try {
+            if (remarkData.remark || remarkData.status || remarkData.note_transport || remarkData.checking) {
+                await api.post(`/complaints/${id}/remark`, {
+                    status: forwardStatus || remarkData.status || undefined,
+                    note_transport: remarkData.note_transport || undefined,
+                    checking: remarkData.checking || undefined,
+                    remark: remarkData.remark || undefined,
+                });
+            }
+
             await api.post(`/complaints/${id}/forward`, {
                 technician_id: forwardTo,
                 status: forwardStatus || undefined
             });
             toast.success('Aduan berjaya diagihkan');
             setForwardTo('');
+            setForwardStatus('');
+            setRemarkData({ status: '', note_transport: '', checking: '', remark: '' });
             loadComplaint();
         } catch (error: any) {
             toast.error(error.response?.data?.error || 'Gagal mengagihkan aduan');
