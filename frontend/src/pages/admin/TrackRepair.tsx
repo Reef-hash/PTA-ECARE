@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Clock, User, Wrench, CheckCircle, AlertTriangle, XCircle, PackageOpen } from 'lucide-react';
+import { ArrowLeft, Clock, Wrench, CheckCircle, AlertTriangle, XCircle, PackageOpen } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 import { Complaint, ComplaintRemark, TechnicianRemark } from '../../types';
