@@ -234,7 +234,7 @@ export default function UserDetails() {
                     </div>
                 </div>
 
-                {/* Password Reset */}
+                {/* Password */}
                 <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -243,7 +243,7 @@ export default function UserDetails() {
                             </div>
                             <div>
                                 <h3 className="font-semibold text-gray-800">Password</h3>
-                                <p className="text-sm text-gray-500">Kata laluan tidak boleh dipaparkan. Anda boleh reset jika perlu.</p>
+                                <p className="text-sm font-mono text-gray-800 bg-gray-100 px-3 py-1 rounded mt-1">{user.password || '-'}</p>
                             </div>
                         </div>
                         <button
@@ -252,6 +252,7 @@ export default function UserDetails() {
                                 try {
                                     const res = await api.post(`/admin/users/${id}/reset-password`);
                                     toast.success(`Password baru: ${res.data.new_password}`, { duration: 10000 });
+                                    loadData();
                                 } catch (err: any) {
                                     toast.error(err.response?.data?.error || 'Gagal reset password');
                                 }

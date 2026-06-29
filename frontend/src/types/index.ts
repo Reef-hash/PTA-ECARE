@@ -15,6 +15,7 @@ export interface User {
     country: string;
     pincode: string | null;
     user_image: string | null;
+    password?: string | null;
     status: 'Active' | 'Inactive' | 'Suspended';
     created_at: string;
     updated_at: string;

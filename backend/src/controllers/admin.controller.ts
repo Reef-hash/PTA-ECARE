@@ -346,8 +346,8 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        const { password_hash, ...userWithoutPassword } = data;
-        res.json({ user: userWithoutPassword });
+        const { password_hash, password_plain, ...userRest } = data;
+        res.json({ user: { ...userRest, password: password_plain || null } });
     } catch (error) {
         console.error('Get user error:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -671,6 +671,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
                 address,
                 state: state || null,
                 password_hash,
+                password_plain: password,
                 status: 'Active',
                 email_verified: !!normalizedEmail,
                 auth_provider: 'password'
@@ -734,7 +735,7 @@ export const resetUserPassword = async (req: Request, res: Response): Promise<vo
 
         const { error } = await supabaseAdmin
             .from('users')
-            .update({ password_hash, updated_at: new Date().toISOString() })
+            .update({ password_hash, password_plain: newPassword, updated_at: new Date().toISOString() })
             .eq('id', id);
 
         if (error) throw error;
