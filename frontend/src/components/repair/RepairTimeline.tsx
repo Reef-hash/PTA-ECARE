@@ -17,8 +17,7 @@ const ALL_STEPS: { status: RepairStatus; label: string }[] = [
 
 function getVisibleSteps(timeline: RepairTimelineItem[]): typeof ALL_STEPS {
     const hasDate = (s: RepairStatus) => timeline.find((t) => t.status === s)?.date;
-    const inCompleteSkipped = !hasDate('IN_COMPLETE') && hasDate('COMPLETE');
-    return ALL_STEPS.filter((s) => !(inCompleteSkipped && s.status === 'IN_COMPLETE'));
+    return ALL_STEPS.filter((s) => s.status !== 'IN_COMPLETE' || hasDate('IN_COMPLETE'));
 }
 
 export default function RepairTimeline({ currentStatus, timeline, stepRemarks }: RepairTimelineProps) {
