@@ -421,6 +421,55 @@ export default function AdminComplaintDetail() {
                                     </button>
                                 </form>
                             )}
+
+                            {/* Forward to Technician */}
+                            {complaint.status !== 'closed' && (
+                                <div className="mt-6 pt-6 border-t">
+                                    <h3 className="font-semibold mb-4 flex items-center gap-2">
+                                        <Forward className="w-5 h-5" />
+                                        {t('admin_complaint_detail.forward_technician')}
+                                    </h3>
+
+                                    {complaint.technicians && (
+                                        <p className="text-sm text-gray-600 mb-3">
+                                            {t('admin_complaint_detail.assigned_to')}: <strong>{complaint.technicians.name}</strong>
+                                        </p>
+                                    )}
+
+                                    <select
+                                        value={forwardTo}
+                                        onChange={(e) => setForwardTo(e.target.value)}
+                                        className="input-field mb-3"
+                                    >
+                                        <option value="">-- {t('admin_complaint_detail.select_technician')} --</option>
+                                        {technicians.map((tech) => (
+                                            <option key={tech.id} value={tech.id}>
+                                                {tech.name} ({tech.department})
+                                            </option>
+                                        ))}
+                                    </select>
+
+                                    <select
+                                        value={forwardStatus}
+                                        onChange={(e) => setForwardStatus(e.target.value)}
+                                        className="input-field mb-3"
+                                    >
+                                        <option value="">-- {t('admin_complaint_detail.select_status') || 'Select Status'} --</option>
+                                        <option value="pending">{t('admin_users.status_pending')}</option>
+                                        <option value="in_process">{t('admin_users.status_in_process')}</option>
+                                        <option value="closed">{t('admin_users.status_closed')}</option>
+                                    </select>
+
+                                    <button
+                                        onClick={handleForward}
+                                        disabled={isSaving || !forwardTo}
+                                        className="btn-primary w-full flex items-center justify-center gap-2"
+                                    >
+                                        <Send className="w-4 h-4" />
+                                        {t('admin_complaint_detail.btn_forward')}
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -476,55 +525,6 @@ export default function AdminComplaintDetail() {
 
                 {/* Sidebar */}
                 <div className="space-y-6">
-                    {/* Forward to Technician - Hide for cancelled/closed complaints */}
-                    {complaint.status !== 'cancelled' && complaint.status !== 'closed' && (
-                        <div className="card">
-                            <h3 className="font-semibold mb-4 flex items-center gap-2">
-                                <Forward className="w-5 h-5" />
-                                {t('admin_complaint_detail.forward_technician')}
-                            </h3>
-
-                            {complaint.technicians && (
-                                <p className="text-sm text-gray-600 mb-3">
-                                    {t('admin_complaint_detail.assigned_to')}: <strong>{complaint.technicians.name}</strong>
-                                </p>
-                            )}
-
-                            <select
-                                value={forwardTo}
-                                onChange={(e) => setForwardTo(e.target.value)}
-                                className="input-field mb-3"
-                            >
-                                <option value="">-- {t('admin_complaint_detail.select_technician')} --</option>
-                                {technicians.map((tech) => (
-                                    <option key={tech.id} value={tech.id}>
-                                        {tech.name} ({tech.department})
-                                    </option>
-                                ))}
-                            </select>
-
-                            <select
-                                value={forwardStatus}
-                                onChange={(e) => setForwardStatus(e.target.value)}
-                                className="input-field mb-3"
-                            >
-                                <option value="">-- {t('admin_complaint_detail.select_status') || 'Select Status'} --</option>
-                                <option value="pending">{t('admin_users.status_pending')}</option>
-                                <option value="in_process">{t('admin_users.status_in_process')}</option>
-                                <option value="closed">{t('admin_users.status_closed')}</option>
-                            </select>
-
-                            <button
-                                onClick={handleForward}
-                                disabled={isSaving || !forwardTo}
-                                className="btn-primary w-full flex items-center justify-center gap-2"
-                            >
-                                <Send className="w-4 h-4" />
-                                {t('admin_complaint_detail.btn_forward')}
-                            </button>
-                        </div>
-                    )}
-
                     {/* Dates */}
                     <div className="card">
                         <h3 className="font-semibold mb-4">{t('admin_complaint_detail.dates')}</h3>
