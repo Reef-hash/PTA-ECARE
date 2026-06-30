@@ -368,7 +368,7 @@ export default function UserComplaintDetail() {
                             <Clock className="w-5 h-5" />
                             Track Repair
                         </h3>
-                        <p className="text-sm text-gray-600 mb-4">View repair progress and history for this complaint.</p>
+                        <p className="text-sm text-gray-600 mb-4">View repair progress and history.</p>
                         <Link
                             to={`/users/complaint/${id}/track-repair`}
                             className="btn-primary w-full flex items-center justify-center gap-2"
