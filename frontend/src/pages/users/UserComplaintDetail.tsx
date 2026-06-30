@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, FileText, User, Calendar, MapPin, Wrench, Clock, XCircle, Eye, Download } from 'lucide-react';
 import UserLayout from '../../components/UserLayout';
 import api from '../../services/api';
-import { Complaint, ComplaintRemark, TechnicianRemark } from '../../types';
+import { Complaint } from '../../types';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -11,8 +11,6 @@ export default function UserComplaintDetail() {
     const { t, i18n } = useTranslation();
     const { id } = useParams();
     const [complaint, setComplaint] = useState<Complaint | null>(null);
-    const [adminRemarks, setAdminRemarks] = useState<ComplaintRemark[]>([]);
-    const [techRemarks, setTechRemarks] = useState<TechnicianRemark[]>([]);
 
     const [isLoading, setIsLoading] = useState(true);
 
@@ -45,8 +43,6 @@ export default function UserComplaintDetail() {
         try {
             const response = await api.get(`/complaints/${id}`);
             setComplaint(response.data.complaint);
-            setAdminRemarks(response.data.adminRemarks);
-            setTechRemarks(response.data.techRemarks);
         } catch (error) {
             toast.error(t('common.error_load'));
         } finally {
@@ -321,61 +317,6 @@ export default function UserComplaintDetail() {
                         )}
                     </div>
 
-                    {/* Timeline */}
-                    <div className="card">
-                        <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-                            <Clock className="w-5 h-5" />
-                            {t('user_dashboard.label_timeline')}
-                        </h3>
-
-                        {adminRemarks.length === 0 && techRemarks.length === 0 ? (
-                            <p className="text-gray-500 text-center py-8">{t('user_dashboard.no_remarks')}</p>
-                        ) : (
-                            <div className="space-y-4">
-                                {/* Combine and sort all remarks */}
-                                {[...adminRemarks.map(r => ({ ...r, type: 'admin' })), ...techRemarks.map(r => ({ ...r, type: 'tech' }))]
-                                    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-                                    .map((remark) => (
-                                        <div key={`${remark.type}-${remark.id}`} className="relative pl-6 pb-4 border-l-2 border-gray-200 last:border-0">
-                                            <div className={`absolute -left-2 w-4 h-4 rounded-full ${remark.type === 'admin' ? 'bg-blue-500' : 'bg-green-500'}`}></div>
-                                            <div className="bg-gray-50 rounded-lg p-4">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <span className={`text-xs font-medium px-2 py-1 rounded ${remark.type === 'admin' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
-                                                        {remark.type === 'admin' ? 'Admin' : t('user_dashboard.label_technician')}
-                                                    </span>
-                                                    <span className="text-xs text-gray-500">{formatDate(remark.created_at)}</span>
-                                                </div>
-                                                {/* Special display for Incomplete / Bawa Pulang */}
-                                                {remark.status === 'incomplete' ? (
-                                                    <div className="mt-1 bg-orange-50 border border-orange-200 rounded-lg p-3 space-y-1.5">
-                                                        <p className="text-sm font-medium text-orange-700 mb-1">Status: Incomplete / Bawa Pulang</p>
-                                                        <p className="text-sm text-orange-800"><strong>🔧 Juruteknik:</strong> {remark.type === 'tech' && (remark as any).technicians?.name ? (remark as any).technicians.name : '-'}</p>
-                                                        <p className="text-sm text-orange-800"><strong>📍 Lokasi:</strong> {complaint?.users?.address || '-'}</p>
-                                                        <p className="text-sm text-orange-800"><strong>📅 Tarikh:</strong> {formatDate(remark.created_at)}</p>
-                                                        <p className="text-sm text-orange-800"><strong>📝 Sebab Bawa Pulang:</strong> {remark.remark || '-'}</p>
-                                                        {remark.note_transport && <p className="text-sm text-orange-800"><strong>🚗 Transport Note:</strong> {remark.note_transport}</p>}
-                                                    </div>
-                                                ) : (
-                                                    <>
-                                                        {remark.remark && <p className="text-gray-700">{remark.remark}</p>}
-                                                        {remark.note_transport && (
-                                                            <p className="text-sm text-gray-600 mt-2">
-                                                                <strong>{t('user_dashboard.remark_transport')}:</strong> {remark.note_transport}
-                                                            </p>
-                                                        )}
-                                                        {remark.checking && (
-                                                            <p className="text-sm text-gray-600 mt-1">
-                                                                <strong>{t('user_dashboard.remark_checking')}:</strong> {remark.checking}
-                                                            </p>
-                                                        )}
-                                                    </>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))}
-                            </div>
-                        )}
-                    </div>
                 </div>
 
                 {/* Sidebar */}
