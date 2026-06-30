@@ -128,7 +128,7 @@ export default function TrackRepair() {
 
     if (isLoading) {
         return (
-            <Layout title="Track Repair" breadcrumb="Track Repair">
+            <Layout title={t('user_dashboard.track_repair')} breadcrumb={t('user_dashboard.track_repair')}>
                 <div className="flex items-center justify-center h-64">
                     <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent"></div>
                 </div>
@@ -138,9 +138,9 @@ export default function TrackRepair() {
 
     if (!complaint) {
         return (
-            <Layout title="Track Repair" breadcrumb="Track Repair">
+            <Layout title={t('user_dashboard.track_repair')} breadcrumb={t('user_dashboard.track_repair')}>
                 <div className="text-center py-12">
-                    <p className="text-gray-500">Complaint not found</p>
+                    <p className="text-gray-500">{t('admin_complaint_detail.complaint_not_found')}</p>
                 </div>
             </Layout>
         );
@@ -176,7 +176,7 @@ export default function TrackRepair() {
     }
 
     return (
-        <Layout title="Track Repair" breadcrumb="Track Repair">
+        <Layout title={t('user_dashboard.track_repair')} breadcrumb={t('user_dashboard.track_repair')}>
             <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -188,7 +188,7 @@ export default function TrackRepair() {
                         className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800"
                     >
                         <ArrowLeft className="w-4 h-4" />
-                        Back
+                        {t('admin_complaint_detail.back')}
                     </Link>
                 </div>
 
@@ -199,7 +199,7 @@ export default function TrackRepair() {
                 <div className="card mt-6">
                     <div className="flex items-start justify-between mb-4 border-b pb-3">
                         <div>
-                            <p className="text-xs text-gray-400 font-semibold tracking-wider uppercase">Report No.</p>
+                            <p className="text-xs text-gray-400 font-semibold tracking-wider uppercase">{t('admin_complaint_detail.report_no')}</p>
                             <h2 className="text-xl font-bold text-gray-900">{complaint.report_number}</h2>
                         </div>
                         <div className="flex items-center gap-2">
@@ -210,35 +210,35 @@ export default function TrackRepair() {
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
-                            <p className="text-xs text-gray-400">Customer</p>
+                            <p className="text-xs text-gray-400">{t('complaint_list.customer')}</p>
                             <p className="font-semibold text-gray-700">{complaint.users?.full_name || '-'}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-400">Category</p>
+                            <p className="text-xs text-gray-400">{t('admin_complaint_detail.category')}</p>
                             <p className="font-semibold text-gray-700">{complaint.categories?.name || '-'}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-400">Subcategory</p>
+                            <p className="text-xs text-gray-400">{t('admin_complaint_detail.subcategory')}</p>
                             <p className="font-semibold text-gray-700">{complaint.subcategory}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-400">Brand</p>
+                            <p className="text-xs text-gray-400">{t('admin_complaint_detail.brand')}</p>
                             <p className="font-semibold text-gray-700">{complaint.brand_name}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-400">Model No.</p>
+                            <p className="text-xs text-gray-400">{t('admin_complaint_detail.model_no')}</p>
                             <p className="font-semibold text-gray-700">{complaint.model_no || '-'}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-400">Warranty</p>
+                            <p className="text-xs text-gray-400">{t('admin_complaint_detail.warranty_type')}</p>
                             <p className="font-semibold text-gray-700">{complaint.complaint_type}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-400">Technician</p>
-                            <p className="font-semibold text-gray-700">{complaint.technicians?.name || 'Not assigned'}</p>
+                            <p className="text-xs text-gray-400">{t('common.technician')}</p>
+                            <p className="font-semibold text-gray-700">{complaint.technicians?.name || t('admin_complaint_detail.not_assigned')}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-400">Created</p>
+                            <p className="text-xs text-gray-400">{t('admin_complaint_detail.date_created')}</p>
                             <p className="font-semibold text-gray-700">{formatDate(complaint.created_at)}</p>
                         </div>
                     </div>
