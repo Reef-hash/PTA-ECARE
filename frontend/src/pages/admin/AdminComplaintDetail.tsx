@@ -234,22 +234,22 @@ export default function AdminComplaintDetail() {
                         </div>
 
                         {/* Track Repair Section */}
-                        <div className="mt-6 p-4 bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-xl flex items-center justify-between">
+                        <div className="mt-6 p-4 bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                             <div className="flex items-start gap-3">
                                 <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center flex-shrink-0">
                                     <Wrench className="w-5 h-5 text-teal-600" />
                                 </div>
                                 <div>
-                                    <h3 className="font-semibold text-gray-800">{t('user_dashboard.track_repair') || 'Track Repair'}</h3>
-                                    <p className="text-sm text-gray-500">{t('user_dashboard.track_repair_desc') || 'View repair progress and history.'}</p>
+                                    <h3 className="font-semibold text-gray-800">{t('user_dashboard.track_repair')}</h3>
+                                    <p className="text-sm text-gray-500">{t('user_dashboard.track_repair_desc')}</p>
                                 </div>
                             </div>
                             <Link
                                 to={`/admin/complaint/${id}/track-repair`}
-                                className="btn-primary flex items-center gap-2 whitespace-nowrap text-sm px-4 py-2"
+                                className="btn-primary flex items-center justify-center gap-2 whitespace-nowrap text-sm px-4 py-2 w-full sm:w-auto"
                             >
                                 <Eye className="w-4 h-4" />
-                                {t('user_dashboard.view_track_repair') || 'VIEW TRACK REPAIR'}
+                                {t('user_dashboard.view_track_repair')}
                             </Link>
                         </div>
 
