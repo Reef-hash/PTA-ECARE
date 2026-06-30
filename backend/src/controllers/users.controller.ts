@@ -242,7 +242,8 @@ export const uploadAvatar = async (req: Request, res: Response): Promise<void> =
             return;
         }
 
-        const extension = file.originalname.split('.').pop() || 'jpg';
+        const mimeExt: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp' };
+        const extension = mimeExt[file.mimetype] || 'jpg';
         const fileName = `${userId}/${Date.now()}.${extension}`;
         const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
             .from('user-images')

@@ -60,5 +60,5 @@ export const requireRole = (...roles: ('user' | 'admin' | 'technician' | 'main_t
 };
 
 export const requireAdmin = requireRole('admin');
-export const requireTechnician = requireRole('technician', 'admin');
+export const requireTechnician = requireRole('technician', 'admin', 'main_technician');
 export const requireUser = requireRole('user');

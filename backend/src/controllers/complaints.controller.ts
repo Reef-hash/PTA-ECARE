@@ -317,12 +317,10 @@ export const createComplaint = async (req: Request, res: Response): Promise<void
             }
         }
 
-        // Validate: Under Warranty requires files
-        if (complaint_type === 'Under Warranty' && (!warranty_file || !receipt_file)) {
-            // Check if files were in the request
-            if (!files?.warranty_file && !files?.receipt_file) {
-                // Allow creation without files for form-data handling
-            }
+        // Validate: Under Warranty requires warranty and receipt files
+        if (complaint_type === 'Under Warranty' && (!warranty_file || !receipt_file) && !files?.warranty_file && !files?.receipt_file) {
+            res.status(400).json({ error: 'Under Warranty complaints require warranty and receipt files' });
+            return;
         }
 
         // Generate report number
@@ -877,13 +875,14 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
             // Optional: If admin updates status manually, notify technician if assigned?
             // Existing logic only asked for Tech -> Admin and Admin -> Tech (Assignment)
             // But let's add it if assigned
-            const { data: c } = await supabaseAdmin.from('complaints').select('assigned_to, report_number').eq('id', id).single();
+            const { data: c } = await supabaseAdmin.from('complaints').select('assigned_to, report_number, assigned_to, created_by').eq('id', id).single();
             if (c && c.assigned_to) {
+                const updater = role === 'technician' ? 'Technician' : 'Admin';
                 await createNotification(
                     c.assigned_to,
                     'technician',
                     `Job Update: ${c.report_number}`,
-                    `Admin updated complaint ${c.report_number} to '${status}'.`,
+                    `${updater} updated complaint ${c.report_number} to '${status}'.`,
                     'status_update',
                     id
                 );
@@ -1564,6 +1563,7 @@ export const resolveNumericId = async (req: Request, res: Response): Promise<voi
         }
         res.json({ report_number: data.report_number });
     } catch (error) {
+        console.error('Resolve numeric ID error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 };

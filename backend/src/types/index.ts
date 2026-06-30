@@ -151,7 +151,7 @@ export interface LoginRequest {
     ic_number?: string;
     username?: string;
     password: string;
-    role: 'user' | 'admin' | 'technician';
+    role: 'user' | 'admin' | 'technician' | 'main_technician';
 }
 
 export interface RegisterRequest {

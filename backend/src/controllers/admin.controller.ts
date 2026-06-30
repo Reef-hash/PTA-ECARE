@@ -465,7 +465,8 @@ export const getAdminProfile = async (req: Request, res: Response): Promise<void
             return;
         }
 
-        res.json(data);
+        const { password_hash, ...profileData } = data;
+        res.json(profileData);
     } catch (error) {
         console.error('Get profile error:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -511,7 +512,8 @@ export const updateAdminProfile = async (req: Request, res: Response): Promise<v
             .single();
 
         if (error) throw error;
-        res.json({ message: 'Profile updated successfully', user: data });
+        const { password_hash, ...userData } = data;
+        res.json({ message: 'Profile updated successfully', user: userData });
     } catch (error) {
         console.error('Update profile error:', error);
         res.status(500).json({ error: 'Internal server error' });
