@@ -4,6 +4,23 @@ import { generateReportNumber, formatNotificationDate } from '../utils/helpers.j
 import { createNotification, buildNotificationEmailHtml } from './notifications.controller.js';
 import { sendEmail } from '../utils/email.js';
 
+/** Resolve complaint param — accepts numeric id OR report_number (e.g. PTAS00001) */
+async function resolveComplaint(idOrReport: string) {
+    const isNumeric = /^\d+$/.test(idOrReport);
+    const query = supabaseAdmin
+        .from('complaints')
+        .select('id')
+        .limit(1);
+    if (isNumeric) {
+        query.eq('id', parseInt(idOrReport, 10));
+    } else {
+        query.eq('report_number', idOrReport);
+    }
+    const { data, error } = await query;
+    if (error || !data || data.length === 0) return null;
+    return data[0].id as number;
+}
+
 // Get technician dashboard stats (for logged-in technician)
 export const getTechnicianDashboardStats = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -178,6 +195,12 @@ export const getComplaint = async (req: Request, res: Response): Promise<void> =
         const userId = req.user?.id;
         const role = req.user?.role;
 
+        const complaintId = await resolveComplaint(id);
+        if (!complaintId) {
+            res.status(404).json({ error: 'Complaint not found' });
+            return;
+        }
+
         const { data: complaint, error } = await supabaseAdmin
             .from('complaints')
             .select(`
@@ -186,7 +209,7 @@ export const getComplaint = async (req: Request, res: Response): Promise<void> =
         categories:category_id (id, name),
         technicians:assigned_to (id, name, department)
       `)
-            .eq('id', id)
+            .eq('id', complaintId)
             .single();
 
         if (error || !complaint) {
@@ -208,7 +231,7 @@ export const getComplaint = async (req: Request, res: Response): Promise<void> =
         const { data: adminRemarks } = await supabaseAdmin
             .from('complaint_remarks')
             .select('*')
-            .eq('complaint_id', id)
+            .eq('complaint_id', complaintId)
             .order('created_at', { ascending: true });
 
         const { data: techRemarks } = await supabaseAdmin
@@ -217,7 +240,7 @@ export const getComplaint = async (req: Request, res: Response): Promise<void> =
         *,
         technicians:remark_by (id, name)
       `)
-            .eq('complaint_id', id)
+            .eq('complaint_id', complaintId)
             .order('created_at', { ascending: true });
 
         // Get forward history
@@ -227,7 +250,7 @@ export const getComplaint = async (req: Request, res: Response): Promise<void> =
         *,
         technicians:forward_to (id, name, department)
       `)
-            .eq('complaint_id', id)
+            .eq('complaint_id', complaintId)
             .order('created_at', { ascending: true });
 
         res.json({
@@ -401,6 +424,12 @@ export const updateComplaint = async (req: Request, res: Response): Promise<void
         const { status } = req.body;
         const role = req.user?.role;
 
+        const complaintId = await resolveComplaint(id);
+        if (!complaintId) {
+            res.status(404).json({ error: 'Complaint not found' });
+            return;
+        }
+
         if (role !== 'admin' && role !== 'technician') {
             res.status(403).json({ error: 'Access denied' });
             return;
@@ -409,7 +438,7 @@ export const updateComplaint = async (req: Request, res: Response): Promise<void
         const { data, error } = await supabaseAdmin
             .from('complaints')
             .update({ status, updated_at: new Date().toISOString() })
-            .eq('id', id)
+            .eq('id', complaintId)
             .select()
             .single();
 
@@ -423,7 +452,6 @@ export const updateComplaint = async (req: Request, res: Response): Promise<void
         // NOTIFICATION LOGIC
         if (role === 'technician' && status) {
             try {
-                // Get technician name
                 const { data: techData } = await supabaseAdmin
                     .from('technicians')
                     .select('name')
@@ -431,18 +459,13 @@ export const updateComplaint = async (req: Request, res: Response): Promise<void
                     .single();
                 const techName = techData?.name || 'Technician';
 
-                // Get report number & user_id (already in 'data' from update response, or fetch if needed)
-                // 'data' has the updated complaint.
                 const reportNumber = data.report_number;
                 const userId = data.user_id;
 
                 if (reportNumber && userId) {
                     const formattedDate = formatNotificationDate(new Date());
 
-                    // Notify Admins
                     if (status === 'in_process' || status === 'closed') {
-                        const statusText = status === 'in_process' ? 'In Process' : 'Complete';
-
                         const { data: admins } = await supabaseAdmin.from('admins').select('id');
                         if (admins) {
                             for (const admin of admins) {
@@ -454,13 +477,12 @@ export const updateComplaint = async (req: Request, res: Response): Promise<void
                                         ? `Status Update: Complaint ${reportNumber} is being processed by technician ${techName} at ${formattedDate}.`
                                         : `Status Update: Complaint ${reportNumber} is now completed by technician ${techName} at ${formattedDate}.`,
                                     'status_update_detailed',
-                                    parseInt(id, 10)
+                                    complaintId
                                 );
                             }
                         }
                     }
 
-                    // Notify User
                     if (status === 'in_process') {
                         await createNotification(
                             userId,
@@ -468,7 +490,7 @@ export const updateComplaint = async (req: Request, res: Response): Promise<void
                             `Status Update: ${reportNumber}`,
                             `Status Update: Complaint ${reportNumber} is being processed by technician ${techName} at ${formattedDate}.`,
                             'status_update_detailed',
-                            parseInt(id, 10)
+                            complaintId
                         );
                     } else if (status === 'closed') {
                         await createNotification(
@@ -477,7 +499,7 @@ export const updateComplaint = async (req: Request, res: Response): Promise<void
                             `Status Update: ${reportNumber}`,
                             `Status Update: Complaint ${reportNumber} is now completed by technician ${techName} at ${formattedDate}. Ready for pickup.`,
                             'status_update_detailed',
-                            parseInt(id, 10)
+                            complaintId
                         );
                     }
                 }
@@ -494,13 +516,19 @@ export const updateComplaint = async (req: Request, res: Response): Promise<void
 // Add remark to complaint (Admin)
 export const addRemark = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { id } = req.params;
+        const { id: paramId } = req.params;
         const { note_transport, checking, remark, status } = req.body;
         const userId = req.user?.id;
         const role = req.user?.role;
 
+        const id = await resolveComplaint(paramId);
+        if (!id) {
+            res.status(404).json({ error: 'Complaint not found' });
+            return;
+        }
+
         const remarkData = {
-            complaint_id: parseInt(id, 10),
+            complaint_id: id,
             note_transport: note_transport || null,
             checking: checking || null,
             remark: remark || null,
@@ -622,7 +650,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                                 `Status Update: ${reportNumber}`,
                                 adminStatusPayload,
                                 'status_update_detailed',
-                                parseInt(id, 10)
+                                id
                             );
                         }
                     }
@@ -637,7 +665,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                             'Administrator',
                             subject,
                             `Juruteknik ${techName} telah mengemaskini status aduan ${reportNumber} daripada '${previousStatus}' kepada 'Selesai' pada ${new Date().toLocaleDateString('ms-MY')} jam ${new Date().toLocaleTimeString('ms-MY')}.`,
-                            parseInt(id, 10),
+                            id,
                             'admin'
                         );
                         await sendEmail(adminEmail, subject, emailHtml);
@@ -648,7 +676,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                                 customerData.name,
                                 subject,
                                 `Aduan anda (${reportNumber}) telah selesai dibaiki oleh juruteknik ${techName}.`,
-                                parseInt(id, 10),
+                                id,
                                 'user'
                             );
                             await sendEmail(customerData.email, subject, custHtml);
@@ -668,14 +696,14 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                         const adminHtml = buildNotificationEmailHtml(
                             'Administrator', subject,
                             `Juruteknik telah update status progress repair kerosakan untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`,
-                            parseInt(id, 10), 'admin'
+                            id, 'admin'
                         );
                         await sendEmail(adminEmail, subject, adminHtml);
 
                         const mainTechHtml = buildNotificationEmailHtml(
                             'Main Technician', subject,
                             `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`,
-                            parseInt(id, 10), 'admin'
+                            id, 'admin'
                         );
                         await sendEmail(mainTechEmail, subject, mainTechHtml);
 
@@ -685,7 +713,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                             const custHtml = buildNotificationEmailHtml(
                                 customerData.name, subject,
                                 `${reportNumber} aduan anda telah update status progress repair kerosakan ${subcategoryName} oleh juruteknik kami (${techName}). Sila tekan semak aduan untuk lihat lebih lanjut.`,
-                                parseInt(id, 10), 'user'
+                                id, 'user'
                             );
                             await sendEmail(customerData.email, subject, custHtml);
                         }
@@ -712,7 +740,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                                 `Transport Update: ${reportNumber}`,
                                 transportAdminPayload,
                                 'transport_update',
-                                parseInt(id, 10)
+                                id
                             );
                         }
                     }
@@ -728,7 +756,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                         `Transport Update: ${reportNumber}`,
                         transportUserPayload,
                         'transport_update',
-                        parseInt(id, 10)
+                        id
                     );
                 }
 
@@ -749,7 +777,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                                 `Checking Update: ${reportNumber}`,
                                 checkingAdminPayload,
                                 'checking_update',
-                                parseInt(id, 10)
+                                id
                             );
                         }
                     }
@@ -765,7 +793,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                         `Checking Update: ${reportNumber}`,
                         checkingUserPayload,
                         'checking_update',
-                        parseInt(id, 10)
+                        id
                     );
                 }
 
@@ -786,7 +814,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                                 `New Remark: ${reportNumber}`,
                                 remarkAdminPayload,
                                 'remark_update',
-                                parseInt(id, 10)
+                                id
                             );
                         }
                     }
@@ -802,7 +830,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                         `New Remark: ${reportNumber}`,
                         remarkUserPayload,
                         'remark_update',
-                        parseInt(id, 10)
+                        id
                     );
                 }
 
@@ -824,7 +852,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                         `Status Update: ${reportNumber}`,
                         processingPayload,
                         'status_update_detailed',
-                        parseInt(id, 10)
+                        id
                     );
                 } else if (status === 'closed') {
                     const closedPayload = JSON.stringify({
@@ -843,7 +871,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                         `Status Update: ${reportNumber}`,
                         closedPayload,
                         'status_update_detailed',
-                        parseInt(id, 10)
+                        id
                     );
                 } else if (status) { // Other status updates (fallback)
                     // Keep existing logic for other statuses if any? 
@@ -863,7 +891,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                     `Job Update: ${c.report_number}`,
                     `Admin updated complaint ${c.report_number} to '${status}'.`,
                     'status_update',
-                    parseInt(id, 10)
+                    id
                 );
             }
         }
@@ -1196,12 +1224,17 @@ export const deleteRemark = async (req: Request, res: Response): Promise<void> =
 // Forward complaint to technician
 export const forwardComplaint = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { id } = req.params;
+        const { id: paramId } = req.params;
         const { technician_id, status } = req.body;
         const adminId = req.user?.id;
         const forwarderRole = req.user?.role; // Track who forwarded it
 
-        // Get current assignment and report details
+        const id = await resolveComplaint(paramId);
+        if (!id) {
+            res.status(404).json({ error: 'Complaint not found' });
+            return;
+        }
+
         // Get current assignment and report details
         const { data: complaint } = await supabaseAdmin
             .from('complaints')
@@ -1231,7 +1264,7 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
 
         // Record forward history
         await supabaseAdmin.from('forward_history').insert({
-            complaint_id: parseInt(id, 10),
+            complaint_id: id,
             forward_from: complaint?.assigned_to || adminId,
             forward_to: technician_id,
         });
@@ -1270,7 +1303,7 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
             `Job Assigned: ${complaint?.report_number}`,
             assignmentPayload,
             'assignment',
-            parseInt(id, 10)
+            id
         );
 
         // NOTIFICATION 2: FOR USER (Antigravity Protocol - Double Trigger)
@@ -1302,7 +1335,7 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
                 `Status Update: ${complaint?.report_number}`,
                 userPayload,
                 'status_update_detailed',
-                parseInt(id, 10)
+                id
             );
         }
 
@@ -1318,7 +1351,7 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
                 const techHtml = buildNotificationEmailHtml(
                     techExists.name, subject,
                     `Satu tugasan aduan (${complaint.report_number}) telah diagihkan kepada anda oleh pihak pengurusan. Sila semak aplikasi E-CARE untuk maklumat lanjut.`,
-                    parseInt(id, 10), 'technician'
+                    id, 'technician'
                 );
                 await sendEmail(techExists.email, subject, techHtml);
             }
@@ -1327,7 +1360,7 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
             const adminHtml = buildNotificationEmailHtml(
                 'Administrator', subject,
                 `Tugasan aduan (${complaint.report_number}) telah berjaya diagihkan kepada juruteknik ${techExists.name}.`,
-                parseInt(id, 10), 'admin'
+                id, 'admin'
             );
             await sendEmail(adminEmail, subject, adminHtml);
 
@@ -1336,7 +1369,7 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
                 const custHtml = buildNotificationEmailHtml(
                     customerName, subject,
                     `Aduan anda (${complaint.report_number}) telah diagihkan kepada juruteknik kami (${techExists.name}) untuk tindakan selanjutnya.`,
-                    parseInt(id, 10), 'user'
+                    id, 'user'
                 );
                 await sendEmail(customerEmail, subject, custHtml);
             }
@@ -1374,8 +1407,14 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
 // Cancel complaint (user only, pending status only)
 export const cancelComplaint = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { id } = req.params;
+        const { id: paramId } = req.params;
         const userId = req.user?.id;
+
+        const id = await resolveComplaint(paramId);
+        if (!id) {
+            res.status(404).json({ error: 'Complaint not found' });
+            return;
+        }
 
         // Get complaint with user info
         const { data: complaint, error: fetchError } = await supabaseAdmin
@@ -1422,7 +1461,7 @@ export const cancelComplaint = async (req: Request, res: Response): Promise<void
             `Status Update: ${complaint.report_number}`,
             `Cancelled on ${formattedDate}`,
             'status_update_detailed',
-            parseInt(id, 10)
+            id
         );
 
         // Get admin to notify
@@ -1445,7 +1484,7 @@ export const cancelComplaint = async (req: Request, res: Response): Promise<void
                 `Aduan Dibatalkan oleh Pengguna`,
                 `${userName} telah membatalkan aduan (No Laporan: ${complaint.report_number}). Klik untuk semak.`,
                 'status_update',
-                parseInt(id, 10)
+                id
             );
             console.log(`[CANCEL COMPLAINT] Admin notification created successfully`);
         } else {
@@ -1464,7 +1503,13 @@ export const cancelComplaint = async (req: Request, res: Response): Promise<void
 // Delete complaint (admin only)
 export const deleteComplaint = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { id } = req.params;
+        const { id: paramId } = req.params;
+
+        const id = await resolveComplaint(paramId);
+        if (!id) {
+            res.status(404).json({ error: 'Aduan tidak dijumpai' });
+            return;
+        }
 
         // Optionally fetch the complaint first to ensure it exists
         const { data: complaint, error: fetchError } = await supabaseAdmin

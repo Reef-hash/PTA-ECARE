@@ -216,7 +216,7 @@ export default function TechnicianDetail() {
                                             <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{formatDate(complaint.created_at)}</td>
                                             <td className="px-4 py-3 text-center whitespace-nowrap">
                                                 <Link
-                                                    to={`/admin/complaint/${complaint.id}`}
+                                                    to={`/admin/complaint/${complaint.report_number}`}
                                                     className="inline-flex items-center justify-center p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
                                                 >
                                                     <Eye className="w-4 h-4" />

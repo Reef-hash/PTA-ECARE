@@ -227,7 +227,7 @@ export default function AdminMainTechQueue() {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-center">
                                                     <Link
-                                                        to={`/admin/complaint/${complaint.id}`}
+                                                        to={`/admin/complaint/${complaint.report_number}`}
                                                         className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium rounded transition-colors shadow-sm"
                                                     >
                                                         <Eye className="w-3.5 h-3.5" />

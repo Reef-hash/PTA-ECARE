@@ -212,7 +212,7 @@ export default function MainTechDashboard() {
                                                         </button>
                                                     ) : (
                                                         <Link
-                                                            to={`/main-tech/complaint/${complaint.id}`}
+                                                            to={`/main-tech/complaint/${complaint.report_number}`}
                                                             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-medium rounded transition-colors shadow-sm"
                                                         >
                                                             <Eye className="w-3.5 h-3.5" />

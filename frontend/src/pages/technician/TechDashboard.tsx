@@ -233,13 +233,13 @@ export default function TechDashboard() {
                                         <td className="px-4 py-3">
                                             <div className="flex flex-col gap-1">
                                                 <Link
-                                                    to={`/admin/technician/complaint/${complaint.id}`}
+                                                    to={`/admin/technician/complaint/${complaint.report_number}`}
                                                     className="text-green-600 hover:text-green-700 font-medium"
                                                 >
                                                     {complaint.report_number}
                                                 </Link>
                                                 <Link
-                                                    to={`/admin/technician/complaint/${complaint.id}/track-repair`}
+                                                    to={`/admin/technician/complaint/${complaint.report_number}/track-repair`}
                                                     className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
                                                 >
                                                     TRACK REPAIR

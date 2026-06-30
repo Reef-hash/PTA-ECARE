@@ -557,13 +557,13 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                                             </td>
                                             <td className="px-4 py-3">
                                                 <Link
-                                                    to={`/admin/complaint/${complaint.id}`}
+                                                    to={`/admin/complaint/${complaint.report_number}`}
                                                     className="font-medium text-indigo-600 hover:text-indigo-800 hover:underline transition-colors"
                                                 >
                                                     {complaint.report_number}
                                                 </Link>
                                                 <Link
-                                                    to={`/admin/complaint/${complaint.id}/track-repair`}
+                                                    to={`/admin/complaint/${complaint.report_number}/track-repair`}
                                                     className="block mt-1 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
                                                 >
                                                     TRACK REPAIR
@@ -597,14 +597,14 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                                             <td className="px-4 py-3 whitespace-nowrap">
                                                 <div className="flex items-center justify-center gap-2">
                                                     <Link
-                                                        to={`/admin/complaint/${complaint.id}`}
+                                                        to={`/admin/complaint/${complaint.report_number}`}
                                                         className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                                                         title={t('complaint_list.view')}
                                                     >
                                                         <Eye className="w-4 h-4" />
                                                     </Link>
                                                     <Link
-                                                        to={`/admin/print/${complaint.id}`}
+                                                        to={`/admin/print/${complaint.report_number}`}
                                                         className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                                                         title={t('complaint_list.print')}
                                                     >

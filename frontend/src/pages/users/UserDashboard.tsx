@@ -359,13 +359,13 @@ export default function UserDashboard() {
                                         <td className="px-4 py-3">
                                             <div className="flex flex-col gap-1">
                                                 <Link
-                                                    to={`/users/complaint/${complaint.id}`}
+                                                    to={`/users/complaint/${complaint.report_number}`}
                                                     className="text-primary-600 hover:text-primary-700 font-medium"
                                                 >
                                                     {complaint.report_number}
                                                 </Link>
                                                 <Link
-                                                    to={`/users/complaint/${complaint.id}/track-repair`}
+                                                    to={`/users/complaint/${complaint.report_number}/track-repair`}
                                                     className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
                                                 >
                                                     TRACK REPAIR

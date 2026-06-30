@@ -310,13 +310,13 @@ export default function TechComplaints() {
                                             <td className="px-4 py-3">
                                                 <div className="flex flex-col gap-1">
                                                     <Link
-                                                        to={`/admin/technician/complaint/${complaint.id}`}
+                                                        to={`/admin/technician/complaint/${complaint.report_number}`}
                                                         className="font-medium text-green-600 hover:text-green-700 hover:underline"
                                                     >
                                                         {complaint.report_number}
                                                     </Link>
                                                     <Link
-                                                        to={`/admin/technician/complaint/${complaint.id}/track-repair`}
+                                                        to={`/admin/technician/complaint/${complaint.report_number}/track-repair`}
                                                         className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
                                                     >
                                                         TRACK REPAIR
@@ -344,14 +344,14 @@ export default function TechComplaints() {
                                             <td className="px-4 py-3 whitespace-nowrap">
                                                 <div className="flex items-center justify-center">
                                                     <Link
-                                                        to={`/admin/technician/complaint/${complaint.id}`}
+                                                        to={`/admin/technician/complaint/${complaint.report_number}`}
                                                         className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                                                         title={t('technician_dashboard.click_to_view') || 'View'}
                                                     >
                                                         <Eye className="w-4 h-4" />
                                                     </Link>
                                                     <Link
-                                                        to={`/admin/print/${complaint.id}`}
+                                                        to={`/admin/print/${complaint.report_number}`}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
