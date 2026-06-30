@@ -192,57 +192,57 @@ export default function TrackRepair() {
                     </Link>
                 </div>
 
-                {/* Complaint Header */}
-                <div className="card mb-6">
-                    <div className="flex items-start justify-between mb-4">
+                {/* BLOCK 1: Track Repair Progress (TOP) */}
+                <RepairTimeline currentStatus={currentStatus} timeline={timeline} stepRemarks={stepRemarks} />
+
+                {/* BLOCK 2: Complaint Details (BELOW) */}
+                <div className="card mt-6">
+                    <div className="flex items-start justify-between mb-4 border-b pb-3">
                         <div>
-                            <p className="text-sm text-gray-500">Report No.</p>
-                            <h2 className="text-2xl font-bold text-gray-800">{complaint.report_number}</h2>
+                            <p className="text-xs text-gray-400 font-semibold tracking-wider uppercase">Report No.</p>
+                            <h2 className="text-xl font-bold text-gray-900">{complaint.report_number}</h2>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                             {getStatusIcon(complaint.status)}
                             {getStatusBadge(complaint.status)}
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
-                            <p className="text-xs text-gray-500">Customer</p>
-                            <p className="font-medium text-sm">{complaint.users?.full_name || '-'}</p>
+                            <p className="text-xs text-gray-400">Customer</p>
+                            <p className="font-semibold text-gray-700">{complaint.users?.full_name || '-'}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-500">Category</p>
-                            <p className="font-medium text-sm">{complaint.categories?.name || '-'}</p>
+                            <p className="text-xs text-gray-400">Category</p>
+                            <p className="font-semibold text-gray-700">{complaint.categories?.name || '-'}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-500">Subcategory</p>
-                            <p className="font-medium text-sm">{complaint.subcategory}</p>
+                            <p className="text-xs text-gray-400">Subcategory</p>
+                            <p className="font-semibold text-gray-700">{complaint.subcategory}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-500">Brand</p>
-                            <p className="font-medium text-sm">{complaint.brand_name}</p>
+                            <p className="text-xs text-gray-400">Brand</p>
+                            <p className="font-semibold text-gray-700">{complaint.brand_name}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-500">Model No.</p>
-                            <p className="font-medium text-sm">{complaint.model_no || '-'}</p>
+                            <p className="text-xs text-gray-400">Model No.</p>
+                            <p className="font-semibold text-gray-700">{complaint.model_no || '-'}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-500">Warranty</p>
-                            <p className="font-medium text-sm">{complaint.complaint_type}</p>
+                            <p className="text-xs text-gray-400">Warranty</p>
+                            <p className="font-semibold text-gray-700">{complaint.complaint_type}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-500">Technician</p>
-                            <p className="font-medium text-sm">{complaint.technicians?.name || 'Not assigned'}</p>
+                            <p className="text-xs text-gray-400">Technician</p>
+                            <p className="font-semibold text-gray-700">{complaint.technicians?.name || 'Not assigned'}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-500">Created</p>
-                            <p className="font-medium text-sm">{formatDate(complaint.created_at)}</p>
+                            <p className="text-xs text-gray-400">Created</p>
+                            <p className="font-semibold text-gray-700">{formatDate(complaint.created_at)}</p>
                         </div>
                     </div>
                 </div>
-
-                {/* Repair Timeline Stepper with Remarks */}
-                <RepairTimeline currentStatus={currentStatus} timeline={timeline} stepRemarks={stepRemarks} />
             </motion.div>
         </Layout>
     );
