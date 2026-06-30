@@ -72,27 +72,38 @@ export default function NotificationsPage() {
             notification.title.includes('Profile') || notification.title.includes('Password');
         const hasValidReferenceId = notification.reference_id && notification.reference_id > 0;
 
+        const resolveAndNavigate = async (basePath: string) => {
+            if (!hasValidReferenceId) {
+                navigate(basePath);
+                return;
+            }
+            try {
+                const { data } = await api.get(`/complaints/resolve-id/${notification.reference_id}`);
+                const reportNumber = data.report_number;
+                const path = location.pathname;
+                if (path.startsWith('/users')) {
+                    navigate(`/users/complaint/${reportNumber}`);
+                } else if (path.startsWith('/admin/technician')) {
+                    navigate(`/admin/technician/complaint/${reportNumber}`);
+                } else {
+                    navigate(`/admin/complaint/${reportNumber}`);
+                }
+            } catch {
+                navigate(basePath);
+            }
+        };
+
         const path = location.pathname;
         if (path.startsWith('/users')) {
             if (isProfileOrPassword) {
                 navigate('/users/profile');
-            } else if (hasValidReferenceId) {
-                navigate(`/users/complaint/${notification.reference_id}`);
             } else {
-                navigate('/users/complaint-history');
+                resolveAndNavigate('/users/complaint-history');
             }
         } else if (path.startsWith('/admin/technician')) {
-            if (hasValidReferenceId) {
-                navigate(`/admin/technician/complaint/${notification.reference_id}`);
-            } else {
-                navigate('/admin/technician/complaints');
-            }
+            resolveAndNavigate('/admin/technician/complaints');
         } else {
-            if (hasValidReferenceId) {
-                navigate(`/admin/complaint/${notification.reference_id}`);
-            } else {
-                navigate('/admin/complaints');
-            }
+            resolveAndNavigate('/admin/complaints');
         }
     };
 

@@ -347,31 +347,40 @@ export default function NotificationBell() {
         // Check if reference_id is valid (not 0 or null)
         const hasValidReferenceId = notification.reference_id && notification.reference_id > 0;
 
+        // Resolve numeric reference_id to report_number
+        const resolveAndNavigate = async (basePath: string) => {
+            if (!hasValidReferenceId) {
+                navigate(basePath);
+                return;
+            }
+            try {
+                const { data } = await api.get(`/complaints/resolve-id/${notification.reference_id}`);
+                const reportNumber = data.report_number;
+                if (path.startsWith('/users')) {
+                    navigate(`/users/complaint/${reportNumber}`);
+                } else if (path.startsWith('/admin/technician')) {
+                    navigate(`/admin/technician/complaint/${reportNumber}`);
+                } else {
+                    navigate(`/admin/complaint/${reportNumber}`);
+                }
+            } catch {
+                // Fallback to the base list page if resolution fails
+                navigate(basePath);
+            }
+        };
+
         // Navigate based on current path context
         const path = window.location.pathname;
         if (path.startsWith('/users')) {
-            // For profile/password notifications, go to profile page
             if (isProfileOrPassword) {
                 navigate('/users/profile');
-            } else if (hasValidReferenceId) {
-                // Go to specific complaint if valid ID
-                navigate(`/users/complaint/${notification.reference_id}`);
             } else {
-                // Otherwise go to complaint history
-                navigate('/users/complaint-history');
+                resolveAndNavigate('/users/complaint-history');
             }
         } else if (path.startsWith('/admin/technician')) {
-            if (hasValidReferenceId) {
-                navigate(`/admin/technician/complaint/${notification.reference_id}`);
-            } else {
-                navigate('/admin/technician/complaints');
-            }
+            resolveAndNavigate('/admin/technician/complaints');
         } else {
-            if (hasValidReferenceId) {
-                navigate(`/admin/complaint/${notification.reference_id}`);
-            } else {
-                navigate('/admin/complaints');
-            }
+            resolveAndNavigate('/admin/complaints');
         }
     };
 

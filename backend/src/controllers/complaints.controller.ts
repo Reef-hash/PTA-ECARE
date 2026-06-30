@@ -4,21 +4,15 @@ import { generateReportNumber, formatNotificationDate } from '../utils/helpers.j
 import { createNotification, buildNotificationEmailHtml } from './notifications.controller.js';
 import { sendEmail } from '../utils/email.js';
 
-/** Resolve complaint param — accepts numeric id OR report_number (e.g. PTAS00001) */
-async function resolveComplaint(idOrReport: string) {
-    const isNumeric = /^\d+$/.test(idOrReport);
-    const query = supabaseAdmin
+/** Resolve complaint by report_number (e.g. PTAS00001) */
+async function resolveComplaint(reportNumber: string) {
+    const { data, error } = await supabaseAdmin
         .from('complaints')
         .select('id')
-        .limit(1);
-    if (isNumeric) {
-        query.eq('id', parseInt(idOrReport, 10));
-    } else {
-        query.eq('report_number', idOrReport);
-    }
-    const { data, error } = await query;
-    if (error || !data || data.length === 0) return null;
-    return data[0].id as number;
+        .eq('report_number', reportNumber)
+        .maybeSingle();
+    if (error || !data) return null;
+    return data.id as number;
 }
 
 // Get technician dashboard stats (for logged-in technician)
@@ -1547,5 +1541,29 @@ export const deleteComplaint = async (req: Request, res: Response): Promise<void
     } catch (error: any) {
         console.error('Error deleting complaint:', error);
         res.status(500).json({ error: 'Ralat memadam aduan' });
+    }
+};
+
+/** Resolve numeric complaint ID to report_number (for notifications) */
+export const resolveNumericId = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { id } = req.params;
+        const complaintId = parseInt(id, 10);
+        if (isNaN(complaintId)) {
+            res.status(400).json({ error: 'Invalid ID' });
+            return;
+        }
+        const { data, error } = await supabaseAdmin
+            .from('complaints')
+            .select('report_number')
+            .eq('id', complaintId)
+            .single();
+        if (error || !data) {
+            res.status(404).json({ error: 'Complaint not found' });
+            return;
+        }
+        res.json({ report_number: data.report_number });
+    } catch (error) {
+        res.status(500).json({ error: 'Internal server error' });
     }
 };

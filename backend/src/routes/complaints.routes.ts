@@ -15,6 +15,7 @@ import {
     getTechnicianDashboardStats,
     cancelComplaint,
     deleteComplaint,
+    resolveNumericId,
 } from '../controllers/complaints.controller.js';
 
 const router = Router();
@@ -38,6 +39,9 @@ router.get('/', getComplaints);
 router.post('/', requireRole('user'), uploadComplaintFiles, createComplaint);
 
 // IMPORTANT: Specific routes MUST come before parameterized routes
+// Resolve numeric ID to report_number (for notification navigation)
+router.get('/resolve-id/:id', resolveNumericId);
+
 // Update/Delete remark (technician only)
 router.put('/remarks/:remarkId', requireRole('technician'), validate(addRemarkSchema), updateRemark);
 router.delete('/remarks/:remarkId', requireRole('technician'), deleteRemark);
