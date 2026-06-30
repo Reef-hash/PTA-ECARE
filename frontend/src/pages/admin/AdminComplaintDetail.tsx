@@ -403,7 +403,7 @@ export default function AdminComplaintDetail() {
                                                 onChange={(e) => setRemarkData({ ...remarkData, status: e.target.value })}
                                                 className="input-field"
                                             >
-                                                <option value="">-- {t('admin_complaint_detail.select_status')} --</option>
+                                                <option value="">-- {t('common.select_status')} --</option>
                                                 <option value="pending">{t('admin_users.status_pending')}</option>
                                                 <option value="in_process">{t('admin_users.status_in_process')}</option>
                                                 <option value="closed">{t('admin_users.status_closed')}</option>
@@ -485,7 +485,7 @@ export default function AdminComplaintDetail() {
                                         onChange={(e) => setForwardStatus(e.target.value)}
                                         className="input-field mb-3"
                                     >
-                                        <option value="">-- {t('admin_complaint_detail.select_status') || 'Select Status'} --</option>
+                                        <option value="">-- {t('common.select_status')} --</option>
                                         <option value="pending">{t('admin_users.status_pending')}</option>
                                         <option value="in_process">{t('admin_users.status_in_process')}</option>
                                         <option value="closed">{t('admin_users.status_closed')}</option>

@@ -40,6 +40,7 @@
     "common": {
         "loading": "Loading...",
         "success_save": "Settings saved successfully",
+        "select": "Select",
         "welcome": "Welcome",
         "view_all": "View All",
         "cancel": "Discard",

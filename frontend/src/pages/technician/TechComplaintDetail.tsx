@@ -359,7 +359,7 @@ export default function TechComplaintDetail() {
                                             onChange={(e) => setRemarkData({ ...remarkData, status: e.target.value })}
                                             className="input-field"
                                         >
-                                            <option value="">-- {t('common.select') || 'Select'} {t('common_actions.status')} --</option>
+                                            <option value="">-- {t('common.select_status')} --</option>
                                             <option value="pending">{t('admin_users.status_pending')}</option>
                                             <option value="in_process">{t('admin_users.status_in_process')}</option>
                                             <option value="incomplete">Incomplete / Bawa Pulang</option>

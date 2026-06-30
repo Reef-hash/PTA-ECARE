@@ -40,6 +40,7 @@
     "common": {
         "loading": "Memuatkan...",
         "success_save": "Tetapan berjaya disimpan",
+        "select": "Pilih",
         "welcome": "Selamat Datang",
         "view_all": "Lihat Semua",
         "cancel": "Abaikan",

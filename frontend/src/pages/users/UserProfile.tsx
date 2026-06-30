@@ -214,7 +214,7 @@ export default function UserProfile() {
                                         onChange={(e) => setFormData({ ...formData, state: e.target.value })}
                                         className="input-field border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 transition-shadow"
                                     >
-                                        <option value="">-- {t('common.select') || 'Select'} {t('user_dashboard.label_state')} --</option>
+                                        <option value="">-- {t('common.select')} {t('user_dashboard.label_state')} --</option>
                                         {states.map((state) => (
                                             <option key={state.id} value={state.name}>
                                                 {state.name}
