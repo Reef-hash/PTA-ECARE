@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, FileText, User, Calendar, MapPin, Wrench, XCircle, Eye, Download } from 'lucide-react';
 import UserLayout from '../../components/UserLayout';
 import api from '../../services/api';
-import { Complaint, ComplaintRemark, TechnicianRemark } from '../../types';
+import { Complaint } from '../../types';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -11,8 +11,6 @@ export default function UserComplaintDetail() {
     const { t, i18n } = useTranslation();
     const { id } = useParams();
     const [complaint, setComplaint] = useState<Complaint | null>(null);
-    const [adminRemarks, setAdminRemarks] = useState<ComplaintRemark[]>([]);
-    const [techRemarks, setTechRemarks] = useState<TechnicianRemark[]>([]);
 
     const [isLoading, setIsLoading] = useState(true);
 
@@ -45,8 +43,6 @@ export default function UserComplaintDetail() {
         try {
             const response = await api.get(`/complaints/${id}`);
             setComplaint(response.data.complaint);
-            setAdminRemarks(response.data.adminRemarks);
-            setTechRemarks(response.data.techRemarks);
         } catch (error) {
             toast.error(t('common.error_load'));
         } finally {

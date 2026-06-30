@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, FileText, User, Wrench, Save, Printer, Edit2, Trash2, Eye, Download } from 'lucide-react';
+import { ArrowLeft, FileText, User, Wrench, Save, Printer, Eye, Download } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 import { Complaint, ComplaintRemark, TechnicianRemark } from '../../types';
@@ -86,34 +86,7 @@ export default function TechComplaintDetail() {
         }
     };
 
-    const handleEditRemark = (remark: TechnicianRemark) => {
-        setRemarkData({
-            status: remark.status || '',
-            note_transport: remark.note_transport || '',
-            checking: remark.checking || '',
-            remark: remark.remark || '',
-        });
-        setEditingId(remark.id);
-        // Scroll to form
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
 
-    const handleDeleteRemark = async (remarkId: number) => {
-        if (!window.confirm('Adakah anda pasti mahu memadam catatan ini?')) return;
-
-        try {
-            await api.delete(`/complaints/remarks/${remarkId}`);
-            toast.success('Catatan berjaya dipadam');
-            loadComplaint();
-        } catch (error: any) {
-            toast.error(error.response?.data?.error || 'Gagal memadam catatan');
-        }
-    };
-
-    const cancelEdit = () => {
-        setRemarkData({ status: '', note_transport: '', checking: '', remark: '' });
-        setEditingId(null);
-    };
 
     const getStatusBadge = (status: string) => {
         switch (status) {
