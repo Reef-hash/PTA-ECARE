@@ -6,7 +6,7 @@ import AdminLayout from '../../components/AdminLayout';
 import UserLayout from '../../components/UserLayout';
 import RepairTimeline from '../../components/repair/RepairTimeline';
 import api from '../../services/api';
-import { Complaint, ComplaintRemark, TechnicianRemark, ForwardHistory, RepairStatus, RepairTimelineItem } from '../../types';
+import { Complaint, ComplaintRemark, TechnicianRemark, RepairStatus, RepairTimelineItem } from '../../types';
 import { StepRemark } from '../../components/repair/TimelineStep';
 import { useTranslation } from 'react-i18next';
 
@@ -17,7 +17,6 @@ export default function TrackRepair() {
     const [complaint, setComplaint] = useState<Complaint | null>(null);
     const [adminRemarks, setAdminRemarks] = useState<ComplaintRemark[]>([]);
     const [techRemarks, setTechRemarks] = useState<TechnicianRemark[]>([]);
-    const [forwardHistory, setForwardHistory] = useState<ForwardHistory[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const isUser = location.pathname.startsWith('/users');
@@ -34,7 +33,6 @@ export default function TrackRepair() {
             setComplaint(response.data.complaint);
             setAdminRemarks(response.data.adminRemarks);
             setTechRemarks(response.data.techRemarks);
-            setForwardHistory(response.data.forwardHistory || []);
         } catch (error) {
             console.error('Failed to load complaint');
         } finally {
@@ -177,18 +175,7 @@ export default function TrackRepair() {
         });
     }
 
-    // Add forward history entries as remark cards with technician name
-    for (const fh of forwardHistory) {
-        const repairStatus = 'PENDING';
-        if (!stepRemarks[repairStatus]) stepRemarks[repairStatus] = [];
-        stepRemarks[repairStatus].push({
-            remarkBy: 'Admin',
-            remark: null,
-            noteTransport: null,
-            checking: null,
-            forwardTo: (fh as any).technicians?.name || 'Technician',
-        });
-    }
+
 
     return (
         <Layout title={t('user_dashboard.track_repair')} breadcrumb={t('user_dashboard.track_repair')}>

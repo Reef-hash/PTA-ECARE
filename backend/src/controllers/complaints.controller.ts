@@ -1262,19 +1262,6 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
             forward_to: technician_id,
         });
 
-        // Save forward details as remark entry for timeline display
-        if (note_transport || checking || remark) {
-            await supabaseAdmin.from('complaint_remarks').insert({
-                complaint_id: id,
-                status: status || 'pending',
-                note_transport: note_transport || null,
-                checking: checking || null,
-                remark: remark || null,
-                remark_by: adminId,
-                created_at: new Date().toISOString(),
-            });
-        }
-
         // Verify technician exists before notifying
         // Verify technician exists and has correct role logic (implicit by table)
         // Guard Logic: Ensure ID belongs to a valid technician before notifying
@@ -1289,6 +1276,20 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
             res.status(400).json({ error: 'Invalid technician ID - User is not a technician' });
             return;
         }
+
+        // Save forward details as remark entry for timeline display
+        const forwardSuffix = `Complaint Forward to Technician : ${techExists.name}`;
+        const remarkText = remark ? `${remark}\n\n${forwardSuffix}` : forwardSuffix;
+
+        await supabaseAdmin.from('complaint_remarks').insert({
+            complaint_id: id,
+            status: status || 'pending',
+            note_transport: note_transport || null,
+            checking: checking || null,
+            remark: remarkText,
+            remark_by: adminId,
+            created_at: new Date().toISOString(),
+        });
 
         console.log(`[FORWARD_DEBUG] Role Verification Passed. Complaint ${complaint?.report_number} forwarded to Technician: ${techExists.name} (ID: ${technician_id})`);
 
