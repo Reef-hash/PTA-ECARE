@@ -1218,7 +1218,7 @@ export const deleteRemark = async (req: Request, res: Response): Promise<void> =
 export const forwardComplaint = async (req: Request, res: Response): Promise<void> => {
     try {
         const { id: paramId } = req.params;
-        const { technician_id, status } = req.body;
+        const { technician_id, status, note_transport, checking, remark } = req.body;
         const adminId = req.user?.id;
         const forwarderRole = req.user?.role; // Track who forwarded it
 
@@ -1261,6 +1261,19 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
             forward_from: complaint?.assigned_to || adminId,
             forward_to: technician_id,
         });
+
+        // Save forward details as remark entry for timeline display
+        if (note_transport || checking || remark) {
+            await supabaseAdmin.from('complaint_remarks').insert({
+                complaint_id: id,
+                status: status || 'pending',
+                note_transport: note_transport || null,
+                checking: checking || null,
+                remark: remark || null,
+                remark_by: adminId,
+                created_at: new Date().toISOString(),
+            });
+        }
 
         // Verify technician exists before notifying
         // Verify technician exists and has correct role logic (implicit by table)

@@ -5,6 +5,7 @@ export interface StepRemark {
     remark: string | null;
     noteTransport: string | null;
     checking: string | null;
+    forwardTo?: string;
 }
 
 interface TimelineStepProps {
@@ -82,6 +83,9 @@ export default function TimelineStep({ label, date, isCurrent, isCompleted, isLa
                                     <p className="text-xs text-gray-500"><strong>Checking:</strong> {r.checking}</p>
                                 )}
                                 {r.remark && <p className="text-sm text-gray-700 mt-1"><strong>Remark:</strong> {r.remark}</p>}
+                                {r.forwardTo && (
+                                    <p className="text-xs text-blue-600 mt-2 font-medium">Complaint forward to: {r.forwardTo}</p>
+                                )}
                             </motion.div>
                         ))}
                     </div>
