@@ -87,7 +87,7 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
     const confirmDelete = async () => {
         if (!deleteTarget) return;
         try {
-            await api.delete(`/complaints/${deleteTarget.id}`);
+            await api.delete(`/complaints/${deleteTarget.reportNumber}`);
             toast.success(`Aduan ${deleteTarget.reportNumber} berjaya dipadam`);
             setDeleteTarget(null);
             loadComplaints();

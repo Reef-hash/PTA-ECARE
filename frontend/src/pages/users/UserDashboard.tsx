@@ -212,7 +212,7 @@ export default function UserDashboard() {
 
         setCancellingId(cancelModal.id);
         try {
-            await api.delete(`/complaints/${cancelModal.id}/cancel`);
+            await api.delete(`/complaints/${cancelModal.reportNumber}/cancel`);
             toast.success(t('complaint_history.cancelled_success') || 'Aduan berjaya dibatalkan');
             loadDashboard();
         } catch (error: any) {

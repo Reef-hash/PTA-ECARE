@@ -659,7 +659,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                             'Administrator',
                             subject,
                             `Juruteknik ${techName} telah mengemaskini status aduan ${reportNumber} daripada '${previousStatus}' kepada 'Selesai' pada ${new Date().toLocaleDateString('ms-MY')} jam ${new Date().toLocaleTimeString('ms-MY')}.`,
-                            id,
+                            reportNumber,
                             'admin'
                         );
                         await sendEmail(adminEmail, subject, emailHtml);
@@ -670,7 +670,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                                 customerData.name,
                                 subject,
                                 `Aduan anda (${reportNumber}) telah selesai dibaiki oleh juruteknik ${techName}.`,
-                                id,
+                                reportNumber,
                                 'user'
                             );
                             await sendEmail(customerData.email, subject, custHtml);
@@ -690,14 +690,14 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                         const adminHtml = buildNotificationEmailHtml(
                             'Administrator', subject,
                             `Juruteknik telah update status progress repair kerosakan untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`,
-                            id, 'admin'
+                            reportNumber, 'admin'
                         );
                         await sendEmail(adminEmail, subject, adminHtml);
 
                         const mainTechHtml = buildNotificationEmailHtml(
                             'Main Technician', subject,
                             `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`,
-                            id, 'admin'
+                            reportNumber, 'admin'
                         );
                         await sendEmail(mainTechEmail, subject, mainTechHtml);
 
@@ -707,7 +707,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                             const custHtml = buildNotificationEmailHtml(
                                 customerData.name, subject,
                                 `${reportNumber} aduan anda telah update status progress repair kerosakan ${subcategoryName} oleh juruteknik kami (${techName}). Sila tekan semak aduan untuk lihat lebih lanjut.`,
-                                id, 'user'
+                                reportNumber, 'user'
                             );
                             await sendEmail(customerData.email, subject, custHtml);
                         }
@@ -1345,7 +1345,7 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
                 const techHtml = buildNotificationEmailHtml(
                     techExists.name, subject,
                     `Satu tugasan aduan (${complaint.report_number}) telah diagihkan kepada anda oleh pihak pengurusan. Sila semak aplikasi E-CARE untuk maklumat lanjut.`,
-                    id, 'technician'
+                    complaint.report_number, 'technician'
                 );
                 await sendEmail(techExists.email, subject, techHtml);
             }
@@ -1354,7 +1354,7 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
             const adminHtml = buildNotificationEmailHtml(
                 'Administrator', subject,
                 `Tugasan aduan (${complaint.report_number}) telah berjaya diagihkan kepada juruteknik ${techExists.name}.`,
-                id, 'admin'
+                complaint.report_number, 'admin'
             );
             await sendEmail(adminEmail, subject, adminHtml);
 
@@ -1363,7 +1363,7 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
                 const custHtml = buildNotificationEmailHtml(
                     customerName, subject,
                     `Aduan anda (${complaint.report_number}) telah diagihkan kepada juruteknik kami (${techExists.name}) untuk tindakan selanjutnya.`,
-                    id, 'user'
+                    complaint.report_number, 'user'
                 );
                 await sendEmail(customerEmail, subject, custHtml);
             }

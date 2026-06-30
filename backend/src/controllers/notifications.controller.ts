@@ -172,7 +172,7 @@ const translateDetailedMessage = (msg: string, userName: string, branchName: str
 };
 
 // HTML Email Notification Template (Blue & White Theme)
-export const buildNotificationEmailHtml = (name: string, title: string, message: string, complaintId?: number, role?: string) => {
+export const buildNotificationEmailHtml = (name: string, title: string, message: string, reportNumber?: string, role?: string) => {
     let baseUrl = 'https://pta-ecare.vercel.app';
     if (process.env.FRONTEND_URL) {
         baseUrl = process.env.FRONTEND_URL.replace(/\/$/, ''); // Remove trailing slash if any
@@ -183,8 +183,8 @@ export const buildNotificationEmailHtml = (name: string, title: string, message:
     
     switch (role) {
         case 'user':
-            if (complaintId) {
-                linkUrl = `${baseUrl}/users/complaint/${complaintId}`;
+            if (reportNumber) {
+                linkUrl = `${baseUrl}/users/complaint/${reportNumber}`;
             } else {
                 linkUrl = `${baseUrl}/users/complaint-history`;
             }
@@ -198,16 +198,16 @@ export const buildNotificationEmailHtml = (name: string, title: string, message:
             }
             break;
         case 'technician':
-            if (complaintId) {
-                linkUrl = `${baseUrl}/admin/technician/complaint/${complaintId}`;
+            if (reportNumber) {
+                linkUrl = `${baseUrl}/admin/technician/complaint/${reportNumber}`;
             } else {
                 linkUrl = `${baseUrl}/admin/technician/complaints`;
             }
             buttonText = 'Semak Tugasan Aduan';
             break;
         case 'admin':
-            if (complaintId) {
-                linkUrl = `${baseUrl}/admin/complaint/${complaintId}`;
+            if (reportNumber) {
+                linkUrl = `${baseUrl}/admin/complaint/${reportNumber}`;
             } else {
                 linkUrl = `${baseUrl}/admin/complaints`;
             }
@@ -367,7 +367,7 @@ export const createNotification = async (
                     }
                 }
                 
-                const emailHtml = buildNotificationEmailHtml(name || 'Pengguna', emailSubject, humanReadableMessage, complaint_id, role);
+                const emailHtml = buildNotificationEmailHtml(name || 'Pengguna', emailSubject, humanReadableMessage, reportNumber, role);
                 await sendEmail(email, emailSubject, emailHtml);
                 console.log(`[CREATE NOTIFICATION] Email sent successfully to ${email}`);
             } else {

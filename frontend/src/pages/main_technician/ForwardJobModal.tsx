@@ -42,7 +42,7 @@ export default function ForwardJobModal({ complaint, onClose, onSuccess }: Forwa
         setIsLoading(true);
         try {
             // Forward the complaint to the selected technician
-            await api.post(`/complaints/${complaint.id}/forward`, { technician_id: selectedTech });
+            await api.post(`/complaints/${complaint.report_number}/forward`, { technician_id: selectedTech });
 
             toast.success('Tugasan berjaya diagihkan');
             onSuccess();
