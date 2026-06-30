@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Eye, Printer, Filter, X, Trash2 } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
+import Modal from '../../components/Modal';
 import api from '../../services/api';
 import { Complaint } from '../../types';
 import toast from 'react-hot-toast';
@@ -33,6 +34,9 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
     const [filterBrand, setFilterBrand] = useState('');
     const [filterTechnician, setFilterTechnician] = useState('');
     const [filterDate, setFilterDate] = useState('');
+
+    // Delete confirmation
+    const [deleteTarget, setDeleteTarget] = useState<{ id: number; reportNumber: string } | null>(null);
 
     // Filter options from data
     const [technicians, setTechnicians] = useState<Technician[]>([]);
@@ -77,14 +81,18 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
     };
 
     const handleDelete = async (id: number, reportNumber: string) => {
-        if (window.confirm(`Adakah anda pasti mahu memadam aduan ${reportNumber}? Tindakan ini tidak boleh diundur.`)) {
-            try {
-                await api.delete(`/complaints/${id}`);
-                toast.success(`Aduan ${reportNumber} berjaya dipadam`);
-                loadComplaints();
-            } catch (error) {
-                toast.error('Gagal memadam aduan');
-            }
+        setDeleteTarget({ id, reportNumber });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteTarget) return;
+        try {
+            await api.delete(`/complaints/${deleteTarget.id}`);
+            toast.success(`Aduan ${deleteTarget.reportNumber} berjaya dipadam`);
+            setDeleteTarget(null);
+            loadComplaints();
+        } catch (error) {
+            toast.error('Gagal memadam aduan');
         }
     };
 
@@ -650,6 +658,16 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                     </>
                 )}
             </div>
+            <Modal
+                isOpen={!!deleteTarget}
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={confirmDelete}
+                title="Pengesahan Padam"
+                description={deleteTarget ? `Adakah anda pasti mahu memadam aduan ${deleteTarget.reportNumber}? Tindakan ini tidak boleh diundur.` : ''}
+                confirmLabel="Padam"
+                cancelLabel="Batal"
+                variant="danger"
+            />
         </AdminLayout>
     );
 }
