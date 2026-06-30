@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
-    ArrowLeft, FileText, User, Clock,
+    ArrowLeft, FileText, User,
     Forward, Send, Save, Printer, XCircle,
     Download, Eye, Wrench
 } from 'lucide-react';
