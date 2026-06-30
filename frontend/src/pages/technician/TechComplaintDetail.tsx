@@ -211,17 +211,25 @@ export default function TechComplaintDetail() {
                                 <p className="text-sm text-gray-500">{t('admin_users.report_no')}</p>
                                 <h2 className="text-2xl font-bold text-gray-800">{complaint.report_number}</h2>
                             </div>
-                            <div className="flex flex-col items-end gap-2">
-                                {getStatusBadge(complaint.status)}
-                                <Link
-                                    to={`/admin/technician/complaint/${id}/track-repair`}
-                                    className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-800 border border-indigo-200 rounded-md px-3 py-1 hover:bg-indigo-50 transition-colors"
-                                >
-                                    <Eye className="w-3.5 h-3.5" />
-                                    Track Repair
-                                </Link>
-                            </div>
+                            {getStatusBadge(complaint.status)}
                         </div>
+
+                        {/* Track Repair */}
+                        <div className="mb-6 pt-4 border-t">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Clock className="w-5 h-5 text-indigo-600" />
+                                <h3 className="font-semibold">Track Repair</h3>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-3">View repair progress and history.</p>
+                            <Link
+                                to={`/admin/technician/complaint/${id}/track-repair`}
+                                className="btn-primary inline-flex items-center gap-2"
+                            >
+                                <Eye className="w-4 h-4" />
+                                View Track Repair
+                            </Link>
+                        </div>
+
                         <div className="p-4 bg-gray-50 rounded-lg mb-6">
                             <h3 className="font-semibold mb-3 flex items-center gap-2">
                                 <User className="w-4 h-4" />
@@ -512,21 +520,6 @@ export default function TechComplaintDetail() {
 
                 {/* Sidebar */}
                 <div className="space-y-6">
-                    {/* Track Repair */}
-                    <div className="card">
-                        <h3 className="font-semibold mb-4 flex items-center gap-2">
-                            <Clock className="w-5 h-5" />
-                            Track Repair
-                        </h3>
-                        <p className="text-sm text-gray-600 mb-4">View repair progress and history.</p>
-                        <Link
-                            to={`/admin/technician/complaint/${id}/track-repair`}
-                            className="btn-primary w-full flex items-center justify-center gap-2"
-                        >
-                            <Clock className="w-4 h-4" />
-                            View Track Repair
-                        </Link>
-                    </div>
                     {/* Dates */}
                     <div className="card">
                         <h3 className="font-semibold mb-4">{t('common_actions.date')}</h3>
