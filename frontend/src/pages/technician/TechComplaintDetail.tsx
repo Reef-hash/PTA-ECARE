@@ -403,11 +403,6 @@ export default function TechComplaintDetail() {
                                             </>
                                         )}
                                     </button>
-                                    {editingId && (
-                                        <button type="button" onClick={cancelEdit} className="btn-secondary">
-                                            Batal
-                                        </button>
-                                    )}
                                 </div>
                             </form>
                         )}
