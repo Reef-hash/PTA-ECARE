@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, FileText, User, Clock, Save, Printer, Eye, Download } from 'lucide-react';
+import { ArrowLeft, FileText, User, Clock, Save, Printer, Edit2, Trash2, Eye, Download } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 import { Complaint, ComplaintRemark, TechnicianRemark } from '../../types';
@@ -83,6 +83,30 @@ export default function TechComplaintDetail() {
             }
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleEditRemark = (remark: TechnicianRemark) => {
+        setRemarkData({
+            status: remark.status || '',
+            note_transport: remark.note_transport || '',
+            checking: remark.checking || '',
+            remark: remark.remark || '',
+        });
+        setEditingId(remark.id);
+        // Scroll to form
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleDeleteRemark = async (remarkId: number) => {
+        if (!window.confirm('Adakah anda pasti mahu memadam catatan ini?')) return;
+
+        try {
+            await api.delete(`/complaints/remarks/${remarkId}`);
+            toast.success('Catatan berjaya dipadam');
+            loadComplaint();
+        } catch (error: any) {
+            toast.error(error.response?.data?.error || 'Gagal memadam catatan');
         }
     };
 
@@ -414,6 +438,86 @@ export default function TechComplaintDetail() {
                         )}
                     </div>
 
+                    {/* Timeline */}
+                    <div className="card">
+                        <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+                            <Clock className="w-5 h-5" />
+                            {t('user_dashboard.label_timeline')}
+                        </h3>
+
+                        {adminRemarks.length === 0 && techRemarks.length === 0 ? (
+                            <p className="text-gray-500 text-center py-8">{t('user_dashboard.no_remarks')}</p>
+                        ) : (
+                            <div className="space-y-4">
+                                {[...adminRemarks.map(r => ({ ...r, type: 'admin' })), ...techRemarks.map(r => ({ ...r, type: 'tech' }))]
+                                    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                                    .map((remark) => (
+                                        <div key={`${remark.type}-${remark.id}`} className="relative pl-6 pb-4 border-l-2 border-gray-200 last:border-0">
+                                            <div className={`absolute -left-2 w-4 h-4 rounded-full ${remark.type === 'admin' ? 'bg-indigo-500' : 'bg-green-500'}`}></div>
+                                            <div className="bg-gray-50 rounded-lg p-4">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className={`text-xs font-medium px-2 py-1 rounded ${remark.type === 'admin' ? 'bg-indigo-100 text-indigo-700' : 'bg-green-100 text-green-700'}`}>
+                                                        {remark.type === 'admin' ? 'Admin' : t('roles.technician')}
+                                                    </span>
+
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="text-xs text-gray-500">{formatDate(remark.created_at)}</span>
+
+                                                        {/* Action Buttons for Technician */}
+                                                        {remark.type === 'tech' && (
+                                                            <div className="flex gap-2">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        console.log('Edit clicked for remark:', remark);
+                                                                        handleEditRemark(remark as any);
+                                                                    }}
+                                                                    className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 rounded transition-colors"
+                                                                >
+                                                                    <Edit2 className="w-3 h-3" />
+                                                                    Edit
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        console.log('Delete clicked for remark:', remark);
+                                                                        handleDeleteRemark(remark.id);
+                                                                    }}
+                                                                    className="flex items-center gap-1 px-2 py-1 text-xs bg-red-100 text-red-700 hover:bg-red-200 rounded transition-colors"
+                                                                >
+                                                                    <Trash2 className="w-3 h-3" />
+                                                                    Delete
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {remark.status && (
+                                                    <p className="text-sm mb-1"><strong>{t('common_actions.status')}:</strong> {remark.status === 'pending' ? t('admin_users.status_pending') : remark.status === 'in_process' ? t('admin_users.status_in_process') : remark.status === 'incomplete' ? 'Incomplete / Bawa Pulang' : remark.status === 'ready_pickup' ? 'Sedia Diambil / Ready Pickup' : remark.status === 'cancelled' ? 'Dibatalkan' : t('admin_users.status_closed')}</p>
+                                                )}
+                                                {/* Special display for Incomplete / Bawa Pulang */}
+                                                {remark.status === 'incomplete' ? (
+                                                    <div className="mt-2 bg-orange-50 border border-orange-200 rounded-lg p-3 space-y-1.5">
+                                                        <p className="text-sm text-orange-800"><strong>🔧 Juruteknik:</strong> {remark.type === 'tech' && (remark as any).technicians?.name ? (remark as any).technicians.name : '-'}</p>
+                                                        <p className="text-sm text-orange-800"><strong>📍 Lokasi:</strong> {complaint?.users?.address || '-'}</p>
+                                                        <p className="text-sm text-orange-800"><strong>📅 Tarikh:</strong> {formatDate(remark.created_at)}</p>
+                                                        <p className="text-sm text-orange-800"><strong>📝 Sebab Bawa Pulang:</strong> {remark.remark || '-'}</p>
+                                                        {remark.note_transport && <p className="text-sm text-orange-800"><strong>🚗 Transport Note:</strong> {remark.note_transport}</p>}
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        {remark.remark && <p className="text-gray-700">{remark.remark}</p>}
+                                                        {remark.note_transport && <p className="text-sm text-gray-600 mt-1"><strong>{t('technician_dashboard.label_transport_note')}:</strong> {remark.note_transport}</p>}
+                                                        {remark.checking && <p className="text-sm text-gray-600 mt-1"><strong>{t('technician_dashboard.label_checking')}:</strong> {remark.checking}</p>}
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Sidebar */}
