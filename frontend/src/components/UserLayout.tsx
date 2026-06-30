@@ -1,6 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import ScrollIndicator from './ScrollIndicator';
 import {
     Home,
     FilePlus,
@@ -191,7 +192,10 @@ export default function UserLayout({ children, breadcrumb }: UserLayoutProps) {
                 </header>
 
                 {/* Content */}
-                <div className="p-3 sm:p-6 min-h-[calc(100vh-180px)]">{children}</div>
+                <div className="p-3 sm:p-6 min-h-[calc(100vh-180px)]">
+                    {children}
+                    <ScrollIndicator />
+                </div>
 
                 {/* Footer */}
                 <footer className="p-4 text-center text-sm text-gray-500">
