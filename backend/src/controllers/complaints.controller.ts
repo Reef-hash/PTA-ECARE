@@ -1279,7 +1279,7 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
 
         // Save forward details as remark entry for timeline display
         const forwardSuffix = `Complaint Forward to Technician : ${techExists.name}`;
-        const remarkText = remark ? `${remark}\n\n${forwardSuffix}` : forwardSuffix;
+        const remarkText = remark ? `${remark}\n__FORWARD__${forwardSuffix}` : `__FORWARD__${forwardSuffix}`;
 
         await supabaseAdmin.from('complaint_remarks').insert({
             complaint_id: id,

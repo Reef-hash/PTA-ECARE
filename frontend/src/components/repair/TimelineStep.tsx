@@ -81,7 +81,15 @@ export default function TimelineStep({ label, date, isCurrent, isCompleted, isLa
                                 {r.checking && (
                                     <p className="text-xs text-gray-500"><strong>Checking:</strong> {r.checking}</p>
                                 )}
-                                {r.remark && <p className="text-sm text-gray-700 mt-1"><strong>Remark:</strong> {r.remark}</p>}
+                                {r.remark && (() => {
+                                    const parts = r.remark!.split('__FORWARD__');
+                                    return (
+                                        <>
+                                            {parts[0] && <p className="text-sm text-gray-700 mt-1"><strong>Remark:</strong> {parts[0]}</p>}
+                                            {parts[1] && <div className="mt-2 pt-2 border-t border-gray-200 text-blue-600 text-xs font-medium">{parts[1]}</div>}
+                                        </>
+                                    );
+                                })()}
                             </motion.div>
                         ))}
                     </div>
