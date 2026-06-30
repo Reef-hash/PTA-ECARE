@@ -5,31 +5,23 @@ export default function ScrollIndicator() {
     const [show, setShow] = useState(false);
 
     useEffect(() => {
-        // Only show if page is scrollable
         const checkScrollable = () => {
-            const isScrollable = document.documentElement.scrollHeight > window.innerHeight + 100;
-            setShow(isScrollable);
+            const isScrollable = document.documentElement.scrollHeight > window.innerHeight + 80;
+            const isAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 10;
+            setShow(isScrollable && !isAtBottom);
         };
 
-        // Check after a short delay to let content render
         const timer = setTimeout(checkScrollable, 500);
 
         const handleScroll = () => {
-            // Hide after user scrolls down more than 50px
-            if (window.scrollY > 50) {
-                setShow(false);
-            }
+            checkScrollable();
         };
-
-        // Auto-hide after 6 seconds
-        const autoHide = setTimeout(() => setShow(false), 6000);
 
         window.addEventListener('scroll', handleScroll, { passive: true });
         window.addEventListener('resize', checkScrollable);
 
         return () => {
             clearTimeout(timer);
-            clearTimeout(autoHide);
             window.removeEventListener('scroll', handleScroll);
             window.removeEventListener('resize', checkScrollable);
         };

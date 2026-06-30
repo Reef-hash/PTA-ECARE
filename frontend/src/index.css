@@ -46,35 +46,36 @@ html {
 
 /* Mobile: Force scrollbar to always show on touch devices */
 @media (max-width: 768px) {
-  html,
+  html {
+    /* -webkit-overflow-scrolling: touch removed — it hides scrollbar on iOS */
+    overflow-y: scroll;
+    scrollbar-width: auto;
+    scrollbar-color: rgba(0, 0, 0, 0.45) rgba(0, 0, 0, 0.08);
+  }
+
   body {
-    -webkit-overflow-scrolling: touch;
     overflow-y: scroll;
   }
 
-  html {
-    scrollbar-width: auto;
-    scrollbar-color: rgba(0, 0, 0, 0.35) rgba(0, 0, 0, 0.05);
-  }
-
-  /* Override WebKit auto-hide behavior on mobile */
   ::-webkit-scrollbar {
-    width: 6px;
+    width: 7px;
     -webkit-appearance: none;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.35);
+    background: rgba(0, 0, 0, 0.45);
     border-radius: 4px;
     min-height: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background-clip: padding-box;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.6);
   }
 
   ::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(0, 0, 0, 0.06);
   }
 }
 
