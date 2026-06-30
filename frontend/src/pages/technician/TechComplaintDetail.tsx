@@ -101,7 +101,7 @@ export default function TechComplaintDetail() {
             case 'closed':
                 return <span className="badge badge-closed text-base px-4 py-1">{t('admin_users.status_closed')}</span>;
             case 'cancelled':
-                return <span className="badge bg-purple-100 text-purple-700 text-base px-4 py-1">{t('admin_users.status_cancelled') || 'Dibatalkan'}</span>;
+                return <span className="badge bg-red-100 text-red-700 text-base px-4 py-1">{t('admin_users.status_cancelled') || 'Dibatalkan'}</span>;
             default:
                 return null;
         }

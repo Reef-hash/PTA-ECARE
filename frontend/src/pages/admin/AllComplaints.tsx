@@ -237,7 +237,7 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
             case 'incomplete':
                 return <span className="badge bg-amber-100 text-amber-700 border-amber-200">{t('dashboard.incomplete') || 'Bawa Pulang'}</span>;
             case 'cancelled':
-                return <span className="badge bg-purple-100 text-purple-700">{t('dashboard.cancelled') || 'Dibatalkan'}</span>;
+                return <span className="badge bg-red-100 text-red-700">{t('dashboard.cancelled') || 'Dibatalkan'}</span>;
             default:
                 return null;
         }

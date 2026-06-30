@@ -56,7 +56,7 @@ export default function TrackRepair() {
             case 'pending': return <Clock className="w-5 h-5 text-yellow-500" />;
             case 'in_process': return <Wrench className="w-5 h-5 text-orange-500" />;
             case 'closed': return <CheckCircle className="w-5 h-5 text-green-500" />;
-            case 'cancelled': return <XCircle className="w-5 h-5 text-purple-500" />;
+            case 'cancelled': return <XCircle className="w-5 h-5 text-red-500" />;
             case 'incomplete': return <PackageOpen className="w-5 h-5 text-amber-500" />;
             case 'ready_pickup': return <CheckCircle className="w-5 h-5 text-indigo-500" />;
             default: return <AlertTriangle className="w-5 h-5 text-gray-500" />;
@@ -70,7 +70,7 @@ export default function TrackRepair() {
             case 'incomplete': return <span className="badge bg-orange-100 text-orange-700 border-orange-200 text-sm px-3 py-1">Incomplete / Bawa Pulang</span>;
             case 'ready_pickup': return <span className="badge bg-indigo-100 text-indigo-700 border-indigo-200 text-sm px-3 py-1">Ready Pickup</span>;
             case 'closed': return <span className="badge badge-closed text-sm px-3 py-1">{t('admin_users.status_closed')}</span>;
-            case 'cancelled': return <span className="badge bg-purple-100 text-purple-700 text-sm px-3 py-1">{t('admin_users.status_cancelled') || 'Dibatalkan'}</span>;
+            case 'cancelled': return <span className="badge bg-red-100 text-red-700 text-sm px-3 py-1">{t('admin_users.status_cancelled') || 'Dibatalkan'}</span>;
             default: return null;
         }
     };
