@@ -220,14 +220,16 @@ export default function TechComplaintDetail() {
                                 <Clock className="w-5 h-5 text-indigo-600" />
                                 <h3 className="font-semibold">Track Repair</h3>
                             </div>
-                            <p className="text-sm text-gray-600 mb-3">View repair progress and history.</p>
-                            <Link
-                                to={`/admin/technician/complaint/${id}/track-repair`}
-                                className="btn-primary inline-flex items-center gap-2"
-                            >
-                                <Eye className="w-4 h-4" />
-                                View Track Repair
-                            </Link>
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm text-gray-600">View repair progress and history.</p>
+                                <Link
+                                    to={`/admin/technician/complaint/${id}/track-repair`}
+                                    className="btn-primary inline-flex items-center gap-2"
+                                >
+                                    <Eye className="w-4 h-4" />
+                                    View Track Repair
+                                </Link>
+                            </div>
                         </div>
 
                         <div className="p-4 bg-gray-50 rounded-lg mb-6">
