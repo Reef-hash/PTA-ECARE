@@ -6,13 +6,18 @@ import {
     Download, Eye, Wrench
 } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
+import MainTechLayout from '../../components/MainTechLayout';
 import api from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import { Complaint, ComplaintRemark, TechnicianRemark, Technician } from '../../types';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 export default function AdminComplaintDetail() {
     const { t, i18n } = useTranslation();
+    const { role } = useAuth();
+    const isMainTech = role === 'main_technician';
+    const Layout = isMainTech ? MainTechLayout : AdminLayout;
     const { id } = useParams();
     const [complaint, setComplaint] = useState<Complaint | null>(null);
     const [adminRemarks, setAdminRemarks] = useState<ComplaintRemark[]>([]);
@@ -88,7 +93,7 @@ export default function AdminComplaintDetail() {
         try {
             await api.post(`/complaints/${id}/forward`, {
                 technician_id: forwardTo,
-                status: forwardStatus || undefined,
+                status: forwardStatus || (isMainTech ? 'pending' : undefined),
                 note_transport: remarkData.note_transport || undefined,
                 checking: remarkData.checking || undefined,
                 remark: remarkData.remark || undefined,
@@ -158,30 +163,30 @@ export default function AdminComplaintDetail() {
 
     if (isLoading) {
         return (
-            <AdminLayout title={t('admin_complaint_detail.title')} breadcrumb={t('admin_complaint_detail.title')}>
+            <Layout breadcrumb={t('admin_complaint_detail.title')}>
                 <div className="flex items-center justify-center h-64">
                     <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent"></div>
                 </div>
-            </AdminLayout>
+            </Layout>
         );
     }
 
     if (!complaint) {
         return (
-            <AdminLayout title={t('admin_complaint_detail.title')} breadcrumb={t('admin_complaint_detail.title')}>
+            <Layout breadcrumb={t('admin_complaint_detail.title')}>
                 <div className="text-center py-12">
                     <p className="text-gray-500">{t('admin_complaint_detail.complaint_not_found')}</p>
                 </div>
-            </AdminLayout>
+            </Layout>
         );
     }
 
     return (
-        <AdminLayout title={t('admin_complaint_detail.title')} breadcrumb={t('admin_complaint_detail.title')}>
+        <Layout breadcrumb={t('admin_complaint_detail.title')}>
             {/* Back Button */}
             <div className="flex items-center justify-between mb-6">
                 <Link
-                    to="/admin/all-complaints"
+                    to={isMainTech ? '/main-tech/dashboard' : '/admin/all-complaints'}
                     className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800"
                 >
                     <ArrowLeft className="w-4 h-4" />
@@ -521,6 +526,6 @@ export default function AdminComplaintDetail() {
 
                 </div>
             </div>
-        </AdminLayout>
+        </Layout>
     );
 }
