@@ -5,21 +5,8 @@ import AdminLayout from '../../components/AdminLayout';
 import UserLayout from '../../components/UserLayout';
 import RepairTimeline from '../../components/repair/RepairTimeline';
 import api from '../../services/api';
-import { Complaint, ComplaintRemark, TechnicianRemark, RepairStatus, RepairTimelineItem } from '../../types';
+import { Complaint, ComplaintRemark, TechnicianRemark, RepairStatus } from '../../types';
 import { useTranslation } from 'react-i18next';
-
-function formatDate(dateStr: string | null): string | null {
-    if (!dateStr) return null;
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('en-MY', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true,
-    });
-}
 
 function mapComplaintStatus(status: string): RepairStatus {
     switch (status) {
@@ -32,9 +19,8 @@ function mapComplaintStatus(status: string): RepairStatus {
     }
 }
 
-function buildTimelineFromRemarks(remarks: { status: string | null; created_at: string }[]): RepairTimelineItem[] {
-    const statusOrder = ['pending', 'in_process', 'incomplete', 'ready_pickup', 'closed'];
-    const stepMap: Record<string, RepairStatus> = {
+function buildTimelineEvents(remarks: any[], i18n: any): any[] {
+    const statusMap: Record<string, RepairStatus> = {
         pending: 'PENDING',
         in_process: 'IN_PROCESS',
         incomplete: 'IN_COMPLETE',
@@ -42,26 +28,36 @@ function buildTimelineFromRemarks(remarks: { status: string | null; created_at: 
         closed: 'COMPLETE',
     };
 
-    const foundDates: Record<string, string | null> = {
-        PENDING: null,
-        IN_PROCESS: null,
-        IN_COMPLETE: null,
-        COMPLETE: null,
-    };
+    return remarks.map(remark => {
+        const repairStatus = remark.status ? statusMap[remark.status] || 'PENDING' : 'PENDING';
+        const locale = i18n.language === 'ms' ? 'ms-MY' : 'en-US';
+        const d = new Date(remark.created_at);
+        const dateStr = d.toLocaleDateString(locale, {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
 
-    for (const status of statusOrder) {
-        const remark = remarks.find((r) => r.status === status);
-        if (remark) {
-            foundDates[stepMap[status]] = formatDate(remark.created_at);
-        }
-    }
+        // Map standard labels
+        let label = 'Pending';
+        if (repairStatus === 'IN_PROCESS') label = 'In Process';
+        if (repairStatus === 'IN_COMPLETE') label = 'In Complete / Bawa Pulang';
+        if (repairStatus === 'COMPLETE') label = 'Complete (Ready to Pickup)';
 
-    return [
-        { status: 'PENDING', date: foundDates['PENDING'] },
-        { status: 'IN_PROCESS', date: foundDates['IN_PROCESS'] },
-        { status: 'IN_COMPLETE', date: foundDates['IN_COMPLETE'] },
-        { status: 'COMPLETE', date: foundDates['COMPLETE'] },
-    ];
+        return {
+            status: repairStatus,
+            label,
+            date: dateStr,
+            remark: {
+                remarkBy: remark.type === 'tech' ? remark.technicians?.name || 'Technician' : 'Admin',
+                remark: remark.remark,
+                noteTransport: remark.note_transport,
+                checking: remark.checking,
+            }
+        };
+    });
 }
 
 const STATUS_BADGE: Record<string, { label: string; class: string }> = {
@@ -105,6 +101,17 @@ export default function RepairDetail() {
         }
     };
 
+    const formatDate = (dateString: string) => {
+        const locale = i18n.language === 'ms' ? 'ms-MY' : 'en-US';
+        return new Date(dateString).toLocaleDateString(locale, {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    };
+
     if (isLoading) {
         return (
             <Layout title="Repair Detail" breadcrumb="Repair Detail">
@@ -133,19 +140,8 @@ export default function RepairDetail() {
         ...techRemarks.map(r => ({ ...r, type: 'tech' as const }))
     ].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
-    const timeline = buildTimelineFromRemarks(allRemarks);
-
-    const formatLocaleDate = (dateString: string) => {
-        const locale = i18n.language === 'ms' ? 'ms-MY' : 'en-US';
-        return new Date(dateString).toLocaleDateString(locale, {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        });
-    };
-
+    const timelineEvents = buildTimelineEvents(allRemarks, i18n);
+    const isClosed = complaint.status === 'closed';
     return (
         <Layout title="Repair Detail" breadcrumb="Repair Detail">
             {/* Back Button */}
@@ -190,8 +186,8 @@ export default function RepairDetail() {
                         </div>
                     </div>
 
-                    {/* Timeline */}
-                    <RepairTimeline currentStatus={currentStatus} timeline={timeline} />
+                    {/* Tracking Progress */}
+                    <RepairTimeline currentStatus={currentStatus} timelineEvents={timelineEvents} isClosed={isClosed} />
 
                     {/* Defect Details */}
                     {complaint.details && (
@@ -235,11 +231,11 @@ export default function RepairDetail() {
                         <div className="space-y-3 text-sm">
                             <div>
                                 <p className="text-gray-500">Created</p>
-                                <p className="font-medium">{formatLocaleDate(complaint.created_at)}</p>
+                                <p className="font-medium">{formatDate(complaint.created_at)}</p>
                             </div>
                             <div>
                                 <p className="text-gray-500">Last Updated</p>
-                                <p className="font-medium">{formatLocaleDate(complaint.updated_at)}</p>
+                                <p className="font-medium text-gray-800">{formatDate(complaint.updated_at)}</p>
                             </div>
                         </div>
                     </div>

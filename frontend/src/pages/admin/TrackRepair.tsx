@@ -6,8 +6,7 @@ import AdminLayout from '../../components/AdminLayout';
 import UserLayout from '../../components/UserLayout';
 import RepairTimeline from '../../components/repair/RepairTimeline';
 import api from '../../services/api';
-import { Complaint, ComplaintRemark, TechnicianRemark, RepairStatus, RepairTimelineItem } from '../../types';
-import { StepRemark } from '../../components/repair/TimelineStep';
+import { Complaint, ComplaintRemark, TechnicianRemark, RepairStatus } from '../../types';
 import { useTranslation } from 'react-i18next';
 
 export default function TrackRepair() {
@@ -87,9 +86,8 @@ export default function TrackRepair() {
         }
     }
 
-    function buildTimelineFromRemarks(remarks: { status: string | null; created_at: string }[]): RepairTimelineItem[] {
-        const statusOrder = ['pending', 'in_process', 'incomplete', 'ready_pickup', 'closed'];
-        const stepMap: Record<string, RepairStatus> = {
+    function buildTimelineEvents(remarks: any[]): any[] {
+        const statusMap: Record<string, RepairStatus> = {
             pending: 'PENDING',
             in_process: 'IN_PROCESS',
             incomplete: 'IN_COMPLETE',
@@ -97,34 +95,36 @@ export default function TrackRepair() {
             closed: 'COMPLETE',
         };
 
-        const foundDates: Record<string, string | null> = {
-            PENDING: null,
-            IN_PROCESS: null,
-            IN_COMPLETE: null,
-            COMPLETE: null,
-        };
+        return remarks.map(remark => {
+            const repairStatus = remark.status ? statusMap[remark.status] || 'PENDING' : 'PENDING';
+            const locale = i18n.language === 'ms' ? 'ms-MY' : 'en-US';
+            const d = new Date(remark.created_at);
+            const dateStr = d.toLocaleDateString(locale, {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+            });
 
-        for (const status of statusOrder) {
-            const remark = remarks.find((r) => r.status === status);
-            if (remark) {
-                const locale = i18n.language === 'ms' ? 'ms-MY' : 'en-US';
-                const d = new Date(remark.created_at);
-                foundDates[stepMap[status]] = d.toLocaleDateString(locale, {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                });
-            }
-        }
+            // Map standard labels
+            let label = 'Pending';
+            if (repairStatus === 'IN_PROCESS') label = 'In Process';
+            if (repairStatus === 'IN_COMPLETE') label = 'In Complete / Bawa Pulang';
+            if (repairStatus === 'COMPLETE') label = 'Complete (Ready to Pickup)';
 
-        return [
-            { status: 'PENDING', date: foundDates['PENDING'] },
-            { status: 'IN_PROCESS', date: foundDates['IN_PROCESS'] },
-            { status: 'IN_COMPLETE', date: foundDates['IN_COMPLETE'] },
-            { status: 'COMPLETE', date: foundDates['COMPLETE'] },
-        ];
+            return {
+                status: repairStatus,
+                label,
+                date: dateStr,
+                remark: {
+                    remarkBy: remark.type === 'tech' ? remark.technicians?.name || 'Technician' : 'Admin',
+                    remark: remark.remark,
+                    noteTransport: remark.note_transport,
+                    checking: remark.checking,
+                }
+            };
+        });
     }
 
     if (isLoading) {
@@ -153,30 +153,8 @@ export default function TrackRepair() {
     ].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
     const currentStatus = mapComplaintStatus(complaint.status);
-    const timeline = buildTimelineFromRemarks(allRemarks);
-
-    const statusMap: Record<string, RepairStatus> = {
-        pending: 'PENDING',
-        in_process: 'IN_PROCESS',
-        incomplete: 'IN_COMPLETE',
-        ready_pickup: 'COMPLETE',
-        closed: 'COMPLETE',
-    };
-
-    const stepRemarks: Record<string, StepRemark[]> = {};
-    for (const remark of allRemarks) {
-        const repairStatus = remark.status ? statusMap[remark.status] : null;
-        if (!repairStatus) continue;
-        if (!stepRemarks[repairStatus]) stepRemarks[repairStatus] = [];
-        stepRemarks[repairStatus].push({
-            remarkBy: remark.type === 'tech' ? (remark as any).technicians?.name || 'Technician' : 'Admin',
-            remark: remark.remark,
-            noteTransport: remark.note_transport,
-            checking: remark.checking,
-        });
-    }
-
-
+    const timelineEvents = buildTimelineEvents(allRemarks);
+    const isClosed = complaint.status === 'closed';
 
     return (
         <Layout title={t('user_dashboard.track_repair')} breadcrumb={t('user_dashboard.track_repair')}>
@@ -196,7 +174,7 @@ export default function TrackRepair() {
                 </div>
 
                 {/* BLOCK 1: Track Repair Progress (TOP) */}
-                <RepairTimeline currentStatus={currentStatus} timeline={timeline} stepRemarks={stepRemarks} />
+                <RepairTimeline currentStatus={currentStatus} timelineEvents={timelineEvents} isClosed={isClosed} />
 
                 {/* BLOCK 2: Complaint Details (BELOW) */}
                 <div className="card mt-6">

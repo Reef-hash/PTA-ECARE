@@ -1,29 +1,37 @@
 import { motion } from 'framer-motion';
-import { RepairStatus, RepairTimelineItem } from '../../types';
+import { RepairStatus } from '../../types';
 import TimelineStep, { StepRemark } from './TimelineStep';
+
+export interface TimelineEvent {
+    status: RepairStatus;
+    label: string;
+    date: string | null;
+    remark?: StepRemark;
+}
 
 interface RepairTimelineProps {
     currentStatus: RepairStatus;
-    timeline: RepairTimelineItem[];
-    stepRemarks?: Record<RepairStatus, StepRemark[]>;
+    timelineEvents: TimelineEvent[];
+    isClosed: boolean;
 }
 
-const ALL_STEPS: { status: RepairStatus; label: string }[] = [
-    { status: 'PENDING', label: 'Pending' },
-    { status: 'IN_PROCESS', label: 'In Process' },
-    { status: 'IN_COMPLETE', label: 'In Complete / Bawa Pulang' },
-    { status: 'COMPLETE', label: 'Complete (Ready to Pickup)' },
-];
+export default function RepairTimeline({ currentStatus: _currentStatus, timelineEvents, isClosed }: RepairTimelineProps) {
+    // If not closed, we append a waiting placeholder at the end
+    const nodes = [...timelineEvents];
+    
+    if (!isClosed) {
+        nodes.push({
+            status: 'COMPLETE',
+            label: 'Complete (Ready to Pickup)',
+            date: null, // "Waiting..."
+        });
+    }
 
-function getVisibleSteps(timeline: RepairTimelineItem[]): typeof ALL_STEPS {
-    const hasDate = (s: RepairStatus) => timeline.find((t) => t.status === s)?.date;
-    return ALL_STEPS.filter((s) => s.status !== 'IN_COMPLETE' || hasDate('IN_COMPLETE'));
-}
-
-export default function RepairTimeline({ currentStatus, timeline, stepRemarks }: RepairTimelineProps) {
-    const visibleSteps = getVisibleSteps(timeline);
-    const visibleOrder = visibleSteps.map((s) => s.status);
-    const currentIndex = visibleOrder.indexOf(currentStatus);
+    // Determine the active index.
+    // For chronological nodes, all nodes with a date are completed or current.
+    // The last node with a date is "current".
+    const lastEventIndex = nodes.map(n => !!n.date).lastIndexOf(true);
+    const currentIndex = lastEventIndex >= 0 ? lastEventIndex : 0;
 
     return (
         <motion.div
@@ -34,21 +42,20 @@ export default function RepairTimeline({ currentStatus, timeline, stepRemarks }:
         >
             <h3 className="text-lg font-semibold mb-6">Track Repair Progress</h3>
             <div>
-                {visibleSteps.map((step, index) => {
-                    const timelineItem = timeline.find((t) => t.status === step.status);
+                {nodes.map((node, index) => {
                     const isCompleted = index < currentIndex;
                     const isCurrent = index === currentIndex;
-                    const isLast = index === visibleSteps.length - 1;
+                    const isLast = index === nodes.length - 1;
 
                     return (
                         <TimelineStep
-                            key={step.status}
-                            label={step.label}
-                            date={timelineItem?.date || null}
+                            key={`${node.status}-${index}`}
+                            label={node.label}
+                            date={node.date}
                             isCurrent={isCurrent}
                             isCompleted={isCompleted}
                             isLast={isLast}
-                            remarks={stepRemarks?.[step.status]}
+                            remark={node.remark}
                         />
                     );
                 })}

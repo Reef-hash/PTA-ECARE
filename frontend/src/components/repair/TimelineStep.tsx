@@ -13,10 +13,10 @@ interface TimelineStepProps {
     isCurrent: boolean;
     isCompleted: boolean;
     isLast: boolean;
-    remarks?: StepRemark[];
+    remark?: StepRemark;
 }
 
-export default function TimelineStep({ label, date, isCurrent, isCompleted, isLast, remarks }: TimelineStepProps) {
+export default function TimelineStep({ label, date, isCurrent, isCompleted, isLast, remark }: TimelineStepProps) {
     const circleColor = isCompleted
         ? 'bg-green-500'
         : isCurrent
@@ -62,36 +62,33 @@ export default function TimelineStep({ label, date, isCurrent, isCompleted, isLa
                 ) : (
                     <p className="text-xs text-gray-300 mt-0.5 italic">Waiting...</p>
                 )}
-                {remarks && remarks.length > 0 && (
-                    <div className="mt-3 space-y-2">
-                        {remarks.map((r, i) => (
-                            <motion.div
-                                key={i}
-                                className="bg-white border border-gray-100 rounded-lg p-3 shadow-sm"
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.3, delay: i * 0.1 }}
-                            >
-                                <div className="flex items-center justify-between mb-2">
-                                    <span className="text-xs font-medium text-gray-500">by {r.remarkBy}</span>
-                                </div>
-                                {r.noteTransport && (
-                                    <p className="text-xs text-gray-500"><strong>Transport:</strong> {r.noteTransport}</p>
-                                )}
-                                {r.checking && (
-                                    <p className="text-xs text-gray-500"><strong>Checking:</strong> {r.checking}</p>
-                                )}
-                                {r.remark && (() => {
-                                    const parts = r.remark!.split('__FORWARD__');
-                                    return (
-                                        <>
-                                            {parts[0] && <p className="text-sm text-gray-700 mt-1"><strong>Remark:</strong> {parts[0]}</p>}
-                                            {parts[1] && <div className="mt-2 pt-2 border-t border-gray-200 text-blue-600 text-xs font-medium">{parts[1]}</div>}
-                                        </>
-                                    );
-                                })()}
-                            </motion.div>
-                        ))}
+                {remark && (
+                    <div className="mt-3">
+                        <motion.div
+                            className="bg-white border border-gray-100 rounded-lg p-3 shadow-sm"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3 }}
+                        >
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-medium text-gray-500">by {remark.remarkBy}</span>
+                            </div>
+                            {remark.noteTransport && (
+                                <p className="text-xs text-gray-500"><strong>Transport:</strong> {remark.noteTransport}</p>
+                            )}
+                            {remark.checking && (
+                                <p className="text-xs text-gray-500"><strong>Checking:</strong> {remark.checking}</p>
+                            )}
+                            {remark.remark && (() => {
+                                const parts = remark.remark.split('__FORWARD__');
+                                return (
+                                    <>
+                                        {parts[0] && <p className="text-sm text-gray-700 mt-1"><strong>Remark:</strong> {parts[0]}</p>}
+                                        {parts[1] && <div className="mt-2 pt-2 border-t border-gray-200 text-blue-600 text-xs font-medium">{parts[1]}</div>}
+                                    </>
+                                );
+                            })()}
+                        </motion.div>
                     </div>
                 )}
             </motion.div>
