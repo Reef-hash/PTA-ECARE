@@ -333,12 +333,20 @@ export default function TechComplaintDetail() {
                         <h3 className="text-lg font-semibold mb-4">{t('technician_dashboard.add_remark_title')}</h3>
 
                         {/* Show limit warning only if NOT editing and limit reached */}
-                        {(adminRemarks.length + techRemarks.length) >= 3 && !editingId ? (
-                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                                <strong className="font-bold">Limit Reached: </strong>
-                                <span className="block sm:inline">Maximum 3 remarks allowed per complaint.</span>
-                            </div>
-                        ) : (
+                        {(() => {
+                            const isEscalated = complaint.status === 'incomplete' || complaint.status === 'bawa_pulang';
+                            const maxRemarks = isEscalated ? 5 : 3;
+                            const limitReached = (adminRemarks.length + techRemarks.length) >= maxRemarks;
+                            
+                            if (limitReached && !editingId) {
+                                return (
+                                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                                        <strong className="font-bold">Limit Reached: </strong>
+                                        <span className="block sm:inline">Maximum {maxRemarks} remarks allowed per complaint.</span>
+                                    </div>
+                                );
+                            }
+                            return (
                             <form onSubmit={handleAddRemark} className="space-y-4">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
@@ -399,7 +407,8 @@ export default function TechComplaintDetail() {
                                     </button>
                                 </div>
                             </form>
-                        )}
+                            );
+                        })()}
                     </div>
 
 

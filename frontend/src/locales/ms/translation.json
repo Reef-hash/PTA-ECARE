@@ -505,7 +505,7 @@
         "success_remark": "Catatan berjaya ditambah",
         "success_forward": "Aduan berjaya diagihkan",
         "error_forward": "Gagal mengagihkan aduan",
-        "remark_limit": "Maksimum 3 catatan dibenarkan untuk setiap aduan",
+        "remark_limit": "Maksimum {{limit}} catatan dibenarkan untuk setiap aduan",
         "cancelled_title": "Aduan Telah Dibatalkan",
         "cancelled_message": "{{userName}} telah membatalkan aduan ini pada {{date}}"
     },

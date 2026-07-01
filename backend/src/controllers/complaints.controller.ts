@@ -554,7 +554,16 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
         let error;
 
         if (role === 'admin' || role === 'technician') {
-            // Check remark limit (Max 3)
+            // Check remark limit (Max 3 normally, Max 5 if escalated to Main Tech)
+            const { data: complaintData } = await supabaseAdmin
+                .from('complaints')
+                .select('status')
+                .eq('id', id)
+                .single();
+
+            const isMainTechEscalated = complaintData?.status === 'incomplete' || complaintData?.status === 'bawa_pulang';
+            const MAX_REMARKS = isMainTechEscalated ? 5 : 3;
+
             const { count: adminCount } = await supabaseAdmin
                 .from('complaint_remarks')
                 .select('*', { count: 'exact', head: true })
@@ -567,8 +576,8 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
 
             const totalRemarks = (adminCount || 0) + (techCount || 0);
 
-            if (totalRemarks >= 3) {
-                res.status(400).json({ error: 'Limit reached: Maximum 3 remarks allowed per complaint.' });
+            if (totalRemarks >= MAX_REMARKS) {
+                res.status(400).json({ error: `Limit reached: Maximum ${MAX_REMARKS} remarks allowed per complaint.` });
                 return;
             }
         }

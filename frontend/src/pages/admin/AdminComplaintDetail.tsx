@@ -390,69 +390,78 @@ export default function AdminComplaintDetail() {
                         <div className="card">
                             <h3 className="text-lg font-semibold mb-4">{t('admin_complaint_detail.add_remark')}</h3>
 
-                            {(adminRemarks.length + techRemarks.length) >= 3 ? (
-                                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                                    <strong className="font-bold">{t('admin_complaint_detail.remark_limit')}</strong>
-                                </div>
-                            ) : (
-                                <form onSubmit={handleAddRemark} className="space-y-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin_complaint_detail.status')}</label>
-                                            <select
-                                                value={remarkData.status}
-                                                onChange={(e) => setRemarkData({ ...remarkData, status: e.target.value })}
-                                                className="input-field"
-                                            >
-                                                <option value="">-- {t('common.select_status')} --</option>
-                                                <option value="pending">{t('admin_users.status_pending')}</option>
-                                                <option value="in_process">{t('admin_users.status_in_process')}</option>
-                                                <option value="closed">{t('admin_users.status_closed')}</option>
-                                            </select>
+                            {(() => {
+                                const isEscalated = complaint.status === 'incomplete' || complaint.status === 'bawa_pulang';
+                                const maxRemarks = isEscalated ? 5 : 3;
+                                const limitReached = (adminRemarks.length + techRemarks.length) >= maxRemarks;
+
+                                if (limitReached) {
+                                    return (
+                                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                                            <strong className="font-bold">{t('admin_complaint_detail.remark_limit', { limit: maxRemarks })}</strong>
+                                        </div>
+                                    );
+                                }
+                                return (
+                                    <form onSubmit={handleAddRemark} className="space-y-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin_complaint_detail.status')}</label>
+                                                <select
+                                                    value={remarkData.status}
+                                                    onChange={(e) => setRemarkData({ ...remarkData, status: e.target.value })}
+                                                    className="input-field"
+                                                >
+                                                    <option value="">-- {t('common.select_status')} --</option>
+                                                    <option value="pending">{t('admin_users.status_pending')}</option>
+                                                    <option value="in_process">{t('admin_users.status_in_process')}</option>
+                                                    <option value="closed">{t('admin_users.status_closed')}</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin_complaint_detail.transport_note')}</label>
+                                                <input
+                                                    type="text"
+                                                    value={remarkData.note_transport}
+                                                    onChange={(e) => setRemarkData({ ...remarkData, note_transport: e.target.value })}
+                                                    className="input-field"
+                                                    placeholder="Cth: Hantar ke bengkel"
+                                                />
+                                            </div>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin_complaint_detail.transport_note')}</label>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin_complaint_detail.checking')}</label>
                                             <input
                                                 type="text"
-                                                value={remarkData.note_transport}
-                                                onChange={(e) => setRemarkData({ ...remarkData, note_transport: e.target.value })}
+                                                value={remarkData.checking}
+                                                onChange={(e) => setRemarkData({ ...remarkData, checking: e.target.value })}
                                                 className="input-field"
-                                                placeholder="Cth: Hantar ke bengkel"
+                                                placeholder="Hasil pemeriksaan"
                                             />
                                         </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin_complaint_detail.checking')}</label>
-                                        <input
-                                            type="text"
-                                            value={remarkData.checking}
-                                            onChange={(e) => setRemarkData({ ...remarkData, checking: e.target.value })}
-                                            className="input-field"
-                                            placeholder="Hasil pemeriksaan"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin_complaint_detail.remark')}</label>
-                                        <textarea
-                                            value={remarkData.remark}
-                                            onChange={(e) => setRemarkData({ ...remarkData, remark: e.target.value })}
-                                            rows={3}
-                                            className="input-field resize-none"
-                                            placeholder="Catatan tambahan..."
-                                        />
-                                    </div>
-                                    <button type="submit" disabled={isSaving} className="btn-primary flex items-center gap-2">
-                                        {isSaving ? (
-                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                        ) : (
-                                            <>
-                                                <Save className="w-4 h-4" />
-                                                {t('admin_complaint_detail.save_remark')}
-                                            </>
-                                        )}
-                                    </button>
-                                </form>
-                            )}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin_complaint_detail.remark')}</label>
+                                            <textarea
+                                                value={remarkData.remark}
+                                                onChange={(e) => setRemarkData({ ...remarkData, remark: e.target.value })}
+                                                rows={3}
+                                                className="input-field resize-none"
+                                                placeholder="Catatan tambahan..."
+                                            />
+                                        </div>
+                                        <button type="submit" disabled={isSaving} className="btn-primary flex items-center gap-2">
+                                            {isSaving ? (
+                                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                            ) : (
+                                                <>
+                                                    <Save className="w-4 h-4" />
+                                                    {t('admin_complaint_detail.save_remark')}
+                                                </>
+                                            )}
+                                        </button>
+                                    </form>
+                                );
+                            })()}
 
                             {/* Forward to Technician */}
                             {complaint.status !== 'closed' && (

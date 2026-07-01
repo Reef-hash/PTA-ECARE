@@ -505,7 +505,7 @@
         "success_remark": "Remark added successfully",
         "success_forward": "Complaint forwarded successfully",
         "error_forward": "Failed to forward complaint",
-        "remark_limit": "Maximum 3 remarks allowed per complaint",
+        "remark_limit": "Maximum {{limit}} remarks allowed per complaint",
         "cancelled_title": "Complaint Cancelled",
         "cancelled_message": "{{userName}} cancelled this complaint on {{date}}"
     },
