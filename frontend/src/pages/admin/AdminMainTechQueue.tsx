@@ -69,14 +69,20 @@ export default function AdminMainTechQueue() {
                 return dateB - dateA;
             });
             // Find the remark that caused the incomplete status
-            const incompleteRemark = sorted.find(r => r.status === 'incomplete') || sorted[0];
+            const incompleteRemark = sorted.find(r => r.status === 'incomplete' && !r.remark?.includes('__FORWARD__')) 
+                || sorted.find(r => r.status === 'incomplete') 
+                || sorted[0];
+
+            const rawRemark = incompleteRemark?.remark || '-';
+            const displayRemark = rawRemark.includes('__FORWARD__') ? rawRemark.split('__FORWARD__')[0].trim() || '-' : rawRemark;
             
             return {
-                remark: incompleteRemark?.remark || '-',
-                transport: incompleteRemark?.note_transport || '-'
+                remark: displayRemark,
+                transport: incompleteRemark?.note_transport || '-',
+                checking: incompleteRemark?.checking || '-'
             };
         } catch (e) {
-            return { remark: '-', transport: '-' };
+            return { remark: '-', transport: '-', checking: '-' };
         }
     };
 

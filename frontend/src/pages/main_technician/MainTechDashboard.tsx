@@ -59,10 +59,16 @@ export default function MainTechDashboard() {
     const getIncompleteDetails = (complaint: Complaint) => {
         if (!complaint.remarks || complaint.remarks.length === 0) return { remark: '-', transport: '-', checking: '-' };
         const sorted = [...complaint.remarks].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        const incompleteRemark = sorted.find(r => r.status === 'incomplete') || sorted[0];
+        // Find the latest incomplete remark that is NOT a system forward remark
+        const incompleteRemark = sorted.find(r => r.status === 'incomplete' && !r.remark?.includes('__FORWARD__')) 
+            || sorted.find(r => r.status === 'incomplete') 
+            || sorted[0];
+
+        const rawRemark = incompleteRemark.remark || '-';
+        const displayRemark = rawRemark.includes('__FORWARD__') ? rawRemark.split('__FORWARD__')[0].trim() || '-' : rawRemark;
 
         return {
-            remark: incompleteRemark.remark || '-',
+            remark: displayRemark,
             transport: incompleteRemark.note_transport || '-',
             checking: incompleteRemark.checking || '-'
         };
