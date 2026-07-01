@@ -55,7 +55,9 @@ export default function SearchComplaint() {
             case 'in_process':
                 return <span className="badge bg-blue-100 text-blue-700 border-blue-200">{t('admin_users.status_in_process') || 'In Process'}</span>;
             case 'incomplete':
-                return <span className="badge bg-orange-100 text-orange-700 border-orange-200">Incomplete / Bawa Pulang</span>;
+                return <span className="badge badge-incomplete">{t('admin_users.status_incomplete')}</span>;
+            case 'bawa_pulang':
+                return <span className="badge badge-incomplete">{t('admin_users.status_bawa_pulang')}</span>;
             case 'ready_pickup':
                 return <span className="badge bg-indigo-100 text-indigo-700 border-indigo-200">Sedia Diambil</span>;
             case 'closed':

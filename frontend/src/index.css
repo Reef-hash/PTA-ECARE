@@ -161,6 +161,10 @@ html {
     @apply bg-gradient-info text-white shadow-soft-md;
   }
 
+  .badge-incomplete {
+    @apply bg-orange-100 text-orange-700 border border-orange-200;
+  }
+
   .badge-closed {
     @apply bg-gradient-success text-white shadow-soft-md;
   }

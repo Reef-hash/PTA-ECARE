@@ -84,7 +84,7 @@ export interface Complaint {
     details: string;
     warranty_file: string | null;
     receipt_file: string | null;
-    status: 'pending' | 'in_process' | 'closed' | 'cancelled' | 'incomplete' | 'ready_pickup';
+    status: 'pending' | 'in_process' | 'closed' | 'cancelled' | 'incomplete' | 'bawa_pulang' | 'ready_pickup';
     report_number: string;
     assigned_to: string | null;
     created_at: string;
@@ -102,7 +102,7 @@ export interface Complaint {
 export interface ComplaintRemark {
     id: number;
     complaint_id: number;
-    status: 'pending' | 'in_process' | 'closed' | 'cancelled' | 'incomplete' | 'ready_pickup' | null;
+    status: 'pending' | 'in_process' | 'closed' | 'cancelled' | 'incomplete' | 'bawa_pulang' | 'ready_pickup' | null;
     note_transport: string | null;
     checking: string | null;
     remark: string | null;
@@ -114,7 +114,7 @@ export interface TechnicianRemark {
     id: number;
     complaint_id: number;
     remark: string | null;
-    status: 'pending' | 'in_process' | 'closed' | 'cancelled' | 'incomplete' | 'ready_pickup' | null;
+    status: 'pending' | 'in_process' | 'closed' | 'cancelled' | 'incomplete' | 'bawa_pulang' | 'ready_pickup' | null;
     note_transport: string | null;
     checking: string | null;
     remark_by: string | null;

@@ -75,7 +75,7 @@ export default function AdminComplaintDetail() {
             await api.post(`/complaints/${id}/remark`, remarkData);
             toast.success('Catatan berjaya ditambah');
             setRemarkData({ status: '', note_transport: '', checking: '', remark: '' });
-            loadComplaint();
+            await loadComplaint();
         } catch (error: any) {
             toast.error(error.response?.data?.error || 'Gagal menambah catatan');
         } finally {
@@ -102,7 +102,7 @@ export default function AdminComplaintDetail() {
             setForwardTo('');
             setForwardStatus('');
             setRemarkData({ status: '', note_transport: '', checking: '', remark: '' });
-            loadComplaint();
+            await loadComplaint();
         } catch (error: any) {
             toast.error(error.response?.data?.error || 'Gagal mengagihkan aduan');
         } finally {
@@ -117,7 +117,9 @@ export default function AdminComplaintDetail() {
             case 'in_process':
                 return <span className="badge badge-in-process text-base px-4 py-1">{t('admin_users.status_in_process')}</span>;
             case 'incomplete':
-                return <span className="badge bg-orange-100 text-orange-700 border-orange-200">Incomplete</span>;
+                return <span className="badge badge-incomplete text-base px-4 py-1">{t('admin_users.status_incomplete')}</span>;
+            case 'bawa_pulang':
+                return <span className="badge badge-incomplete text-base px-4 py-1">{t('admin_users.status_bawa_pulang')}</span>;
             case 'ready_pickup':
                 return <span className="badge bg-indigo-100 text-indigo-700 border-indigo-200">Ready Pickup</span>;
             case 'closed':
@@ -405,6 +407,8 @@ export default function AdminComplaintDetail() {
                                                 <option value="">-- {t('common.select_status')} --</option>
                                                 <option value="pending">{t('admin_users.status_pending')}</option>
                                                 <option value="in_process">{t('admin_users.status_in_process')}</option>
+                                                <option value="incomplete">{t('admin_users.status_incomplete')}</option>
+                                                <option value="bawa_pulang">{t('admin_users.status_bawa_pulang')}</option>
                                                 <option value="closed">{t('admin_users.status_closed')}</option>
                                             </select>
                                         </div>

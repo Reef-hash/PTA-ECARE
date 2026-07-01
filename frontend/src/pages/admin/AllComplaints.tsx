@@ -243,7 +243,9 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
             case 'closed':
                 return <span className="badge badge-closed">{t('table.closed')}</span>;
             case 'incomplete':
-                return <span className="badge bg-amber-100 text-amber-700 border-amber-200">{t('dashboard.incomplete') || 'Bawa Pulang'}</span>;
+                return <span className="badge badge-incomplete">{t('table.incomplete')}</span>;
+            case 'bawa_pulang':
+                return <span className="badge badge-incomplete">{t('table.bawa_pulang')}</span>;
             case 'cancelled':
                 return <span className="badge bg-red-100 text-red-700">{t('dashboard.cancelled') || 'Dibatalkan'}</span>;
             default:
