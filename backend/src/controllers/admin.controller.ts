@@ -46,7 +46,7 @@ export const getStats = async (req: Request, res: Response): Promise<void> => {
             if (c.status === 'pending' && !c.assigned_to) stats.not_forwarded++;
             if (c.status === 'pending' && c.assigned_to) stats.assigned++;
 
-            const isIncomplete = c.status === 'incomplete' || c.status === 'bawa_pulang';
+            const isIncomplete = c.status === 'incomplete';
             if (isIncomplete) {
                 stats.incomplete_total++;
                 if (!c.assigned_to) stats.incomplete_not_assigned++;
