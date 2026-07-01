@@ -407,7 +407,6 @@ export default function AdminComplaintDetail() {
                                                 <option value="">-- {t('common.select_status')} --</option>
                                                 <option value="pending">{t('admin_users.status_pending')}</option>
                                                 <option value="in_process">{t('admin_users.status_in_process')}</option>
-                                                <option value="incomplete">{t('admin_users.status_incomplete')}</option>
                                                 <option value="closed">{t('admin_users.status_closed')}</option>
                                             </select>
                                         </div>
