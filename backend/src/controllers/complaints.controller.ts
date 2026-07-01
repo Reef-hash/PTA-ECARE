@@ -59,7 +59,8 @@ export const getComplaints = async (req: Request, res: Response): Promise<void> 
         *,
         users:user_id (id, full_name, ic_number, contact_no, address),
         categories:category_id (id, name),
-        technicians:assigned_to (id, name, department, username)
+        technicians:assigned_to (id, name, department, username),
+        remarks:complaint_remarks (id, status, note_transport, checking, remark, remark_by, created_at)
       `, { count: 'exact' });
 
         // Role-based filtering
