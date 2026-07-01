@@ -43,20 +43,7 @@ export default function TechComplaintDetail() {
 
     const handleAddRemark = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!remarkData.remark && !remarkData.status) {
-            toast.error(t('technician_dashboard.error_remark_input'));
-            return;
-        }
-
-        if (remarkData.status === 'incomplete' && !remarkData.remark.trim()) {
-            toast.error('Sila masukkan Remark untuk menjelaskan sebab bawa pulang / tidak siap.');
-            return;
-        }
-
-        if (remarkData.status === 'incomplete' && !remarkData.note_transport.trim()) {
-            toast.error('Sila masukkan maklumat jarak/transport sebelum menukar status kepada Incomplete.');
-            return;
-        }
+        // No required field validations as requested
 
         setIsSaving(true);
         try {
