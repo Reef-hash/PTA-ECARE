@@ -174,12 +174,14 @@ export default function TechComplaintDetail() {
                 <div className="lg:col-span-2 space-y-6">
                     {/* Complaint Details */}
                     <div className="card">
-                        <div className="flex items-start justify-between mb-6">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
                             <div>
-                                <p className="text-sm text-gray-500">{t('admin_users.report_no')}</p>
+                                <p className="text-sm text-gray-500">Report No</p>
                                 <h2 className="text-2xl font-bold text-gray-800">{complaint.report_number}</h2>
                             </div>
-                            {getStatusBadge(complaint.status)}
+                            <div className="self-start sm:self-auto w-fit">
+                                {getStatusBadge(complaint.status)}
+                            </div>
                         </div>
 
                         {/* Track Repair Section */}

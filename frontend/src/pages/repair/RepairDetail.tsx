@@ -160,12 +160,14 @@ export default function RepairDetail() {
                 <div className="lg:col-span-2 space-y-6">
                     {/* Repair Header */}
                     <div className="card">
-                        <div className="flex items-start justify-between mb-6">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
                             <div>
                                 <p className="text-sm text-gray-500">Report No.</p>
                                 <h2 className="text-2xl font-bold text-gray-800">{complaint.report_number}</h2>
                             </div>
-                            <span className={`badge ${statusInfo.class}`}>{statusInfo.label}</span>
+                            <div className="self-start sm:self-auto w-fit">
+                                <span className={`badge ${statusInfo.class}`}>{statusInfo.label}</span>
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
