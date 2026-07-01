@@ -14,6 +14,13 @@ export const getStats = async (req: Request, res: Response): Promise<void> => {
 
         if (error) throw error;
 
+        // Resolve which complaint ids have a forward_history record, so we can
+        // count jobs that were forwarded by MainTech and are now closed.
+        const { data: forwardedRows } = await supabaseAdmin
+            .from('forward_history')
+            .select('complaint_id');
+        const forwardedIds = new Set((forwardedRows || []).map((r: any) => r.complaint_id));
+
         const stats = {
             total: allComplaints?.length || 0,
             pending: 0,
@@ -23,6 +30,11 @@ export const getStats = async (req: Request, res: Response): Promise<void> => {
             assigned: 0,
             cancelled: 0,
             incomplete: 0,
+            // MainTech incomplete-lifecycle sub-counts
+            incomplete_total: 0,
+            incomplete_not_assigned: 0,
+            incomplete_assigned: 0,
+            incomplete_completed: 0,
         };
 
         (allComplaints || []).forEach((c: any) => {
@@ -33,6 +45,16 @@ export const getStats = async (req: Request, res: Response): Promise<void> => {
             if (c.status === 'incomplete') stats.incomplete++;
             if (c.status === 'pending' && !c.assigned_to) stats.not_forwarded++;
             if (c.status === 'pending' && c.assigned_to) stats.assigned++;
+
+            const isIncomplete = c.status === 'incomplete' || c.status === 'bawa_pulang';
+            if (isIncomplete) {
+                stats.incomplete_total++;
+                if (!c.assigned_to) stats.incomplete_not_assigned++;
+                else stats.incomplete_assigned++;
+            }
+            if (c.status === 'closed' && forwardedIds.has(c.id)) {
+                stats.incomplete_completed++;
+            }
         });
 
         res.json({ stats });

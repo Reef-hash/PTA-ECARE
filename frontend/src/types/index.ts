@@ -183,6 +183,11 @@ export interface DashboardStats {
     assigned: number;
     cancelled: number;
     incomplete: number;
+    // MainTech incomplete-lifecycle sub-counts
+    incomplete_total: number;
+    incomplete_not_assigned: number;
+    incomplete_assigned: number;
+    incomplete_completed: number;
 }
 
 export interface TechnicianStats {

@@ -42,11 +42,12 @@ export default function ForwardJobModal({ complaint, onClose, onSuccess }: Forwa
         setIsLoading(true);
         try {
             // Forward the complaint to the selected technician.
-            // Keep status as 'pending' so the job lands in the ASSIGNED bucket
-            // (pending + assigned_to set) and waits for the shop technician to start.
+            // Keep status as 'incomplete' so the job stays in the Incomplete
+            // lifecycle master list; only assigned_to changes, moving it from
+            // "Not Assigned" to the "Assigned" sub-state.
             await api.post(`/complaints/${complaint.report_number}/forward`, {
                 technician_id: selectedTech,
-                status: 'pending',
+                status: 'incomplete',
             });
 
             toast.success('Tugasan berjaya diagihkan');

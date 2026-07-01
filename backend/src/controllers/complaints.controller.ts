@@ -86,6 +86,28 @@ export const getComplaints = async (req: Request, res: Response): Promise<void> 
                 query = query.eq('status', 'pending').is('assigned_to', null);
             } else if (status === 'job_assigned') {
                 query = query.eq('status', 'pending').not('assigned_to', 'is', null);
+            } else if (status === 'incomplete') {
+                // Master list: all complaints in the incomplete lifecycle
+                query = query.in('status', ['incomplete', 'bawa_pulang']);
+            } else if (status === 'incomplete_not_assigned') {
+                // Incomplete jobs not yet forwarded to a shop technician
+                query = query.in('status', ['incomplete', 'bawa_pulang']).is('assigned_to', null);
+            } else if (status === 'incomplete_assigned') {
+                // Incomplete jobs that have been forwarded (assigned_to set)
+                query = query.in('status', ['incomplete', 'bawa_pulang']).not('assigned_to', 'is', null);
+            } else if (status === 'incomplete_completed') {
+                // Jobs that were forwarded by MainTech and are now closed.
+                // Resolve which complaint ids appear in forward_history, then filter.
+                const { data: forwardedRows } = await supabaseAdmin
+                    .from('forward_history')
+                    .select('complaint_id');
+                const forwardedIds = (forwardedRows || []).map((r: any) => r.complaint_id);
+                if (forwardedIds.length === 0) {
+                    // No forward history at all — return nothing
+                    query = query.eq('status', 'closed').eq('id', -1);
+                } else {
+                    query = query.eq('status', 'closed').in('id', forwardedIds);
+                }
             } else {
                 query = query.eq('status', status);
             }

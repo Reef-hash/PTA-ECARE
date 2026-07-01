@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Wrench, AlertTriangle, ArrowRightCircle, AlertCircle } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import { Wrench, AlertTriangle, ArrowRightCircle, AlertCircle, Clock, UserCheck, CheckCircle, Eye } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import MainTechLayout from '../../components/MainTechLayout';
 import api from '../../services/api';
 import { Complaint, DashboardStats } from '../../types';
@@ -7,45 +8,45 @@ import toast from 'react-hot-toast';
 import ForwardJobModal from './ForwardJobModal';
 import { useTranslation } from 'react-i18next';
 
+type IncompleteFilter = 'incomplete' | 'incomplete_not_assigned' | 'incomplete_assigned' | 'incomplete_completed';
+
 export default function MainTechDashboard() {
     const { t } = useTranslation();
     const [complaints, setComplaints] = useState<Complaint[]>([]);
     const [stats, setStats] = useState<DashboardStats>({
-        total: 0, pending: 0, in_process: 0, closed: 0, not_forwarded: 0, assigned: 0, cancelled: 0, incomplete: 0
+        total: 0, pending: 0, in_process: 0, closed: 0, not_forwarded: 0, assigned: 0,
+        cancelled: 0, incomplete: 0,
+        incomplete_total: 0, incomplete_not_assigned: 0, incomplete_assigned: 0, incomplete_completed: 0,
     });
     const [isLoading, setIsLoading] = useState(true);
     const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
+    const [activeFilter, setActiveFilter] = useState<IncompleteFilter>('incomplete');
 
-    // Dashboard is incomplete-only: surface complaints a technician marked as
-    // 'incomplete' (brought back) so MainTech can review the technician's
-    // actions (transport / checking / remark) and forward the job onward.
-    const activeFilter = 'incomplete';
-
-    useEffect(() => {
-        loadStats();
-        loadComplaints();
-    }, []);
-
-    const loadStats = async () => {
+    const loadStats = useCallback(async () => {
         try {
             const res = await api.get('/admin/stats');
             setStats(res.data.stats);
         } catch (error) {
             console.error('Failed to load stats', error);
         }
-    };
+    }, []);
 
-    const loadComplaints = async () => {
+    const loadComplaints = useCallback(async () => {
         setIsLoading(true);
         try {
-            const response = await api.get(`/complaints?status=${activeFilter}`);
+            const response = await api.get(`/complaints?status=${activeFilter}&limit=1000`);
             setComplaints(response.data.complaints || response.data.data || []);
         } catch (error) {
             toast.error(t('common.error_load') || 'Gagal memuatkan data papan pemuka');
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [activeFilter, t]);
+
+    useEffect(() => {
+        loadStats();
+        loadComplaints();
+    }, [loadStats, loadComplaints]);
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('ms-MY', {
@@ -67,27 +68,33 @@ export default function MainTechDashboard() {
         };
     };
 
-    const handleForwardSuccess = () => {
+    const handleForwardSuccess = useCallback(() => {
         setSelectedComplaint(null);
         loadStats();
         loadComplaints();
-    };
+    }, [loadStats, loadComplaints]);
 
-    // Dashboard is incomplete-only: only complaints the technician marked
-    // as 'incomplete' (brought back) are surfaced here for MainTech to action.
+    // Incomplete lifecycle cards. Each maps to a backend status filter so the
+    // list below the cards reflects the selected sub-state.
     const statCards = [
-        { label: t('main_tech.dashboard.cards.incomplete'), value: stats.incomplete, icon: AlertCircle, color: 'orange', filter: 'incomplete' },
+        { label: t('main_tech.dashboard.cards.incomplete'), value: stats.incomplete_total, icon: AlertCircle, color: 'orange', filter: 'incomplete' as IncompleteFilter },
+        { label: t('main_tech.dashboard.cards.not_forwarded'), value: stats.incomplete_not_assigned, icon: Clock, color: 'red', filter: 'incomplete_not_assigned' as IncompleteFilter },
+        { label: t('main_tech.dashboard.cards.assigned'), value: stats.incomplete_assigned, icon: UserCheck, color: 'teal', filter: 'incomplete_assigned' as IncompleteFilter },
+        { label: t('main_tech.dashboard.cards.closed'), value: stats.incomplete_completed, icon: CheckCircle, color: 'green', filter: 'incomplete_completed' as IncompleteFilter },
     ];
 
     const getColorClasses = (color: string) => {
-        const colors: Record<string, { bg: string; icon: string; border: string }> = {
-            orange: { bg: 'bg-orange-100', icon: 'text-orange-600', border: 'border-l-orange-500' },
-            red: { bg: 'bg-red-100', icon: 'text-red-600', border: 'border-l-red-500' },
-            teal: { bg: 'bg-teal-100', icon: 'text-teal-600', border: 'border-l-teal-500' },
-            green: { bg: 'bg-green-100', icon: 'text-green-600', border: 'border-l-green-500' },
+        const colors: Record<string, { bg: string; icon: string; border: string; badge: string }> = {
+            orange: { bg: 'bg-orange-100', icon: 'text-orange-600', border: 'border-l-orange-500', badge: 'bg-orange-100 text-orange-700' },
+            red: { bg: 'bg-red-100', icon: 'text-red-600', border: 'border-l-red-500', badge: 'bg-red-100 text-red-700' },
+            teal: { bg: 'bg-teal-100', icon: 'text-teal-600', border: 'border-l-teal-500', badge: 'bg-teal-100 text-teal-700' },
+            green: { bg: 'bg-green-100', icon: 'text-green-600', border: 'border-l-green-500', badge: 'bg-green-100 text-green-700' },
         };
         return colors[color] || colors.orange;
     };
+
+    const activeCard = statCards.find(c => c.filter === activeFilter);
+    const activeColor = getColorClasses(activeCard?.color || 'orange');
 
     return (
         <MainTechLayout breadcrumb={t('sidebar.dashboard')}>
@@ -104,26 +111,30 @@ export default function MainTechDashboard() {
                     </div>
                 </div>
 
-                {/* Stats Grid - incomplete only */}
+                {/* Stats Grid - incomplete lifecycle */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                     {statCards.map((card) => {
                         const Icon = card.icon;
                         const colors = getColorClasses(card.color);
+                        const isActive = activeFilter === card.filter;
                         return (
-                            <div
+                            <button
                                 key={card.label}
-                                className={`w-full rounded-xl shadow-sm border p-5 ${colors.border} border-l-4 bg-white border-gray-100`}
+                                onClick={() => setActiveFilter(card.filter)}
+                                className={`text-left w-full rounded-xl shadow-sm border p-5 ${colors.border} border-l-4 transition-all duration-200 ${
+                                    isActive ? 'bg-gray-50 ring-2 ring-indigo-500 border-indigo-500 scale-[1.02]' : 'bg-white border-gray-100 hover:bg-gray-50'
+                                }`}
                             >
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-xs uppercase font-medium text-gray-500">{card.label}</p>
+                                        <p className={`text-xs uppercase font-medium ${isActive ? 'text-indigo-600' : 'text-gray-500'}`}>{card.label}</p>
                                         <p className="text-2xl font-bold text-gray-800 mt-1">{card.value}</p>
                                     </div>
                                     <div className={`w-10 h-10 ${colors.bg} rounded-lg flex items-center justify-center`}>
                                         <Icon className={`w-5 h-5 ${colors.icon}`} />
                                     </div>
                                 </div>
-                            </div>
+                            </button>
                         );
                     })}
                 </div>
@@ -131,9 +142,9 @@ export default function MainTechDashboard() {
                 <div className="card overflow-hidden">
                     <div className="p-6 border-b border-gray-100 flex justify-between items-center">
                         <h2 className="text-lg font-semibold text-gray-800">
-                            {t('main_tech.dashboard.list_title')}
+                            {activeCard?.label || t('main_tech.dashboard.list_title')}
                         </h2>
-                        <span className="badge font-medium px-3 py-1 bg-orange-100 text-orange-700">
+                        <span className={`badge font-medium px-3 py-1 ${activeColor.badge}`}>
                             {complaints.length}
                         </span>
                     </div>
@@ -201,13 +212,23 @@ export default function MainTechDashboard() {
                                                     </p>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                    <button
-                                                        onClick={() => setSelectedComplaint(complaint)}
-                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded transition-colors shadow-sm"
-                                                    >
-                                                        <ArrowRightCircle className="w-3.5 h-3.5" />
-                                                        Forward Job
-                                                    </button>
+                                                    {!complaint.assigned_to ? (
+                                                        <button
+                                                            onClick={() => setSelectedComplaint(complaint)}
+                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded transition-colors shadow-sm"
+                                                        >
+                                                            <ArrowRightCircle className="w-3.5 h-3.5" />
+                                                            Forward Job
+                                                        </button>
+                                                    ) : (
+                                                        <Link
+                                                            to={`/main-tech/complaint/${complaint.report_number}`}
+                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-medium rounded transition-colors shadow-sm"
+                                                        >
+                                                            <Eye className="w-3.5 h-3.5" />
+                                                            {t('common.view', 'Papar')}
+                                                        </Link>
+                                                    )}
                                                 </td>
                                             </tr>
                                         );

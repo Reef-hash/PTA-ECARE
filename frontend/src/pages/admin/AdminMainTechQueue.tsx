@@ -11,7 +11,8 @@ export default function AdminMainTechQueue() {
     const { t } = useTranslation();
     const [complaints, setComplaints] = useState<Complaint[]>([]);
     const [stats, setStats] = useState<DashboardStats>({
-        total: 0, pending: 0, in_process: 0, closed: 0, not_forwarded: 0, assigned: 0, cancelled: 0, incomplete: 0
+        total: 0, pending: 0, in_process: 0, closed: 0, not_forwarded: 0, assigned: 0, cancelled: 0, incomplete: 0,
+        incomplete_total: 0, incomplete_not_assigned: 0, incomplete_assigned: 0, incomplete_completed: 0,
     });
     const [isLoading, setIsLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState('incomplete');

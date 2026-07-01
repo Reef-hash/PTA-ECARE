@@ -93,7 +93,7 @@ export default function AdminComplaintDetail() {
         try {
             await api.post(`/complaints/${id}/forward`, {
                 technician_id: forwardTo,
-                status: forwardStatus || (isMainTech ? 'pending' : undefined),
+                status: forwardStatus || (isMainTech ? 'incomplete' : undefined),
                 note_transport: remarkData.note_transport || undefined,
                 checking: remarkData.checking || undefined,
                 remark: remarkData.remark || undefined,
