@@ -180,7 +180,7 @@ export default function TrackRepair() {
 
                 {/* BLOCK 2: Complaint Details (BELOW) */}
                 <div className="card mt-6">
-                    <div className="flex items-start justify-between mb-4 border-b pb-3">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 border-b pb-3 gap-4">
                         <div>
                             <p className="text-xs text-gray-400 font-semibold tracking-wider uppercase">{t('admin_complaint_detail.report_no')}</p>
                             <h2 className="text-xl font-bold text-gray-900">{complaint.report_number}</h2>
