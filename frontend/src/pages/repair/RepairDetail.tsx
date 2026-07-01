@@ -51,7 +51,9 @@ function buildTimelineEvents(remarks: any[], i18n: any): any[] {
             label,
             date: dateStr,
             remark: {
-                remarkBy: remark.type === 'tech' ? remark.technicians?.name || 'Technician' : 'Admin',
+                remarkBy: remark.type === 'tech' 
+                    ? remark.technicians?.name || 'Technician' 
+                    : (remark.resolved_user?.role === 'main_technician' ? 'Main Technician' : 'Admin'),
                 remark: remark.remark,
                 noteTransport: remark.note_transport,
                 checking: remark.checking,

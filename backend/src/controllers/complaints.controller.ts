@@ -245,11 +245,38 @@ export const getComplaint = async (req: Request, res: Response): Promise<void> =
         }
 
         // Get remarks
-        const { data: adminRemarks } = await supabaseAdmin
+        const { data: adminRemarksData } = await supabaseAdmin
             .from('complaint_remarks')
             .select('*')
             .eq('complaint_id', complaintId)
             .order('created_at', { ascending: true });
+
+        let adminRemarks = adminRemarksData || [];
+
+        if (adminRemarks.length > 0) {
+            const remarkByUuids = [...new Set(adminRemarks.map(r => r.remark_by).filter(Boolean))];
+            
+            if (remarkByUuids.length > 0) {
+                const { data: admins } = await supabaseAdmin
+                    .from('admins')
+                    .select('id, admin_name')
+                    .in('id', remarkByUuids);
+                    
+                const { data: techs } = await supabaseAdmin
+                    .from('technicians')
+                    .select('id, name')
+                    .in('id', remarkByUuids);
+                    
+                const userMap = new Map();
+                admins?.forEach(a => userMap.set(a.id, { name: a.admin_name, role: 'admin' }));
+                techs?.forEach(t => userMap.set(t.id, { name: t.name, role: 'main_technician' }));
+                
+                adminRemarks = adminRemarks.map(remark => ({
+                    ...remark,
+                    resolved_user: remark.remark_by ? userMap.get(remark.remark_by) || { name: 'Admin', role: 'admin' } : { name: 'Admin', role: 'admin' }
+                }));
+            }
+        }
 
         const { data: techRemarks } = await supabaseAdmin
             .from('technician_remarks')
