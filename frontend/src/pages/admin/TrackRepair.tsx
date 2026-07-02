@@ -4,6 +4,7 @@ import { ArrowLeft, Clock, Wrench, CheckCircle, AlertTriangle, XCircle, PackageO
 import { motion } from 'framer-motion';
 import AdminLayout from '../../components/AdminLayout';
 import UserLayout from '../../components/UserLayout';
+import MainTechLayout from '../../components/MainTechLayout';
 import RepairTimeline from '../../components/repair/RepairTimeline';
 import api from '../../services/api';
 import { Complaint, ComplaintRemark, TechnicianRemark, RepairStatus } from '../../types';
@@ -19,8 +20,15 @@ export default function TrackRepair() {
     const [isLoading, setIsLoading] = useState(true);
 
     const isUser = location.pathname.startsWith('/users');
-    const Layout = isUser ? UserLayout : AdminLayout;
-    const backLink = isUser ? `/users/complaint/${id}` : location.pathname.includes('/admin/technician') ? `/admin/technician/complaint/${id}` : `/admin/complaint/${id}`;
+    const isMainTech = location.pathname.startsWith('/main-tech');
+    const Layout = isUser ? UserLayout : isMainTech ? MainTechLayout : AdminLayout;
+    const backLink = isUser 
+        ? `/users/complaint/${id}` 
+        : isMainTech 
+            ? `/main-tech/complaint/${id}` 
+            : location.pathname.includes('/admin/technician') 
+                ? `/admin/technician/complaint/${id}` 
+                : `/admin/complaint/${id}`;
 
     useEffect(() => {
         loadComplaint();

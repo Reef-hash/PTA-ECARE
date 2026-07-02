@@ -500,6 +500,14 @@ function App() {
                     </ProtectedRoute>
                 }
             />
+            <Route
+                path="/main-tech/complaint/:id/track-repair"
+                element={
+                    <ProtectedRoute allowedRoles={['main_technician']}>
+                        <TrackRepair />
+                    </ProtectedRoute>
+                }
+            />
 
             {/* Catch all */}
             <Route path="*" element={<Navigate to="/" replace />} />

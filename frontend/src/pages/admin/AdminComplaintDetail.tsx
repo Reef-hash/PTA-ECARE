@@ -248,7 +248,7 @@ export default function AdminComplaintDetail() {
                                 </div>
                             </div>
                             <Link
-                                to={`/admin/complaint/${id}/track-repair`}
+                                to={isMainTech ? `/main-tech/complaint/${id}/track-repair` : `/admin/complaint/${id}/track-repair`}
                                 className="btn-primary flex items-center justify-center gap-2 whitespace-nowrap text-sm px-4 py-2 w-full sm:w-auto"
                             >
                                 <Eye className="w-4 h-4" />
