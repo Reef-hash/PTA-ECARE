@@ -542,13 +542,13 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                                 <thead>
                                     <tr className="table-header">
                                         <th className="text-center px-4 py-3 w-12 whitespace-nowrap">No.</th>
-                                        <th className="text-left px-4 py-3">{t('complaint_list.report_no')}</th>
-                                        <th className="text-left px-4 py-3">{t('complaint_list.customer')}</th>
-                                        <th className="text-left px-4 py-3">{t('complaint_form.subcategory')}</th>
-                                        <th className="text-left px-4 py-3">{t('complaint_form.brand')}</th>
-                                        <th className="text-left px-4 py-3">{t('complaint_list.technician')}</th>
-                                        <th className="text-left px-4 py-3">{t('table.status')}</th>
-                                        <th className="text-center px-4 py-3 whitespace-nowrap">{t('table.action')}</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap min-w-[140px]">{t('complaint_list.report_no')}</th>
+                                        <th className="text-left px-4 py-3 min-w-[200px]">{t('complaint_list.customer')}</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap min-w-[150px]">{t('complaint_form.subcategory')}</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap min-w-[120px]">{t('complaint_form.brand')}</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap min-w-[150px]">{t('complaint_list.technician')}</th>
+                                        <th className="text-left px-4 py-3 min-w-[250px]">{t('table.status')}</th>
+                                        <th className="text-center px-4 py-3 whitespace-nowrap min-w-[100px]">{t('table.action')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
