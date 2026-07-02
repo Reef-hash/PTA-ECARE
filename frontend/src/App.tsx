@@ -51,6 +51,7 @@ import TechComplaintDetail from './pages/technician/TechComplaintDetail';
 
 // Main Tech pages
 import MainTechDashboard from './pages/main_technician/MainTechDashboard';
+import MainTechComplaints from './pages/main_technician/MainTechComplaints';
 import SearchComplaint from './pages/main_technician/SearchComplaint';
 
 // Shared pages
@@ -456,6 +457,14 @@ function App() {
                 element={
                     <ProtectedRoute allowedRoles={['main_technician']}>
                         <MainTechDashboard />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/main-tech/complaints"
+                element={
+                    <ProtectedRoute allowedRoles={['main_technician']}>
+                        <MainTechComplaints />
                     </ProtectedRoute>
                 }
             />
