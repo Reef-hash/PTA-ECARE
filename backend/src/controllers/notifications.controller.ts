@@ -262,7 +262,7 @@ export const buildNotificationEmailHtml = (name: string, title: string, message:
 // Internal helper to create notification
 export const createNotification = async (
     userId: string | number,
-    role: 'user' | 'admin' | 'technician',
+    role: 'user' | 'admin' | 'technician' | 'main_technician',
     start_msg: string,
     payload: string,
     type: 'assignment' | 'status_update' | 'status_update_detailed' | 'transport_update' | 'checking_update' | 'remark_update' | 'system' = 'status_update',
@@ -311,7 +311,7 @@ export const createNotification = async (
                 // Ensure all notifications for admin role go to adminecare.ptasssb@gmail.com
                 email = 'adminecare.ptasssb@gmail.com';
                 name = adminProfile?.admin_name || 'Administrator';
-            } else if (role === 'technician') {
+            } else if (role === 'technician' || role === 'main_technician') {
                 const { data: techProfile } = await supabaseAdmin
                     .from('technicians')
                     .select('email, name')

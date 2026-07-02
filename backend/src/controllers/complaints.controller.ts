@@ -735,6 +735,27 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                     } catch (emailErr) {
                         console.error('Failed to send transition email to admin/customer:', emailErr);
                     }
+                    
+                    // Notify Main Tech via Bell when Incomplete job is Completed
+                    if (isTransitionFromIncompleteToComplete) {
+                        try {
+                            const { data: mainTechs } = await supabaseAdmin.from('technicians').select('id').eq('username', 'maintech');
+                            if (mainTechs) {
+                                for (const mt of mainTechs) {
+                                    await createNotification(
+                                        mt.id,
+                                        'main_technician',
+                                        `Status Update: ${reportNumber}`,
+                                        `Juruteknik ${techName} telah menyiapkan aduan ${reportNumber} (sebelum ini bawa pulang / incomplete).`,
+                                        'status_update_detailed',
+                                        id
+                                    );
+                                }
+                            }
+                        } catch (e) {
+                            console.error('Failed to notify main tech on completion:', e);
+                        }
+                    }
                 }
 
                 // New Email requirement: Transition to Incomplete
@@ -770,6 +791,25 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                         }
                     } catch (err) {
                         console.error('Failed to send incomplete notification emails:', err);
+                    }
+
+                    // Notify Main Tech via Bell
+                    try {
+                        const { data: mainTechs } = await supabaseAdmin.from('technicians').select('id').eq('username', 'maintech');
+                        if (mainTechs) {
+                            for (const mt of mainTechs) {
+                                await createNotification(
+                                    mt.id,
+                                    'main_technician',
+                                    `Status Update: ${reportNumber}`,
+                                    `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}.`,
+                                    'status_update_detailed',
+                                    id
+                                );
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Failed to notify main tech on incomplete:', e);
                     }
                 }
 
@@ -1403,6 +1443,25 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
                 'status_update_detailed',
                 id
             );
+        }
+
+        // Notify Main Tech that job has been forwarded
+        try {
+            const { data: mainTechs } = await supabaseAdmin.from('technicians').select('id').eq('username', 'maintech');
+            if (mainTechs) {
+                for (const mt of mainTechs) {
+                    await createNotification(
+                        mt.id,
+                        'main_technician',
+                        `Job Forwarded: ${complaint?.report_number}`,
+                        `Aduan ${complaint?.report_number} berjaya di hantar kepada juruteknik ${techExists.name}.`,
+                        'assignment',
+                        id
+                    );
+                }
+            }
+        } catch (e) {
+            console.error('Failed to notify main tech on forward:', e);
         }
 
         // Email Notifications for Forward Job
