@@ -245,59 +245,109 @@ export default function ComplaintHistory() {
                     </div>
                 ) : (
                     <>
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead>
-                                    <tr className="table-header">
-                                        <th className="text-center px-4 py-3 w-12 whitespace-nowrap">#</th>
-                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_users.report_no') || 'Report No'}</th>
-                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_master.category')}</th>
-                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_master.subcategory')}</th>
-                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_master.brand')}</th>
-                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('common_actions.status')}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {paginatedComplaints.map((complaint, index) => (
-                                        <tr key={complaint.id} className="table-row">
-                                            <td className="px-4 py-3 text-center text-gray-500 font-medium whitespace-nowrap">
-                                                {(currentPage - 1) * itemsPerPage + index + 1}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <div className="flex flex-col gap-1">
+                        <div className="overflow-hidden sm:rounded-lg">
+                            {/* Mobile Layout (List-Item Compact) */}
+                            <div className="block md:hidden border-t border-gray-200">
+                                {paginatedComplaints.map((complaint, index) => (
+                                    <div key={complaint.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div className="flex flex-col gap-1.5">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-gray-400 font-medium text-xs">#{(currentPage - 1) * itemsPerPage + index + 1}</span>
                                                     <Link
                                                         to={`/users/complaint/${complaint.report_number}`}
-                                                        className="text-primary-600 hover:text-primary-700 font-medium"
+                                                        className="text-primary-600 hover:text-primary-700 font-bold text-sm"
                                                     >
                                                         {complaint.report_number}
                                                     </Link>
-                                                    <Link
-                                                        to={`/users/complaint/${complaint.report_number}/track-repair`}
-                                                        className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
-                                                    >
-                                                        TRACK REPAIR
-                                                    </Link>
                                                 </div>
-                                            </td>
-                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
-                                                {complaint.categories?.name || '-'}
-                                            </td>
-                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.subcategory}</td>
-                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.brand_name}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap">
-                                                <div className="flex flex-col gap-1">
-                                                    {getStatusBadge(complaint)}
-                                                    <div className="mt-1">
-                                                        <div className="mt-1 text-xs text-gray-500">
-                                                            {renderStatusMessage(complaint) as React.ReactNode}
+                                                <Link
+                                                    to={`/users/complaint/${complaint.report_number}/track-repair`}
+                                                    className="text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit shadow-sm"
+                                                >
+                                                    TRACK REPAIR
+                                                </Link>
+                                            </div>
+                                            <div className="flex-shrink-0">
+                                                {getStatusBadge(complaint)}
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-[auto_1fr_1fr] gap-x-3 gap-y-1 text-sm mt-2 items-center">
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_master.category')}</span>
+                                            <span className="text-gray-900 font-medium text-xs col-span-2">{complaint.categories?.name || '-'}</span>
+                                            
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_master.subcategory')}</span>
+                                            <span className="text-gray-900 font-medium text-xs col-span-2">{complaint.subcategory}</span>
+                                            
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_master.brand')}</span>
+                                            <span className="text-gray-900 font-medium text-xs col-span-2">{complaint.brand_name}</span>
+                                        </div>
+                                        
+                                        <div className="mt-3 pt-3 border-t border-gray-100">
+                                            <div className="text-xs text-gray-500 leading-relaxed">
+                                                {renderStatusMessage(complaint) as React.ReactNode}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Desktop Layout (Table) */}
+                            <div className="hidden md:block overflow-x-auto">
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="table-header">
+                                            <th className="text-center px-4 py-3 w-12 whitespace-nowrap">#</th>
+                                            <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_users.report_no') || 'Report No'}</th>
+                                            <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_master.category')}</th>
+                                            <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_master.subcategory')}</th>
+                                            <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_master.brand')}</th>
+                                            <th className="text-left px-4 py-3 whitespace-nowrap">{t('common_actions.status')}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {paginatedComplaints.map((complaint, index) => (
+                                            <tr key={complaint.id} className="table-row">
+                                                <td className="px-4 py-3 text-center text-gray-500 font-medium whitespace-nowrap">
+                                                    {(currentPage - 1) * itemsPerPage + index + 1}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <div className="flex flex-col gap-1">
+                                                        <Link
+                                                            to={`/users/complaint/${complaint.report_number}`}
+                                                            className="text-primary-600 hover:text-primary-700 font-medium"
+                                                        >
+                                                            {complaint.report_number}
+                                                        </Link>
+                                                        <Link
+                                                            to={`/users/complaint/${complaint.report_number}/track-repair`}
+                                                            className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
+                                                        >
+                                                            TRACK REPAIR
+                                                        </Link>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                                                    {complaint.categories?.name || '-'}
+                                                </td>
+                                                <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.subcategory}</td>
+                                                <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.brand_name}</td>
+                                                <td className="px-4 py-3 whitespace-nowrap">
+                                                    <div className="flex flex-col gap-1">
+                                                        {getStatusBadge(complaint)}
+                                                        <div className="mt-1">
+                                                            <div className="mt-1 text-xs text-gray-500">
+                                                                {renderStatusMessage(complaint) as React.ReactNode}
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
                         {/* Pagination */}
