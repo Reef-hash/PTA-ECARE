@@ -29,10 +29,10 @@ async function createMainTechnician() {
             .single();
 
         if (existing) {
-            // Update password
+            // Update password and username
             const { error } = await supabase
                 .from('technicians')
-                .update({ password_hash: hash })
+                .update({ password_hash: hash, username: 'maintech' })
                 .eq('email', email);
 
             if (error) console.error('Update error:', error);
@@ -46,7 +46,7 @@ async function createMainTechnician() {
                     department: 'Main Tech Dept',
                     email: email,
                     contact_number: 123456789,
-                    username: email, // Use email as username as well
+                    username: 'maintech',
                     password_hash: hash,
                     is_active: true
                 });
@@ -56,7 +56,8 @@ async function createMainTechnician() {
         }
 
         console.log('\nMain Technician Credentials:');
-        console.log(`  Email/Username: ${email}`);
+        console.log(`  Email: ${email}`);
+        console.log(`  Username: maintech`);
         console.log('  Password: Tech#2026');
     } catch (err) {
         console.error('Script error:', err);
