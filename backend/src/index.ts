@@ -22,7 +22,9 @@ app.use(cors({
         process.env.FRONTEND_URL || 'http://localhost:5173',
         'http://localhost:5174',
         'https://zszonetechnology.top',
-        'https://api.zszonetechnology.top'
+        'https://api.zszonetechnology.top',
+        'https://ptas.my',
+        'https://www.ptas.my'
     ],
     credentials: true,
 }));
