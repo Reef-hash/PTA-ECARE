@@ -97,93 +97,168 @@ export default function MainTechComplaints() {
                         </span>
                     </div>
 
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[140px]">{t('table.report_number')}</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[150px]">{t('table.original_technician', 'Juruteknik Asal')}</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[200px]">{t('admin_complaint_detail.transport_note', 'Catatan Pengangkutan')}</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[200px]">{t('admin_complaint_detail.checking', 'Pemeriksaan')}</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[200px]">{t('table.incomplete_reason', 'Sebab Bawa Pulang')}</th>
-                                    <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[100px]">{t('table.action')}</th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {isLoading ? (
-                                    <tr>
-                                        <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                                            <div className="flex justify-center items-center gap-3">
-                                                <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-500 border-t-transparent"></div>
-                                                {t('common.loading')}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ) : complaints.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={6} className="px-6 py-12 text-center">
-                                            <div className="flex flex-col items-center justify-center text-gray-400">
-                                                <AlertTriangle className="w-12 h-12 mb-3 text-gray-300" />
-                                                <p className="text-lg font-medium text-gray-600">{t('main_tech.dashboard.empty')}</p>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    complaints.map((complaint) => {
-                                        const details = getIncompleteDetails(complaint);
-                                        const isAssignedTo = complaint.technicians?.name || complaint.assigned_to || 'Tidak Diketahui';
+                    <div className="overflow-hidden sm:rounded-lg">
+                        {/* Mobile Layout (List-Item Compact) */}
+                        <div className="block md:hidden border-t border-gray-200">
+                            {isLoading ? (
+                                <div className="p-8 text-center text-gray-500">
+                                    <div className="flex justify-center items-center gap-3">
+                                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-500 border-t-transparent"></div>
+                                        {t('common.loading')}
+                                    </div>
+                                </div>
+                            ) : complaints.length === 0 ? (
+                                <div className="p-12 text-center">
+                                    <div className="flex flex-col items-center justify-center text-gray-400">
+                                        <AlertTriangle className="w-12 h-12 mb-3 text-gray-300" />
+                                        <p className="text-lg font-medium text-gray-600">{t('main_tech.dashboard.empty')}</p>
+                                    </div>
+                                </div>
+                            ) : (
+                                complaints.map((complaint) => {
+                                    const details = getIncompleteDetails(complaint);
+                                    const isAssignedTo = complaint.technicians?.name || complaint.assigned_to || 'Tidak Diketahui';
 
-                                        return (
-                                            <tr key={complaint.id} className="hover:bg-gray-50 transition-colors">
-                                                <td className="px-6 py-4 whitespace-nowrap">
+                                    return (
+                                        <div key={complaint.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div>
                                                     <div className="font-medium text-gray-900">{complaint.report_number || `ADU-${complaint.id}`}</div>
                                                     <div className="text-xs text-gray-500 mt-1">{formatDate(complaint.created_at)}</div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700">
-                                                        {isAssignedTo}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <p className="text-sm text-gray-600 line-clamp-2" title={details.transport}>
-                                                        {details.transport}
-                                                    </p>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <p className="text-sm text-gray-600 line-clamp-2" title={details.checking}>
-                                                        {details.checking}
-                                                    </p>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <p className="text-sm text-gray-600 line-clamp-2" title={details.remark}>
-                                                        {details.remark}
-                                                    </p>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                </div>
+                                                <div className="flex gap-2">
                                                     {!complaint.assigned_to ? (
                                                         <button
                                                             onClick={() => setSelectedComplaint(complaint)}
-                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded transition-colors shadow-sm"
+                                                            className="p-1.5 bg-primary-50 text-primary-600 hover:bg-primary-100 rounded-lg transition-colors border border-primary-100"
+                                                            title="Forward Job"
                                                         >
-                                                            <ArrowRightCircle className="w-3.5 h-3.5" />
-                                                            Forward Job
+                                                            <ArrowRightCircle className="w-5 h-5" />
                                                         </button>
                                                     ) : (
                                                         <Link
                                                             to={`/main-tech/complaint/${complaint.report_number}`}
-                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-medium rounded transition-colors shadow-sm"
+                                                            className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-indigo-100"
+                                                            title={t('common.view', 'Papar')}
                                                         >
-                                                            <Eye className="w-3.5 h-3.5" />
-                                                            {t('common.view', 'Papar')}
+                                                            <Eye className="w-5 h-5" />
                                                         </Link>
                                                     )}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })
-                                )}
-                            </tbody>
-                        </table>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm mt-3 items-center">
+                                                <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('table.original_technician', 'Juruteknik Asal')}</span>
+                                                <div>
+                                                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700">
+                                                        {isAssignedTo}
+                                                    </span>
+                                                </div>
+
+                                                <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_complaint_detail.transport_note', 'Catatan Transport')}</span>
+                                                <span className="text-gray-600 text-xs line-clamp-1">{details.transport}</span>
+
+                                                <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_complaint_detail.checking', 'Pemeriksaan')}</span>
+                                                <span className="text-gray-600 text-xs line-clamp-1">{details.checking}</span>
+
+                                                <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('table.incomplete_reason', 'Sebab')}</span>
+                                                <span className="text-gray-900 text-xs line-clamp-2">{details.remark}</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+
+                        {/* Desktop Layout (Table) */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[140px]">{t('table.report_number')}</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[150px]">{t('table.original_technician', 'Juruteknik Asal')}</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[200px]">{t('admin_complaint_detail.transport_note', 'Catatan Pengangkutan')}</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[200px]">{t('admin_complaint_detail.checking', 'Pemeriksaan')}</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[200px]">{t('table.incomplete_reason', 'Sebab Bawa Pulang')}</th>
+                                        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[100px]">{t('table.action')}</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {isLoading ? (
+                                        <tr>
+                                            <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                                                <div className="flex justify-center items-center gap-3">
+                                                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-500 border-t-transparent"></div>
+                                                    {t('common.loading')}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ) : complaints.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={6} className="px-6 py-12 text-center">
+                                                <div className="flex flex-col items-center justify-center text-gray-400">
+                                                    <AlertTriangle className="w-12 h-12 mb-3 text-gray-300" />
+                                                    <p className="text-lg font-medium text-gray-600">{t('main_tech.dashboard.empty')}</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        complaints.map((complaint) => {
+                                            const details = getIncompleteDetails(complaint);
+                                            const isAssignedTo = complaint.technicians?.name || complaint.assigned_to || 'Tidak Diketahui';
+
+                                            return (
+                                                <tr key={complaint.id} className="hover:bg-gray-50 transition-colors">
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="font-medium text-gray-900">{complaint.report_number || `ADU-${complaint.id}`}</div>
+                                                        <div className="text-xs text-gray-500 mt-1">{formatDate(complaint.created_at)}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700">
+                                                            {isAssignedTo}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <p className="text-sm text-gray-600 line-clamp-2" title={details.transport}>
+                                                            {details.transport}
+                                                        </p>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <p className="text-sm text-gray-600 line-clamp-2" title={details.checking}>
+                                                            {details.checking}
+                                                        </p>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <p className="text-sm text-gray-600 line-clamp-2" title={details.remark}>
+                                                            {details.remark}
+                                                        </p>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                        {!complaint.assigned_to ? (
+                                                            <button
+                                                                onClick={() => setSelectedComplaint(complaint)}
+                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded transition-colors shadow-sm"
+                                                            >
+                                                                <ArrowRightCircle className="w-3.5 h-3.5" />
+                                                                Forward Job
+                                                            </button>
+                                                        ) : (
+                                                            <Link
+                                                                to={`/main-tech/complaint/${complaint.report_number}`}
+                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-medium rounded transition-colors shadow-sm"
+                                                            >
+                                                                <Eye className="w-3.5 h-3.5" />
+                                                                {t('common.view', 'Papar')}
+                                                            </Link>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
