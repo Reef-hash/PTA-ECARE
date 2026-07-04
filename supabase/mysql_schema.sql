@@ -3,16 +3,13 @@
 -- MySQL (phpMyAdmin)
 -- ============================================
 
-CREATE DATABASE IF NOT EXISTS ecare_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE ecare_db;
-
 -- ============================================
 -- TABLES
 -- ============================================
 
 -- 1. Users (Pelanggan)
 CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id VARCHAR(36) PRIMARY KEY,
     full_name VARCHAR(100) NOT NULL,
     email VARCHAR(255) UNIQUE,
     ic_number VARCHAR(12) UNIQUE NOT NULL,
@@ -29,25 +26,30 @@ CREATE TABLE IF NOT EXISTS users (
     pincode VARCHAR(20),
     user_image TEXT,
     status ENUM('Active', 'Inactive', 'Suspended') DEFAULT 'Active',
+    role VARCHAR(50) DEFAULT 'user',
+    avatar_url TEXT,
+    phone_number VARCHAR(50),
+    password_plain TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
 -- 2. Admins
 CREATE TABLE IF NOT EXISTS admins (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id VARCHAR(36) PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     admin_name VARCHAR(200) NOT NULL,
     email VARCHAR(150) UNIQUE NOT NULL,
     contact_number BIGINT NOT NULL,
+    is_active TINYINT(1) DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
 -- 3. Technicians (Juruteknik)
 CREATE TABLE IF NOT EXISTS technicians (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id VARCHAR(36) PRIMARY KEY,
     name VARCHAR(150) NOT NULL,
     department VARCHAR(150) NOT NULL,
     email VARCHAR(150) UNIQUE NOT NULL,
@@ -100,7 +102,7 @@ CREATE TABLE IF NOT EXISTS states (
 -- 8. Complaints (Aduan)
 CREATE TABLE IF NOT EXISTS complaints (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,
+    user_id VARCHAR(36),
     category_id INT,
     subcategory VARCHAR(255) NOT NULL,
     complaint_type ENUM('Under Warranty', 'Over Warranty') NOT NULL,
@@ -112,7 +114,7 @@ CREATE TABLE IF NOT EXISTS complaints (
     receipt_file TEXT,
     status ENUM('pending', 'in_process', 'closed', 'cancelled') DEFAULT 'pending',
     report_number VARCHAR(10) UNIQUE NOT NULL,
-    assigned_to INT,
+    assigned_to VARCHAR(36),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -128,7 +130,7 @@ CREATE TABLE IF NOT EXISTS complaint_remarks (
     note_transport TEXT,
     checking TEXT,
     remark TEXT,
-    remark_by INT,
+    remark_by VARCHAR(36),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (complaint_id) REFERENCES complaints(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
@@ -141,7 +143,7 @@ CREATE TABLE IF NOT EXISTS technician_remarks (
     status ENUM('pending', 'in_process', 'closed', 'cancelled'),
     note_transport TEXT,
     checking TEXT,
-    remark_by INT,
+    remark_by VARCHAR(36),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (complaint_id) REFERENCES complaints(id) ON DELETE CASCADE,
     FOREIGN KEY (remark_by) REFERENCES technicians(id) ON DELETE SET NULL
@@ -151,8 +153,8 @@ CREATE TABLE IF NOT EXISTS technician_remarks (
 CREATE TABLE IF NOT EXISTS forward_history (
     id INT AUTO_INCREMENT PRIMARY KEY,
     complaint_id INT,
-    forward_from INT,
-    forward_to INT,
+    forward_from VARCHAR(36),
+    forward_to VARCHAR(36),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (complaint_id) REFERENCES complaints(id) ON DELETE CASCADE,
     FOREIGN KEY (forward_to) REFERENCES technicians(id) ON DELETE SET NULL
@@ -161,7 +163,7 @@ CREATE TABLE IF NOT EXISTS forward_history (
 -- 12. User Logs (Log Aktiviti)
 CREATE TABLE IF NOT EXISTS user_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,
+    user_id VARCHAR(36),
     username VARCHAR(100) NOT NULL,
     user_ip VARCHAR(45) NOT NULL,
     success TINYINT(1) DEFAULT 0,
@@ -172,7 +174,7 @@ CREATE TABLE IF NOT EXISTS user_logs (
 -- 13. Password Resets
 CREATE TABLE IF NOT EXISTS password_resets (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,
+    user_id VARCHAR(36),
     otp VARCHAR(10) NOT NULL,
     expires_at DATETIME NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -182,7 +184,7 @@ CREATE TABLE IF NOT EXISTS password_resets (
 -- 14. Notifications
 CREATE TABLE IF NOT EXISTS notifications (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    recipient_id INT NOT NULL,
+    recipient_id VARCHAR(36) NOT NULL,
     recipient_role VARCHAR(20) NOT NULL,
     title VARCHAR(255) NOT NULL,
     message TEXT NOT NULL,
@@ -213,147 +215,4 @@ CREATE INDEX idx_notifications_is_read ON notifications(is_read);
 -- DEFAULT DATA - CATEGORIES
 -- ============================================
 
-INSERT INTO categories (name, description) VALUES
-('LAPORAN KEROSAKAN PELANGGAN', 'Laporan kerosakan barangan elektrik daripada pelanggan'),
-('SERVIS AIRCOND', 'Servis dan penyelenggaraan aircond'),
-('SERVIS CUCIAN', 'Servis cucian barangan elektrik'),
-('Other', 'Kategori lain');
 
--- ============================================
--- DEFAULT DATA - SUBCATEGORIES (51 items)
--- ============================================
-
-INSERT INTO subcategories (category_id, name) VALUES
-(1, 'Mesin Basuh'),
-(1, 'PETI'),
-(1, 'DRYER'),
-(1, 'FREEZER'),
-(1, 'JAM AZAN MASJID'),
-(1, 'WATER HEATER'),
-(1, 'TV (50\" ke atas)'),
-(1, 'AIRCOND'),
-(1, 'KIPAS SILING/DINDING'),
-(1, 'VACUUM'),
-(1, 'AIR COOLER'),
-(1, 'SERVICE'),
-(1, 'WIRING'),
-(1, 'JUICER'),
-(1, 'WATER JET'),
-(1, 'AIR FRYER'),
-(1, 'HAIR DRYER'),
-(1, 'BREADMAKER'),
-(1, 'THERMOPOT'),
-(1, 'WATER DISPENSER'),
-(1, 'WATER PUMP'),
-(1, 'KETTLE JUG'),
-(1, 'STEAMER'),
-(1, 'ANDROID BOX'),
-(1, 'HAND MIXER'),
-(1, 'AIR PURIFIER'),
-(1, 'SEALER'),
-(1, 'SPEAKER'),
-(1, 'JAM'),
-(1, 'HOOD'),
-(1, 'HOME THEATER'),
-(1, 'INSECT KILLER'),
-(1, 'GRILL PAN'),
-(1, 'CCTV'),
-(1, 'LAMPU'),
-(1, 'AUTOGATE'),
-(1, 'CHILLER'),
-(1, 'EKZOS FAN'),
-(1, 'NETWORK'),
-(1, 'TRANSPORT'),
-(2, 'AIRCOND SILING CASSETE'),
-(2, 'AIRCOND WALL MOUNTED'),
-(3, 'MESIN PENGERING'),
-(4, 'LAIN-LAIN');
-
--- ============================================
--- DEFAULT DATA - BRANDS (66 items)
--- ============================================
-
-INSERT INTO brands (category_id, name) VALUES
-(1, 'ACSON'),
-(1, 'AUX'),
-(1, 'BLACK SPIDER'),
-(1, 'CORNELL'),
-(1, 'DAIKIN'),
-(1, 'DAEWOOD'),
-(1, 'DEKA'),
-(1, 'DAHUA'),
-(1, 'ELECTROLUX'),
-(1, 'ELBA'),
-(1, 'EPAY'),
-(1, 'FABER'),
-(1, 'HITEC'),
-(1, 'HAIER'),
-(1, 'HISENSE'),
-(1, 'HITACHI'),
-(1, 'HIKVISION'),
-(1, 'HESSTAR'),
-(1, 'ISONIC'),
-(1, 'I SLIDE'),
-(1, 'JOVEN'),
-(1, 'JASMA'),
-(1, 'KHIND'),
-(1, 'KDK'),
-(1, 'KARCHER'),
-(1, 'LG'),
-(1, 'MIDEA'),
-(1, 'MORGAN'),
-(1, 'MECK'),
-(1, 'MILUX'),
-(1, 'MITSUBISHI'),
-(1, 'MAHITA'),
-(1, 'MAYER'),
-(1, 'MI'),
-(1, 'NOXXA'),
-(1, 'NATIONAL'),
-(1, 'NEW BUTTERFLY'),
-(1, 'PHILIPS'),
-(1, 'PENSONIC'),
-(1, 'PTIME'),
-(1, 'PROMAS'),
-(1, 'TOPAIRE'),
-(1, 'PRIMADA'),
-(1, 'PHISON'),
-(1, 'PANASONIC'),
-(1, 'RUIJIE'),
-(1, 'REGAIR'),
-(1, 'SHARP'),
-(1, 'TELEFUNKEN'),
-(1, 'SONY'),
-(1, 'AIWA'),
-(1, 'SINGER'),
-(1, 'SAMSUNG'),
-(1, 'SKYWORTH'),
-(1, 'STANLEY'),
-(1, 'SNOW'),
-(1, 'SANKYO'),
-(1, 'SANDEN'),
-(1, 'TOSHIBA'),
-(1, 'TRIO'),
-(1, 'THE BAKER'),
-(1, 'TOKAI'),
-(1, 'TCL'),
-(1, 'UNIVERSAL'),
-(1, 'ZANUSSI'),
-(1, 'ASTRO');
-
--- ============================================
--- DEFAULT DATA - STATES (Lokasi Pembelian)
--- ============================================
-
-INSERT INTO states (name, description) VALUES
-('KAMPUNG RAJA (BESUT)', 'Cawangan Kampung Raja, Besut'),
-('SETIU (TERENGGANU)', 'Cawangan Setiu, Terengganu'),
-('JERTEH (TERENGGANU)', 'Cawangan Jerteh, Terengganu');
-
--- ============================================
--- DEFAULT ADMIN (password: admin123)
--- Password hash generated with bcrypt for 'admin123'
--- ============================================
-
-INSERT INTO admins (username, password_hash, admin_name, email, contact_number) VALUES
-('admin', '$2b$10$8K1MqJ6qGq1JW5lW5Kz5XuYz3UxWJHK8v0RAEMYwjvL1G.6xkWyai', 'System Administrator', 'adminecare.ptasssb@gmail.com', 0123456789);

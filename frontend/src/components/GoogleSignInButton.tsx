@@ -1,7 +1,10 @@
+import { GoogleLogin } from '@react-oauth/google';
+
 type GoogleButtonText = 'signin_with' | 'signup_with' | 'continue_with';
 
 interface GoogleSignInButtonProps {
-    onClick: () => void;
+    onSuccess: (credential: string) => void;
+    onError?: () => void;
     text?: GoogleButtonText;
     disabled?: boolean;
     disabledLabel: string;
@@ -9,14 +12,9 @@ interface GoogleSignInButtonProps {
     isConfigured?: boolean;
 }
 
-const labels: Record<GoogleButtonText, string> = {
-    signin_with: 'Sign in with Google',
-    signup_with: 'Sign up with Google',
-    continue_with: 'Continue with Google',
-};
-
 export default function GoogleSignInButton({
-    onClick,
+    onSuccess,
+    onError,
     text = 'continue_with',
     disabled = false,
     disabledLabel,
@@ -40,15 +38,24 @@ export default function GoogleSignInButton({
     }
 
     return (
-        <button
-            type="button"
-            onClick={onClick}
-            className="w-full py-3 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-3 font-medium shadow-sm"
-        >
-            <span className="w-5 h-5 rounded-full bg-white border border-gray-200 flex items-center justify-center text-sm font-bold text-blue-600">
-                G
-            </span>
-            {labels[text]}
-        </button>
+        <div className="flex justify-center w-full">
+            <GoogleLogin
+                onSuccess={(credentialResponse) => {
+                    if (credentialResponse.credential) {
+                        onSuccess(credentialResponse.credential);
+                    } else if (onError) {
+                        onError();
+                    }
+                }}
+                onError={() => {
+                    if (onError) onError();
+                }}
+                useOneTap={false}
+                text={text}
+                theme="outline"
+                size="large"
+                width="100%"
+            />
+        </div>
     );
 }
