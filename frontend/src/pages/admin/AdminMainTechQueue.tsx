@@ -156,97 +156,172 @@ export default function AdminMainTechQueue() {
                         </span>
                     </div>
 
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">No. Laporan / Tarikh</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Pelanggan</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Juruteknik Asal</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Sebab Bawa Pulang</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Jarak Transport</th>
-                                    <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Tindakan</th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {isLoading ? (
-                                    <tr>
-                                        <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                                            <div className="flex justify-center items-center gap-3">
-                                                <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-500 border-t-transparent"></div>
-                                                Memuatkan data...
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ) : complaints.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={6} className="px-6 py-12 text-center">
-                                            <div className="flex flex-col items-center justify-center text-gray-400">
-                                                <AlertTriangle className="w-12 h-12 mb-3 text-gray-300" />
-                                                <p className="text-lg font-medium text-gray-600">Tiada rekod dijumpai</p>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    complaints.map((complaint) => {
-                                        const details = getIncompleteDetails(complaint);
-                                        const isAssignedTo = complaint.technicians?.name || complaint.assigned_to || 'Tidak Diketahui';
+                    <div className="overflow-hidden sm:rounded-lg">
+                        {/* Mobile Layout (List-Item Compact) */}
+                        <div className="block md:hidden border-t border-gray-200">
+                            {isLoading ? (
+                                <div className="p-8 text-center text-gray-500">
+                                    <div className="flex justify-center items-center gap-3">
+                                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-500 border-t-transparent"></div>
+                                        Memuatkan data...
+                                    </div>
+                                </div>
+                            ) : complaints.length === 0 ? (
+                                <div className="p-12 text-center">
+                                    <div className="flex flex-col items-center justify-center text-gray-400">
+                                        <AlertTriangle className="w-12 h-12 mb-3 text-gray-300" />
+                                        <p className="text-lg font-medium text-gray-600">Tiada rekod dijumpai</p>
+                                    </div>
+                                </div>
+                            ) : (
+                                complaints.map((complaint) => {
+                                    const details = getIncompleteDetails(complaint);
+                                    const isAssignedTo = complaint.technicians?.name || complaint.assigned_to || 'Tidak Diketahui';
 
-                                        return (
-                                            <tr key={complaint.id} className="hover:bg-gray-50 transition-colors">
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="p-2 bg-gray-50 rounded-lg">
-                                                            <Wrench className="w-4 h-4 text-gray-500" />
-                                                        </div>
-                                                        <div>
-                                                            <div className="font-medium text-gray-900">{complaint.report_number || `ADU-${complaint.id}`}</div>
-                                                            <div className="text-xs text-gray-500 mt-1">{formatDate(complaint.created_at)}</div>
-                                                        </div>
+                                    return (
+                                        <div key={complaint.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 bg-gray-50 rounded-lg">
+                                                        <Wrench className="w-4 h-4 text-gray-500" />
                                                     </div>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <div className="text-sm font-medium text-gray-900">{complaint.users?.full_name || '-'}</div>
-                                                    <div className="text-xs text-gray-500 mt-1 max-w-[200px] truncate" title={complaint.users?.address}>
-                                                        {complaint.users?.address || '-'}
+                                                    <div>
+                                                        <div className="font-medium text-gray-900">{complaint.report_number || `ADU-${complaint.id}`}</div>
+                                                        <div className="text-xs text-gray-500 mt-1">{formatDate(complaint.created_at)}</div>
                                                     </div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700">
+                                                </div>
+                                                <Link
+                                                    to={`/admin/complaint/${complaint.report_number}`}
+                                                    className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-indigo-100"
+                                                    title="Lihat"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </Link>
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm mt-3 items-center">
+                                                <span className="text-gray-500 text-[11px] uppercase tracking-wider">Pelanggan</span>
+                                                <div>
+                                                    <div className="text-gray-900 font-medium text-xs">{complaint.users?.full_name || '-'}</div>
+                                                    <div className="text-xs text-gray-500 line-clamp-1">{complaint.users?.address || '-'}</div>
+                                                </div>
+
+                                                <span className="text-gray-500 text-[11px] uppercase tracking-wider">Juruteknik</span>
+                                                <div>
+                                                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700">
                                                         {isAssignedTo}
                                                     </span>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    {activeFilter === 'incomplete' ? (
-                                                        <p className="text-sm text-gray-600 line-clamp-2" title={details.remark}>
-                                                            {details.remark}
-                                                        </p>
-                                                    ) : (
-                                                        <p className="text-sm text-gray-600 line-clamp-2">
-                                                            {complaint.details}
-                                                        </p>
-                                                    )}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className="text-sm font-medium text-gray-700">
-                                                        {activeFilter === 'incomplete' ? details.transport : '-'}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                    <Link
-                                                        to={`/admin/complaint/${complaint.report_number}`}
-                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium rounded transition-colors shadow-sm"
-                                                    >
-                                                        <Eye className="w-3.5 h-3.5" />
-                                                        Lihat
-                                                    </Link>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })
-                                )}
-                            </tbody>
-                        </table>
+                                                </div>
+
+                                                <span className="text-gray-500 text-[11px] uppercase tracking-wider">Sebab</span>
+                                                <span className="text-gray-900 text-xs line-clamp-2">
+                                                    {activeFilter === 'incomplete' ? details.remark : complaint.details}
+                                                </span>
+
+                                                <span className="text-gray-500 text-[11px] uppercase tracking-wider">Jarak</span>
+                                                <span className="text-gray-900 text-xs font-medium">
+                                                    {activeFilter === 'incomplete' ? details.transport : '-'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+
+                        {/* Desktop Layout (Table) */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">No. Laporan / Tarikh</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Pelanggan</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Juruteknik Asal</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Sebab Bawa Pulang</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Jarak Transport</th>
+                                        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Tindakan</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {isLoading ? (
+                                        <tr>
+                                            <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                                                <div className="flex justify-center items-center gap-3">
+                                                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-500 border-t-transparent"></div>
+                                                    Memuatkan data...
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ) : complaints.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={6} className="px-6 py-12 text-center">
+                                                <div className="flex flex-col items-center justify-center text-gray-400">
+                                                    <AlertTriangle className="w-12 h-12 mb-3 text-gray-300" />
+                                                    <p className="text-lg font-medium text-gray-600">Tiada rekod dijumpai</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        complaints.map((complaint) => {
+                                            const details = getIncompleteDetails(complaint);
+                                            const isAssignedTo = complaint.technicians?.name || complaint.assigned_to || 'Tidak Diketahui';
+
+                                            return (
+                                                <tr key={complaint.id} className="hover:bg-gray-50 transition-colors">
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="p-2 bg-gray-50 rounded-lg">
+                                                                <Wrench className="w-4 h-4 text-gray-500" />
+                                                            </div>
+                                                            <div>
+                                                                <div className="font-medium text-gray-900">{complaint.report_number || `ADU-${complaint.id}`}</div>
+                                                                <div className="text-xs text-gray-500 mt-1">{formatDate(complaint.created_at)}</div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="text-sm font-medium text-gray-900">{complaint.users?.full_name || '-'}</div>
+                                                        <div className="text-xs text-gray-500 mt-1 max-w-[200px] truncate" title={complaint.users?.address}>
+                                                            {complaint.users?.address || '-'}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700">
+                                                            {isAssignedTo}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        {activeFilter === 'incomplete' ? (
+                                                            <p className="text-sm text-gray-600 line-clamp-2" title={details.remark}>
+                                                                {details.remark}
+                                                            </p>
+                                                        ) : (
+                                                            <p className="text-sm text-gray-600 line-clamp-2">
+                                                                {complaint.details}
+                                                            </p>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <span className="text-sm font-medium text-gray-700">
+                                                            {activeFilter === 'incomplete' ? details.transport : '-'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                        <Link
+                                                            to={`/admin/complaint/${complaint.report_number}`}
+                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium rounded transition-colors shadow-sm"
+                                                        >
+                                                            <Eye className="w-3.5 h-3.5" />
+                                                            Lihat
+                                                        </Link>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>

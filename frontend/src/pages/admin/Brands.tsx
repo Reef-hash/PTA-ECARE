@@ -132,44 +132,82 @@ export default function Brands() {
                         <p className="text-gray-500">{t('admin_master.no_data')}</p>
                     </div>
                 ) : (<>
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="table-header">
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">#</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">{t('common_actions.name')}</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_master.category')}</th>
-                                    <th className="text-center px-4 py-3 whitespace-nowrap">{t('common_actions.action')}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {displayedBrands.map((brand, index) => (
-                                    <tr key={brand.id} className="table-row">
-                                        <td className="px-4 py-3 text-gray-500">{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                                        <td className="px-4 py-3 font-medium">{brand.name}</td>
-                                        <td className="px-4 py-3 text-gray-600">{brand.category_name || t('admin_master.all_categories')}</td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center justify-center gap-2">
-                                                <button
-                                                    onClick={() => openEditModal(brand)}
-                                                    className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                                    title={t('common_actions.edit')}
-                                                >
-                                                    <Edit className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(brand.id)}
-                                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                    title={t('common_actions.delete')}
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </td>
+                    <div className="overflow-hidden sm:rounded-lg">
+                        {/* Mobile Layout (List-Item Compact) */}
+                        <div className="block md:hidden border-t border-gray-200">
+                            {displayedBrands.map((brand, index) => (
+                                <div key={brand.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-gray-400 font-medium text-xs">#{(currentPage - 1) * itemsPerPage + index + 1}</span>
+                                            <span className="font-bold text-gray-900 text-sm">{brand.name}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                onClick={() => openEditModal(brand)}
+                                                className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-indigo-100"
+                                                title={t('common_actions.edit')}
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(brand.id)}
+                                                className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-red-100"
+                                                title={t('common_actions.delete')}
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm items-start">
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider mt-0.5">{t('admin_master.category')}</span>
+                                        <span className="text-gray-600 text-xs">{brand.category_name || t('admin_master.all_categories')}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Desktop Layout (Table) */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="table-header">
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">#</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('common_actions.name')}</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_master.category')}</th>
+                                        <th className="text-center px-4 py-3 whitespace-nowrap">{t('common_actions.action')}</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {displayedBrands.map((brand, index) => (
+                                        <tr key={brand.id} className="table-row">
+                                            <td className="px-4 py-3 text-gray-500">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                                            <td className="px-4 py-3 font-medium">{brand.name}</td>
+                                            <td className="px-4 py-3 text-gray-600">{brand.category_name || t('admin_master.all_categories')}</td>
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <button
+                                                        onClick={() => openEditModal(brand)}
+                                                        className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                                        title={t('common_actions.edit')}
+                                                    >
+                                                        <Edit className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(brand.id)}
+                                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title={t('common_actions.delete')}
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     {/* Pagination */}

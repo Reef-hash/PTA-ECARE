@@ -537,94 +537,172 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                     </div>
                 ) : (
                     <>
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead>
-                                    <tr className="table-header">
-                                        <th className="text-center px-4 py-3 w-12 whitespace-nowrap">No.</th>
-                                        <th className="text-left px-4 py-3 whitespace-nowrap min-w-[140px]">{t('complaint_list.report_no')}</th>
-                                        <th className="text-left px-4 py-3 min-w-[200px]">{t('complaint_list.customer')}</th>
-                                        <th className="text-left px-4 py-3 whitespace-nowrap min-w-[150px]">{t('complaint_form.subcategory')}</th>
-                                        <th className="text-left px-4 py-3 whitespace-nowrap min-w-[120px]">{t('complaint_form.brand')}</th>
-                                        <th className="text-left px-4 py-3 whitespace-nowrap min-w-[150px]">{t('complaint_list.technician')}</th>
-                                        <th className="text-left px-4 py-3 min-w-[250px]">{t('table.status')}</th>
-                                        <th className="text-center px-4 py-3 whitespace-nowrap min-w-[100px]">{t('table.action')}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {paginatedComplaints.map((complaint, index) => (
-                                        <tr key={complaint.id} className="table-row">
-                                            <td className="px-4 py-3 text-center text-gray-500 font-medium whitespace-nowrap">
-                                                {(currentPage - 1) * itemsPerPage + index + 1}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <Link
-                                                    to={`/admin/complaint/${complaint.report_number}`}
-                                                    className="font-medium text-indigo-600 hover:text-indigo-800 hover:underline transition-colors"
-                                                >
-                                                    {complaint.report_number}
-                                                </Link>
+                        <div className="overflow-hidden sm:rounded-lg">
+                            {/* Mobile Layout (List-Item Compact) */}
+                            <div className="block md:hidden border-t border-gray-200">
+                                {paginatedComplaints.map((complaint, index) => (
+                                    <div key={complaint.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div className="flex flex-col gap-1.5">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-gray-400 font-medium text-xs">#{(currentPage - 1) * itemsPerPage + index + 1}</span>
+                                                    <Link
+                                                        to={`/admin/complaint/${complaint.report_number}`}
+                                                        className="text-indigo-600 hover:text-indigo-800 font-bold text-sm"
+                                                    >
+                                                        {complaint.report_number}
+                                                    </Link>
+                                                </div>
                                                 <Link
                                                     to={`/admin/complaint/${complaint.report_number}/track-repair`}
-                                                    className="block mt-1 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
+                                                    className="text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit shadow-sm"
                                                 >
                                                     TRACK REPAIR
                                                 </Link>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <div>
-                                                    <p className="font-medium text-gray-900 text-sm">{complaint.users?.full_name || '-'}</p>
-                                                    <p className="text-xs text-gray-500 mt-0.5">
-                                                        ID/IC: {complaint.users?.ic_number || (t('common.no_ic_info') || 'Tiada Maklumat IC')}
-                                                    </p>
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-3 text-gray-600">{complaint.subcategory}</td>
-                                            <td className="px-4 py-3 text-gray-600">{complaint.brand_name}</td>
-                                            <td className="px-4 py-3">
-                                                {complaint.technicians ? (
-                                                    <span className="text-gray-700">{complaint.technicians.name}</span>
-                                                ) : (
-                                                    <span className="text-red-500 text-sm">{t('complaint_list.not_assigned')}</span>
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <div className="flex flex-col gap-1">
-                                                    {renderStatusBadge(complaint)}
-                                                    <div className="mt-1">
-                                                        {renderStatusDescription(complaint)}
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-3 whitespace-nowrap">
-                                                <div className="flex items-center justify-center gap-2">
+                                            </div>
+                                            <div className="flex-shrink-0">
+                                                {renderStatusBadge(complaint)}
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm mt-3 items-center">
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('complaint_list.customer')}</span>
+                                            <div className="flex flex-col">
+                                                <span className="text-gray-900 font-medium text-xs">{complaint.users?.full_name || '-'}</span>
+                                                <span className="text-gray-500 text-[10px]">IC: {complaint.users?.ic_number || '-'}</span>
+                                            </div>
+
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('complaint_form.subcategory')}</span>
+                                            <span className="text-gray-900 font-medium text-xs">{complaint.subcategory}</span>
+                                            
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('complaint_form.brand')}</span>
+                                            <span className="text-gray-900 font-medium text-xs">{complaint.brand_name}</span>
+
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('complaint_list.technician')}</span>
+                                            <span className="text-gray-900 font-medium text-xs">
+                                                {complaint.technicians ? complaint.technicians.name : <span className="text-red-500">{t('complaint_list.not_assigned')}</span>}
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="mt-3 pt-3 border-t border-gray-100 flex flex-col gap-3">
+                                            <div className="text-xs text-gray-500 leading-relaxed">
+                                                {renderStatusDescription(complaint)}
+                                            </div>
+                                            <div className="flex items-center gap-2 justify-end mt-1">
+                                                <Link
+                                                    to={`/admin/complaint/${complaint.report_number}`}
+                                                    className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-indigo-100"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </Link>
+                                                <Link
+                                                    to={`/admin/print/${complaint.report_number}`}
+                                                    className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
+                                                >
+                                                    <Printer className="w-4 h-4" />
+                                                </Link>
+                                                <button
+                                                    onClick={() => handleDelete(complaint.id, complaint.report_number)}
+                                                    className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-red-100"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Desktop Layout (Table) */}
+                            <div className="hidden md:block overflow-x-auto">
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="table-header">
+                                            <th className="text-center px-4 py-3 w-12 whitespace-nowrap">No.</th>
+                                            <th className="text-left px-4 py-3 whitespace-nowrap min-w-[140px]">{t('complaint_list.report_no')}</th>
+                                            <th className="text-left px-4 py-3 min-w-[200px]">{t('complaint_list.customer')}</th>
+                                            <th className="text-left px-4 py-3 whitespace-nowrap min-w-[150px]">{t('complaint_form.subcategory')}</th>
+                                            <th className="text-left px-4 py-3 whitespace-nowrap min-w-[120px]">{t('complaint_form.brand')}</th>
+                                            <th className="text-left px-4 py-3 whitespace-nowrap min-w-[150px]">{t('complaint_list.technician')}</th>
+                                            <th className="text-left px-4 py-3 min-w-[250px]">{t('table.status')}</th>
+                                            <th className="text-center px-4 py-3 whitespace-nowrap min-w-[100px]">{t('table.action')}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {paginatedComplaints.map((complaint, index) => (
+                                            <tr key={complaint.id} className="table-row">
+                                                <td className="px-4 py-3 text-center text-gray-500 font-medium whitespace-nowrap">
+                                                    {(currentPage - 1) * itemsPerPage + index + 1}
+                                                </td>
+                                                <td className="px-4 py-3">
                                                     <Link
                                                         to={`/admin/complaint/${complaint.report_number}`}
-                                                        className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                                        title={t('complaint_list.view')}
+                                                        className="font-medium text-indigo-600 hover:text-indigo-800 hover:underline transition-colors"
                                                     >
-                                                        <Eye className="w-4 h-4" />
+                                                        {complaint.report_number}
                                                     </Link>
                                                     <Link
-                                                        to={`/admin/print/${complaint.report_number}`}
-                                                        className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                                                        title={t('complaint_list.print')}
+                                                        to={`/admin/complaint/${complaint.report_number}/track-repair`}
+                                                        className="block mt-1 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
                                                     >
-                                                        <Printer className="w-4 h-4" />
+                                                        TRACK REPAIR
                                                     </Link>
-                                                    <button
-                                                        onClick={() => handleDelete(complaint.id, complaint.report_number)}
-                                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                        title="Padam Aduan"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <div>
+                                                        <p className="font-medium text-gray-900 text-sm">{complaint.users?.full_name || '-'}</p>
+                                                        <p className="text-xs text-gray-500 mt-0.5">
+                                                            ID/IC: {complaint.users?.ic_number || (t('common.no_ic_info') || 'Tiada Maklumat IC')}
+                                                        </p>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3 text-gray-600">{complaint.subcategory}</td>
+                                                <td className="px-4 py-3 text-gray-600">{complaint.brand_name}</td>
+                                                <td className="px-4 py-3">
+                                                    {complaint.technicians ? (
+                                                        <span className="text-gray-700">{complaint.technicians.name}</span>
+                                                    ) : (
+                                                        <span className="text-red-500 text-sm">{t('complaint_list.not_assigned')}</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <div className="flex flex-col gap-1">
+                                                        {renderStatusBadge(complaint)}
+                                                        <div className="mt-1">
+                                                            {renderStatusDescription(complaint)}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3 whitespace-nowrap">
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <Link
+                                                            to={`/admin/complaint/${complaint.report_number}`}
+                                                            className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                                            title={t('complaint_list.view')}
+                                                        >
+                                                            <Eye className="w-4 h-4" />
+                                                        </Link>
+                                                        <Link
+                                                            to={`/admin/print/${complaint.report_number}`}
+                                                            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                                            title={t('complaint_list.print')}
+                                                        >
+                                                            <Printer className="w-4 h-4" />
+                                                        </Link>
+                                                        <button
+                                                            onClick={() => handleDelete(complaint.id, complaint.report_number)}
+                                                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                            title="Padam Aduan"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
 

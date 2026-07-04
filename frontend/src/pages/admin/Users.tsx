@@ -191,70 +191,140 @@ export default function Users() {
                         <p className="text-gray-500">{t('admin_users.no_users')}</p>
                     </div>
                 ) : (<>
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="table-header">
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">#</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">{t('common_actions.name')}</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">No IC</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_users.phone_number')}</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_master.title_states').replace('Pengurusan ', '')}</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">{t('common_actions.date')}</th>
-                                    <th className="text-center px-4 py-3 whitespace-nowrap">{t('common_actions.status')}</th>
-                                    <th className="text-center px-4 py-3 whitespace-nowrap">{t('common_actions.action')}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {displayedUsers.map((user, index) => (
-                                    <tr key={user.id} className="table-row">
-                                        <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                                        <td className="px-4 py-3 whitespace-nowrap">
-                                            <div>
-                                                <Link to={`/admin/users/${user.id}`} className="font-medium hover:text-indigo-600 transition-colors">
-                                                    {user.full_name}
-                                                </Link>
-                                                <p className="text-xs text-gray-500">{user.email || '-'}</p>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{user.ic_number}</td>
-                                        <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{user.contact_no}</td>
-                                        <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{user.state || '-'}</td>
-                                        <td className="px-4 py-3 text-gray-500 text-sm whitespace-nowrap">{formatDate(user.created_at)}</td>
-                                        <td className="px-4 py-3 text-center whitespace-nowrap">{getStatusBadge(user.status)}</td>
-                                        <td className="px-4 py-3 whitespace-nowrap">
-                                            <div className="flex items-center justify-center gap-2">
-                                                {user.status !== 'Active' && (
-                                                    <button
-                                                        onClick={() => handleStatusChange(user.id, 'Active')}
-                                                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                                        title={t('admin_users.confirm_active')}
-                                                    >
-                                                        <UserCheck className="w-4 h-4" />
-                                                    </button>
-                                                )}
-                                                {user.status !== 'Suspended' && (
-                                                    <button
-                                                        onClick={() => handleStatusChange(user.id, 'Suspended')}
-                                                        className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
-                                                        title={t('admin_users.confirm_suspend')}
-                                                    >
-                                                        <UserX className="w-4 h-4" />
-                                                    </button>
-                                                )}
-                                                <button
-                                                    onClick={() => handleDeleteUser(user.id)}
-                                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                    title="Padam Pelanggan"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </td>
+                    <div className="overflow-hidden sm:rounded-lg">
+                        {/* Mobile Layout (List-Item Compact) */}
+                        <div className="block md:hidden border-t border-gray-200">
+                            {displayedUsers.map((user, index) => (
+                                <div key={user.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-gray-400 font-medium text-xs">#{(currentPage - 1) * itemsPerPage + index + 1}</span>
+                                            <Link
+                                                to={`/admin/users/${user.id}`}
+                                                className="text-indigo-600 hover:underline hover:text-indigo-800 font-bold text-sm"
+                                            >
+                                                {user.full_name}
+                                            </Link>
+                                        </div>
+                                        <div className="flex-shrink-0">
+                                            {getStatusBadge(user.status)}
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm mt-2 items-center">
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider">No IC</span>
+                                        <span className="text-gray-900 font-medium text-xs">{user.ic_number}</span>
+
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_users.phone_number')}</span>
+                                        <span className="text-gray-900 font-medium text-xs">{user.contact_no}</span>
+
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_master.title_states').replace('Pengurusan ', '')}</span>
+                                        <span className="text-gray-900 font-medium text-xs">{user.state || '-'}</span>
+
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider">E-mel</span>
+                                        <span className="text-gray-900 font-medium text-xs">{user.email || '-'}</span>
+
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('common_actions.date')}</span>
+                                        <span className="text-gray-900 font-medium text-xs">{formatDate(user.created_at)}</span>
+                                    </div>
+                                    
+                                    <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-end gap-2">
+                                        {user.status !== 'Active' && (
+                                            <button
+                                                onClick={() => handleStatusChange(user.id, 'Active')}
+                                                className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors border border-green-100"
+                                                title={t('admin_users.confirm_active')}
+                                            >
+                                                <UserCheck className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                        {user.status !== 'Suspended' && (
+                                            <button
+                                                onClick={() => handleStatusChange(user.id, 'Suspended')}
+                                                className="p-1.5 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors border border-orange-100"
+                                                title={t('admin_users.confirm_suspend')}
+                                            >
+                                                <UserX className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={() => handleDeleteUser(user.id)}
+                                            className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-red-100"
+                                            title="Padam Pelanggan"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Desktop Layout (Table) */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="table-header">
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">#</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('common_actions.name')}</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">No IC</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_users.phone_number')}</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_master.title_states').replace('Pengurusan ', '')}</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('common_actions.date')}</th>
+                                        <th className="text-center px-4 py-3 whitespace-nowrap">{t('common_actions.status')}</th>
+                                        <th className="text-center px-4 py-3 whitespace-nowrap">{t('common_actions.action')}</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {displayedUsers.map((user, index) => (
+                                        <tr key={user.id} className="table-row">
+                                            <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap">
+                                                <div>
+                                                    <Link to={`/admin/users/${user.id}`} className="font-medium hover:text-indigo-600 transition-colors">
+                                                        {user.full_name}
+                                                    </Link>
+                                                    <p className="text-xs text-gray-500">{user.email || '-'}</p>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{user.ic_number}</td>
+                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{user.contact_no}</td>
+                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{user.state || '-'}</td>
+                                            <td className="px-4 py-3 text-gray-500 text-sm whitespace-nowrap">{formatDate(user.created_at)}</td>
+                                            <td className="px-4 py-3 text-center whitespace-nowrap">{getStatusBadge(user.status)}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap">
+                                                <div className="flex items-center justify-center gap-2">
+                                                    {user.status !== 'Active' && (
+                                                        <button
+                                                            onClick={() => handleStatusChange(user.id, 'Active')}
+                                                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                                            title={t('admin_users.confirm_active')}
+                                                        >
+                                                            <UserCheck className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                    {user.status !== 'Suspended' && (
+                                                        <button
+                                                            onClick={() => handleStatusChange(user.id, 'Suspended')}
+                                                            className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                                                            title={t('admin_users.confirm_suspend')}
+                                                        >
+                                                            <UserX className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        onClick={() => handleDeleteUser(user.id)}
+                                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Padam Pelanggan"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     {/* Pagination */}
