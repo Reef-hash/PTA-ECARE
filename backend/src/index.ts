@@ -67,9 +67,9 @@ app.use((req, res) => {
 
 // Only start server if not running in Vercel (Vercel exports the app)
 if (!process.env.VERCEL) {
-    app.listen(PORT, () => {
-        console.log(`🚀 E-CARE API Server running on http://localhost:${PORT}`);
-        console.log(`📋 Health check: http://localhost:${PORT}/api/health`);
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`🚀 E-CARE API Server running on http://0.0.0.0:${PORT}`);
+        console.log(`📋 Health check: http://0.0.0.0:${PORT}/api/health`);
     });
 }
 
