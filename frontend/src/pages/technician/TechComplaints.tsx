@@ -439,6 +439,7 @@ export default function TechComplaints() {
                                     </tbody>
                                 </table>
                             </div>
+                        </div>
 
                         {/* Pagination */}
                         {totalPages > 1 && (
