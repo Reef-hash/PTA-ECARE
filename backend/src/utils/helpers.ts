@@ -17,12 +17,12 @@ export async function generateReportNumber(): Promise<string> {
     if (data && data.length > 0) {
         // Extract the numerical parts and sort them
         const numbers = data
-            .map(row => {
+            .map((row: any) => {
                 const match = row.report_number.match(/^PTAS(\d+)$/);
                 return match ? parseInt(match[1], 10) : null;
             })
-            .filter((num): num is number => num !== null)
-            .sort((a, b) => a - b);
+            .filter((num: any): num is number => num !== null)
+            .sort((a: number, b: number) => a - b);
 
         // Find the first missing number (gap) in the sequence starting from 1
         for (let i = 0; i < numbers.length; i++) {
