@@ -340,72 +340,136 @@ export default function UserDashboard() {
                         </Link>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="table-header">
-                                    <th className="text-center px-4 py-3 w-12 whitespace-nowrap">#</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">{t('complaint_list.report_no')}</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">{t('complaint_form.category')}</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">{t('complaint_form.brand')}</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">{t('table.status')}</th>
-                                    <th className="text-center px-4 py-3 whitespace-nowrap">{t('table.action')}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {recentComplaints.map((complaint, index) => (
-                                    <tr key={complaint.id} className="table-row">
-                                        <td className="px-4 py-3 text-center text-gray-500 font-medium whitespace-nowrap">
-                                            {index + 1}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex flex-col gap-1">
+                    <div className="overflow-hidden sm:rounded-lg">
+                        {/* Mobile Layout (List-Item Compact) */}
+                        <div className="block md:hidden border-t border-gray-200">
+                            {recentComplaints.map((complaint, index) => (
+                                <div key={complaint.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div className="flex flex-col gap-1.5">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-gray-400 font-medium text-xs">#{index + 1}</span>
                                                 <Link
                                                     to={`/users/complaint/${complaint.report_number}`}
-                                                    className="text-primary-600 hover:text-primary-700 font-medium"
+                                                    className="text-primary-600 hover:text-primary-700 font-bold text-sm"
                                                 >
                                                     {complaint.report_number}
                                                 </Link>
-                                                <Link
-                                                    to={`/users/complaint/${complaint.report_number}/track-repair`}
-                                                    className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
-                                                >
-                                                    TRACK REPAIR
-                                                </Link>
                                             </div>
-                                        </td>
-                                        <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.subcategory}</td>
-                                        <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.brand_name}</td>
-                                        <td className="px-4 py-3 whitespace-nowrap">
-                                            <div className="flex flex-col gap-1">
-                                                {getStatusBadge(complaint.status)}
-                                                <div className="mt-1">
-                                                    {renderStatusDescription(complaint)}
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3 text-center whitespace-nowrap">
-                                            {complaint.status === 'pending' ? (
-                                                <button
-                                                    onClick={() => handleCancelClick(complaint.id, complaint.report_number)}
-                                                    disabled={cancellingId === complaint.id}
-                                                    className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors disabled:opacity-50"
-                                                >
-                                                    {cancellingId === complaint.id ? (
-                                                        <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
-                                                    ) : (
-                                                        <X className="w-4 h-4" />
-                                                    )}
-                                                    {t('common_actions.cancel') || 'Cancel'}
-                                                </button>
-                                            ) : (
-                                                <span className="text-gray-400 text-sm">-</span>
-                                            )}
-                                        </td>
+                                            <Link
+                                                to={`/users/complaint/${complaint.report_number}/track-repair`}
+                                                className="text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit shadow-sm"
+                                            >
+                                                TRACK REPAIR
+                                            </Link>
+                                        </div>
+                                        <div className="flex-shrink-0">
+                                            {getStatusBadge(complaint.status)}
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-[auto_1fr_1fr] gap-x-3 gap-y-1 text-sm mt-2 items-center">
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('complaint_form.category')}</span>
+                                        <span className="text-gray-900 font-medium text-xs col-span-2">{complaint.categories?.name || '-'}</span>
+                                        
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_master.subcategory')}</span>
+                                        <span className="text-gray-900 font-medium text-xs col-span-2">{complaint.subcategory}</span>
+                                        
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('complaint_form.brand')}</span>
+                                        <span className="text-gray-900 font-medium text-xs col-span-2">{complaint.brand_name}</span>
+                                    </div>
+                                    
+                                    <div className="mt-3 pt-3 border-t border-gray-100 flex flex-col gap-3">
+                                        <div className="text-xs text-gray-500 leading-relaxed">
+                                            {renderStatusDescription(complaint)}
+                                        </div>
+                                        {complaint.status === 'pending' && (
+                                            <button
+                                                onClick={() => handleCancelClick(complaint.id, complaint.report_number)}
+                                                disabled={cancellingId === complaint.id}
+                                                className="inline-flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors disabled:opacity-50 w-full"
+                                            >
+                                                {cancellingId === complaint.id ? (
+                                                    <div className="w-3.5 h-3.5 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                                                ) : (
+                                                    <X className="w-3.5 h-3.5" />
+                                                )}
+                                                {t('common_actions.cancel') || 'Cancel'}
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Desktop Layout (Table) */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="table-header">
+                                        <th className="text-center px-4 py-3 w-12 whitespace-nowrap">#</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('complaint_list.report_no')}</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('complaint_form.category')}</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('complaint_form.brand')}</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('table.status')}</th>
+                                        <th className="text-center px-4 py-3 whitespace-nowrap">{t('table.action')}</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {recentComplaints.map((complaint, index) => (
+                                        <tr key={complaint.id} className="table-row">
+                                            <td className="px-4 py-3 text-center text-gray-500 font-medium whitespace-nowrap">
+                                                {index + 1}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="flex flex-col gap-1">
+                                                    <Link
+                                                        to={`/users/complaint/${complaint.report_number}`}
+                                                        className="text-primary-600 hover:text-primary-700 font-medium"
+                                                    >
+                                                        {complaint.report_number}
+                                                    </Link>
+                                                    <Link
+                                                        to={`/users/complaint/${complaint.report_number}/track-repair`}
+                                                        className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
+                                                    >
+                                                        TRACK REPAIR
+                                                    </Link>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.subcategory}</td>
+                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.brand_name}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap">
+                                                <div className="flex flex-col gap-1">
+                                                    {getStatusBadge(complaint.status)}
+                                                    <div className="mt-1">
+                                                        {renderStatusDescription(complaint)}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 text-center whitespace-nowrap">
+                                                {complaint.status === 'pending' ? (
+                                                    <button
+                                                        onClick={() => handleCancelClick(complaint.id, complaint.report_number)}
+                                                        disabled={cancellingId === complaint.id}
+                                                        className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors disabled:opacity-50"
+                                                    >
+                                                        {cancellingId === complaint.id ? (
+                                                            <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                                                        ) : (
+                                                            <X className="w-4 h-4" />
+                                                        )}
+                                                        {t('common_actions.cancel') || 'Cancel'}
+                                                    </button>
+                                                ) : (
+                                                    <span className="text-gray-400 text-sm">-</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 )}
             </div>
