@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+let API_URL = import.meta.env.VITE_API_URL || '/api';
+if (API_URL === 'https://api.ptas.my') {
+    API_URL = 'https://api.ptas.my/api';
+}
 
 const api = axios.create({
     baseURL: API_URL,
