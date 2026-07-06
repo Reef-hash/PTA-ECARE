@@ -126,25 +126,6 @@ export default function MainTechComplaints() {
                                                     <div className="font-medium text-gray-900">{complaint.report_number || `ADU-${complaint.id}`}</div>
                                                     <div className="text-xs text-gray-500 mt-1">{formatDate(complaint.created_at)}</div>
                                                 </div>
-                                                <div className="flex gap-2">
-                                                    {!complaint.assigned_to ? (
-                                                        <button
-                                                            onClick={() => setSelectedComplaint(complaint)}
-                                                            className="p-1.5 bg-primary-50 text-primary-600 hover:bg-primary-100 rounded-lg transition-colors border border-primary-100"
-                                                            title="Forward Job"
-                                                        >
-                                                            <ArrowRightCircle className="w-5 h-5" />
-                                                        </button>
-                                                    ) : (
-                                                        <Link
-                                                            to={`/main-tech/complaint/${complaint.report_number}`}
-                                                            className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-indigo-100"
-                                                            title={t('common.view', 'Papar')}
-                                                        >
-                                                            <Eye className="w-5 h-5" />
-                                                        </Link>
-                                                    )}
-                                                </div>
                                             </div>
                                             
                                             <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm mt-3 items-center">
@@ -163,6 +144,26 @@ export default function MainTechComplaints() {
 
                                                 <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('table.incomplete_reason', 'Sebab')}</span>
                                                 <span className="text-gray-900 text-xs line-clamp-2">{details.remark}</span>
+                                            </div>
+                                            
+                                            <div className="mt-3 pt-3 border-t border-gray-100">
+                                                {!complaint.assigned_to ? (
+                                                    <button
+                                                        onClick={() => setSelectedComplaint(complaint)}
+                                                        className="w-full inline-flex justify-center items-center gap-1.5 px-3 py-2 bg-primary-50 text-primary-700 hover:bg-primary-100 text-xs font-medium rounded-lg transition-colors border border-primary-100"
+                                                    >
+                                                        <ArrowRightCircle className="w-4 h-4" />
+                                                        Forward Job
+                                                    </button>
+                                                ) : (
+                                                    <Link
+                                                        to={`/main-tech/complaint/${complaint.report_number}`}
+                                                        className="w-full inline-flex justify-center items-center gap-1.5 px-3 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-medium rounded-lg transition-colors border border-indigo-100"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                        {t('common.view', 'View Details')}
+                                                    </Link>
+                                                )}
                                             </div>
                                         </div>
                                     );

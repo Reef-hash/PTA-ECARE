@@ -310,25 +310,6 @@ export default function TechComplaints() {
                                                     {getStatusBadge(complaint.status)}
                                                 </div>
                                             </div>
-                                            <div className="flex gap-2">
-                                                <Link
-                                                    to={`/admin/print/${complaint.report_number}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-blue-100"
-                                                    title="Cetak Resit"
-                                                >
-                                                    <Printer className="w-5 h-5" />
-                                                </Link>
-                                                <Link
-                                                    to={`/admin/technician/complaint/${complaint.report_number}`}
-                                                    className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors border border-green-100"
-                                                    title={t('technician_dashboard.click_to_view') || 'View'}
-                                                >
-                                                    <Eye className="w-5 h-5" />
-                                                </Link>
-                                            </div>
-                                        </div>
                                         
                                         <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm items-start mb-3 mt-3">
                                             <span className="text-gray-500 text-[11px] uppercase tracking-wider mt-0.5">{t('admin_users.customer')}</span>
@@ -348,10 +329,28 @@ export default function TechComplaints() {
                                             {getStatusMessage(complaint)}
                                         </div>
 
-                                        <div className="flex justify-end mt-2">
+                                        <div className="flex flex-col gap-2 mt-2 pt-3 border-t border-gray-100">
+                                            <div className="flex items-center justify-between">
+                                                <Link
+                                                    to={`/admin/technician/complaint/${complaint.report_number}`}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg transition-colors text-xs font-medium border border-green-100"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                    {t('technician_dashboard.click_to_view') || 'View Details'}
+                                                </Link>
+                                                <Link
+                                                    to={`/admin/print/${complaint.report_number}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-blue-100"
+                                                    title="Cetak Resit"
+                                                >
+                                                    <Printer className="w-4 h-4" />
+                                                </Link>
+                                            </div>
                                             <Link
                                                 to={`/admin/technician/complaint/${complaint.report_number}/track-repair`}
-                                                className="text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded transition-colors w-full text-center"
+                                                className="text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded-lg transition-colors w-full text-center"
                                             >
                                                 TRACK REPAIR
                                             </Link>

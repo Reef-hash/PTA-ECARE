@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Filter, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import UserLayout from '../../components/UserLayout';
 import api from '../../services/api';
 import { Complaint } from '../../types';
@@ -261,12 +261,6 @@ export default function ComplaintHistory() {
                                                         {complaint.report_number}
                                                     </Link>
                                                 </div>
-                                                <Link
-                                                    to={`/users/complaint/${complaint.report_number}/track-repair`}
-                                                    className="text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit shadow-sm"
-                                                >
-                                                    TRACK REPAIR
-                                                </Link>
                                             </div>
                                             <div className="flex-shrink-0">
                                                 {getStatusBadge(complaint)}
@@ -285,8 +279,23 @@ export default function ComplaintHistory() {
                                         </div>
                                         
                                         <div className="mt-3 pt-3 border-t border-gray-100">
-                                            <div className="text-xs text-gray-500 leading-relaxed">
+                                            <div className="text-xs text-gray-500 leading-relaxed mb-3">
                                                 {renderStatusMessage(complaint) as React.ReactNode}
+                                            </div>
+                                            <div className="flex flex-col gap-2">
+                                                <Link
+                                                    to={`/users/complaint/${complaint.report_number}`}
+                                                    className="w-full inline-flex justify-center items-center gap-1.5 px-3 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-medium rounded-lg transition-colors border border-indigo-100"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                    {t('common.view', 'View Details')}
+                                                </Link>
+                                                <Link
+                                                    to={`/users/complaint/${complaint.report_number}/track-repair`}
+                                                    className="w-full text-center text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded-lg transition-colors shadow-sm"
+                                                >
+                                                    TRACK REPAIR
+                                                </Link>
                                             </div>
                                         </div>
                                     </div>
