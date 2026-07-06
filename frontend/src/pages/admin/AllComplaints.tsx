@@ -594,25 +594,28 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                                             <div className="text-xs text-gray-500 leading-relaxed">
                                                 {renderStatusDescription(complaint)}
                                             </div>
-                                            <div className="flex items-center gap-2 justify-end mt-1">
+                                            <div className="flex items-center justify-between mt-1">
                                                 <Link
                                                     to={`/admin/complaint/${complaint.report_number}`}
-                                                    className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-indigo-100"
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg transition-colors text-xs font-medium border border-indigo-100"
                                                 >
                                                     <Eye className="w-4 h-4" />
+                                                    {t('complaint_list.view') || 'View Details'}
                                                 </Link>
-                                                <Link
-                                                    to={`/admin/print/${complaint.report_number}`}
-                                                    className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
-                                                >
-                                                    <Printer className="w-4 h-4" />
-                                                </Link>
-                                                <button
-                                                    onClick={() => handleDelete(complaint.id, complaint.report_number)}
-                                                    className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-red-100"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
+                                                <div className="flex items-center gap-2">
+                                                    <Link
+                                                        to={`/admin/print/${complaint.report_number}`}
+                                                        className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
+                                                    >
+                                                        <Printer className="w-4 h-4" />
+                                                    </Link>
+                                                    <button
+                                                        onClick={() => handleDelete(complaint.id, complaint.report_number)}
+                                                        className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-red-100"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
