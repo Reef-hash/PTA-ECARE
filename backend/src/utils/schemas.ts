@@ -83,7 +83,7 @@ export const updateProfileSchema = z.object({
     full_name: z.string().min(2).optional(),
     email: z.string().email().optional().or(z.literal('')),
     contact_no: z.string().min(10).optional(),
-    contact_no_2: z.string().optional(),
+    contact_no_2: z.string().nullable().optional(),
     address: z.string().min(5).optional(),
     state: z.string().optional(),
     ic_number: z.string().length(12, 'IC number must be 12 digits').optional(),
