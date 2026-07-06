@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
-import { supabaseAdmin } from '../config/supabase.js';
 import pool from '../config/mysql.js';
+import { saveFile } from '../utils/storage.js';
 import { createNotification } from './notifications.controller.js';
 import { isEmailAllowed, sendEmail } from '../utils/email.js';
 import { buildUserSignupOtpEmailHtml } from './auth.controller.js';
@@ -176,31 +176,16 @@ export const uploadAvatar = async (req: Request, res: Response): Promise<void> =
 
         const mimeExt: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp' };
         const extension = mimeExt[file.mimetype] || 'jpg';
-        const fileName = `${userId}/${Date.now()}.${extension}`;
-        
-        // Storage is left as Supabase for file hosting purposes
-        const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
-            .from('user-images')
-            .upload(fileName, file.buffer, {
-                contentType: file.mimetype,
-                upsert: true,
-            });
+        const fileName = `${userId}_${Date.now()}.${extension}`;
 
-        if (uploadError) {
-            console.error('Avatar storage upload error:', uploadError);
+        try {
+            const { publicUrl } = saveFile('user-images', fileName, file.buffer);
+            await pool.query('UPDATE users SET user_image = ? WHERE id = ?', [publicUrl, userId]);
+            res.json({ message: 'Avatar uploaded', url: publicUrl });
+        } catch (e) {
+            console.error('Avatar storage upload error:', e);
             res.status(500).json({ error: 'Failed to upload avatar' });
-            return;
         }
-
-        const { data: urlData } = supabaseAdmin.storage
-            .from('user-images')
-            .getPublicUrl(uploadData.path);
-
-        const publicUrl = urlData.publicUrl;
-
-        await pool.query('UPDATE users SET user_image = ? WHERE id = ?', [publicUrl, userId]);
-
-        res.json({ message: 'Avatar uploaded', url: publicUrl });
     } catch (error) {
         console.error('Upload avatar error:', error);
         res.status(500).json({ error: 'Internal server error' });

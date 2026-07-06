@@ -156,7 +156,7 @@ const translateDetailedMessage = (msg: string, userName: string, branchName: str
 
 // HTML Email Notification Template (Blue & White Theme)
 export const buildNotificationEmailHtml = (name: string, title: string, message: string, reportNumber?: string, role?: string) => {
-    let baseUrl = 'https://pta-ecare.vercel.app';
+    let baseUrl = 'https://ptas.my';
     if (process.env.FRONTEND_URL) {
         baseUrl = process.env.FRONTEND_URL.replace(/\/$/, ''); // Remove trailing slash if any
     }

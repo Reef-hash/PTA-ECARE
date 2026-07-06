@@ -73,7 +73,7 @@ const ensureAllowedGoogleEmail = (email: string): void => {
     }
 };
 
-const verifyGoogleAuthRequest = async (credential?: string, supabaseAccessToken?: string): Promise<VerifiedGoogleAccount> => {
+const verifyGoogleAuthRequest = async (credential?: string): Promise<VerifiedGoogleAccount> => {
     if (!credential) throw new Error('Google credential is required');
     const payload = await verifyGoogleCredential(credential);
     const email = payload.email!.toLowerCase();
@@ -140,7 +140,7 @@ const sendWelcomeEmail = async (user: UserRow): Promise<void> => {
 };
 
 export const buildUserSignupOtpEmailHtml = (email: string, otp: string) => {
-    let baseUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace(/\/$/, '') : 'https://pta-ecare.vercel.app';
+    let baseUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace(/\/$/, '') : 'https://ptas.my';
     const confirmationUrl = `${baseUrl}/users/register?email=${encodeURIComponent(email)}&otp=${otp}`;
     return `
 <div style="font-family: 'Segoe UI', Arial, sans-serif; background-color: #f8fafc; padding: 40px 0; width: 100%;">

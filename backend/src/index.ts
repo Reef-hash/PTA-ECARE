@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import fs from 'fs';
 
 import authRoutes from './routes/auth.routes.js';
 // Forced restart check
@@ -30,6 +32,13 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve uploaded files from local filesystem
+const uploadsDir = path.resolve(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+app.use('/uploads', express.static(uploadsDir));
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -65,12 +74,9 @@ app.use((req, res) => {
     res.status(404).json({ error: 'Not found' });
 });
 
-// Only start server if not running in Vercel (Vercel exports the app)
-if (!process.env.VERCEL) {
-    app.listen(PORT, '0.0.0.0', () => {
-        console.log(`🚀 E-CARE API Server running on http://0.0.0.0:${PORT}`);
-        console.log(`📋 Health check: http://0.0.0.0:${PORT}/api/health`);
-    });
-}
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 E-CARE API Server running on http://0.0.0.0:${PORT}`);
+    console.log(`📋 Health check: http://0.0.0.0:${PORT}/api/health`);
+});
 
 export default app;

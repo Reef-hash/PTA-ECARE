@@ -1,22 +1,15 @@
-import { supabaseAdmin } from '../config/supabase.js';
+import pool from '../config/mysql.js';
 
 export async function generateReportNumber(): Promise<string> {
-    const { data, error } = await supabaseAdmin
-        .from('complaints')
-        .select('report_number')
-        .like('report_number', 'PTAS%');
-
-    if (error) {
-        console.error('Error fetching report numbers:', error);
-        throw new Error('Failed to generate report number');
-    }
+    const [rows]: any = await pool.query(
+        `SELECT report_number FROM complaints WHERE report_number LIKE 'PTAS%'`
+    );
 
     const letterPrefix = 'PTAS';
     let nextNumber = 1;
 
-    if (data && data.length > 0) {
-        // Extract the numerical parts and sort them
-        const numbers = data
+    if (rows && rows.length > 0) {
+        const numbers = rows
             .map((row: any) => {
                 const match = row.report_number.match(/^PTAS(\d+)$/);
                 return match ? parseInt(match[1], 10) : null;
@@ -24,13 +17,10 @@ export async function generateReportNumber(): Promise<string> {
             .filter((num: any): num is number => num !== null)
             .sort((a: number, b: number) => a - b);
 
-        // Find the first missing number (gap) in the sequence starting from 1
         for (let i = 0; i < numbers.length; i++) {
             if (numbers[i] > nextNumber) {
-                // Gap found! nextNumber is the missing number
                 break;
             } else if (numbers[i] === nextNumber) {
-                // Number exists, increment our expected nextNumber
                 nextNumber++;
             }
         }

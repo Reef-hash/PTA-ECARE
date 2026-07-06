@@ -163,7 +163,6 @@ export interface RegisterData {
 
 export interface GoogleAuthData {
     credential?: string;
-    supabase_access_token?: string;
     full_name?: string;
     ic_number?: string;
     contact_no?: string;

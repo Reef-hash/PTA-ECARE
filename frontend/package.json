@@ -10,7 +10,6 @@
         "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
     },
     "dependencies": {
-        "@supabase/supabase-js": "^2.98.0",
         "axios": "^1.6.2",
         "framer-motion": "^12.42.0",
         "i18next": "^25.8.0",

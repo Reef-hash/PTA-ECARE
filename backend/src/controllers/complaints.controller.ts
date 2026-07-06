@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import pool from '../config/mysql.js';
-import { supabaseAdmin } from '../config/supabase.js';
+import { saveFile } from '../utils/storage.js';
 import { generateReportNumber, formatNotificationDate } from '../utils/helpers.js';
 import { createNotification, buildNotificationEmailHtml } from './notifications.controller.js';
 import { sendEmail } from '../utils/email.js';
@@ -395,20 +395,22 @@ export const createComplaint = async (req: Request, res: Response): Promise<void
         if (files?.warranty_file?.[0]) {
             const file = files.warranty_file[0];
             const fileName = `${Date.now()}_${file.originalname}`;
-            const { data, error } = await supabaseAdmin.storage.from('warranty-docs').upload(fileName, file.buffer, { contentType: file.mimetype });
-            if (!error) {
-                const { data: urlData } = supabaseAdmin.storage.from('warranty-docs').getPublicUrl(data.path);
-                warranty_file = urlData.publicUrl;
+            try {
+                const { publicUrl } = saveFile('warranty-docs', fileName, file.buffer);
+                warranty_file = publicUrl;
+            } catch (e) {
+                console.error('Warranty file upload error:', e);
             }
         }
 
         if (files?.receipt_file?.[0]) {
             const file = files.receipt_file[0];
             const fileName = `${Date.now()}_${file.originalname}`;
-            const { data, error } = await supabaseAdmin.storage.from('receipt-docs').upload(fileName, file.buffer, { contentType: file.mimetype });
-            if (!error) {
-                const { data: urlData } = supabaseAdmin.storage.from('receipt-docs').getPublicUrl(data.path);
-                receipt_file = urlData.publicUrl;
+            try {
+                const { publicUrl } = saveFile('receipt-docs', fileName, file.buffer);
+                receipt_file = publicUrl;
+            } catch (e) {
+                console.error('Receipt file upload error:', e);
             }
         }
 
