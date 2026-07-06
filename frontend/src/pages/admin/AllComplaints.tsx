@@ -579,7 +579,7 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                                             <span className="text-gray-900 font-medium text-xs">{complaint.brand_name}</span>
 
                                             <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_complaint_detail.defect_details')}</span>
-                                            <span className="text-gray-900 font-medium text-xs">{complaint.complaint_type || '-'}</span>
+                                            <span className="text-gray-900 font-medium text-xs line-clamp-2" title={complaint.details || ''}>{complaint.details || '-'}</span>
 
                                             <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('table.date') || 'Tarikh'}</span>
                                             <span className="text-gray-900 font-medium text-xs">{new Date(complaint.created_at).toLocaleDateString(i18n.language === 'en' ? 'en-MY' : 'ms-MY', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
