@@ -254,6 +254,12 @@ export default function TrackRepair() {
                             <p className="text-xs text-gray-400">{t('admin_complaint_detail.date_created')}</p>
                             <p className="font-semibold text-gray-700">{formatDate(complaint.created_at)}</p>
                         </div>
+                        
+                        {/* Defect Details */}
+                        <div className="col-span-2 md:col-span-4 pt-2 border-t border-gray-100">
+                            <p className="text-xs text-gray-400">{t('admin_complaint_detail.defect_details')}</p>
+                            <p className="font-semibold text-gray-700 whitespace-pre-wrap">{complaint.details || '-'}</p>
+                        </div>
                     </div>
                 </div>
             </motion.div>
