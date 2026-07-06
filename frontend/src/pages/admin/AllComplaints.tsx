@@ -578,6 +578,12 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                                             <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('complaint_form.brand')}</span>
                                             <span className="text-gray-900 font-medium text-xs">{complaint.brand_name}</span>
 
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('complaint_form.problem') || 'Masalah'}</span>
+                                            <span className="text-gray-900 font-medium text-xs">{complaint.complaint_type || '-'}</span>
+
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('table.date') || 'Tarikh'}</span>
+                                            <span className="text-gray-900 font-medium text-xs">{new Date(complaint.created_at).toLocaleDateString(i18n.language === 'en' ? 'en-MY' : 'ms-MY', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+
                                             <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('complaint_list.technician')}</span>
                                             <span className="text-gray-900 font-medium text-xs">
                                                 {complaint.technicians ? complaint.technicians.name : <span className="text-red-500">{t('complaint_list.not_assigned')}</span>}

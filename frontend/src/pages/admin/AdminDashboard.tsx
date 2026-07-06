@@ -116,48 +116,49 @@ export default function AdminDashboard() {
                     <p className="text-gray-500 text-center py-8">{t('dashboard.no_technicians')}</p>
                 ) : (
                     <div className="overflow-hidden sm:rounded-lg">
-                        {/* Mobile Layout (List-Item Compact) */}
-                        <div className="block md:hidden border-t border-gray-200">
+                        {/* Mobile Layout (Premium Card View) */}
+                        <div className="block md:hidden border-t border-gray-200 bg-gray-50/50">
                             {technicianStats.map((tech, index) => (
-                                <div key={tech.technician_id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-gray-400 font-medium text-xs">#{index + 1}</span>
-                                            <Link
-                                                to={`/admin/technicians/${tech.technician_id}`}
-                                                className="text-indigo-600 hover:text-indigo-800 font-bold text-sm"
-                                            >
-                                                {tech.technician_name}
-                                            </Link>
+                                <div key={tech.technician_id} className="bg-white border-b border-gray-200 p-5 last:border-b-0 hover:bg-gray-50 transition-colors">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 font-bold text-sm">
+                                                {index + 1}
+                                            </div>
+                                            <div>
+                                                <Link
+                                                    to={`/admin/technicians/${tech.technician_id}`}
+                                                    className="text-gray-900 hover:text-indigo-600 font-bold text-base transition-colors line-clamp-1"
+                                                >
+                                                    {tech.technician_name}
+                                                </Link>
+                                                <span className="text-gray-500 text-xs font-medium uppercase tracking-wider">{tech.department}</span>
+                                            </div>
                                         </div>
-                                        <div className="flex-shrink-0">
-                                            <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                                                {t('table.total')}: {tech.total}
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">{t('table.total')}</span>
+                                            <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-1 bg-indigo-600 text-white rounded-lg text-xs font-bold shadow-sm">
+                                                {tech.total}
                                             </span>
                                         </div>
                                     </div>
                                     
-                                    <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm mt-2 items-center">
-                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('table.department')}</span>
-                                        <span className="text-gray-900 font-medium text-xs">{tech.department}</span>
-                                    </div>
-                                    
-                                    <div className="mt-3 pt-3 border-t border-gray-100 grid grid-cols-4 gap-2 text-center">
-                                        <div className="flex flex-col gap-1">
-                                            <span className="text-gray-500 text-[10px] uppercase">{t('table.pending')}</span>
-                                            <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 rounded-lg text-xs font-medium">{tech.pending}</span>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="flex flex-col bg-yellow-50/50 p-3 rounded-xl border border-yellow-100">
+                                            <span className="text-yellow-600 text-[10px] font-bold uppercase tracking-wider mb-1 line-clamp-1">{t('table.pending')}</span>
+                                            <span className="text-yellow-700 font-bold text-lg">{tech.pending}</span>
                                         </div>
-                                        <div className="flex flex-col gap-1">
-                                            <span className="text-gray-500 text-[10px] uppercase">{t('table.in_process')}</span>
-                                            <span className="inline-block px-2 py-1 bg-orange-100 text-orange-700 rounded-lg text-xs font-medium">{tech.in_process}</span>
+                                        <div className="flex flex-col bg-orange-50/50 p-3 rounded-xl border border-orange-100">
+                                            <span className="text-orange-600 text-[10px] font-bold uppercase tracking-wider mb-1 line-clamp-1">{t('table.in_process')}</span>
+                                            <span className="text-orange-700 font-bold text-lg">{tech.in_process}</span>
                                         </div>
-                                        <div className="flex flex-col gap-1">
-                                            <span className="text-gray-500 text-[10px] uppercase">{t('table.incomplete')}</span>
-                                            <span className="inline-block px-2 py-1 bg-amber-100 text-amber-700 rounded-lg text-xs font-medium">{tech.incomplete}</span>
+                                        <div className="flex flex-col bg-amber-50/50 p-3 rounded-xl border border-amber-100">
+                                            <span className="text-amber-600 text-[10px] font-bold uppercase tracking-wider mb-1 line-clamp-2" title={t('table.incomplete') || ''}>{t('table.incomplete')}</span>
+                                            <span className="text-amber-700 font-bold text-lg">{tech.incomplete}</span>
                                         </div>
-                                        <div className="flex flex-col gap-1">
-                                            <span className="text-gray-500 text-[10px] uppercase">{t('table.closed')}</span>
-                                            <span className="inline-block px-2 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-medium">{tech.closed}</span>
+                                        <div className="flex flex-col bg-green-50/50 p-3 rounded-xl border border-green-100">
+                                            <span className="text-green-600 text-[10px] font-bold uppercase tracking-wider mb-1 line-clamp-1">{t('table.closed')}</span>
+                                            <span className="text-green-700 font-bold text-lg">{tech.closed}</span>
                                         </div>
                                     </div>
                                 </div>
