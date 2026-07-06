@@ -578,7 +578,7 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                                             <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('complaint_form.brand')}</span>
                                             <span className="text-gray-900 font-medium text-xs">{complaint.brand_name}</span>
 
-                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('complaint_form.problem') || 'Masalah'}</span>
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_complaint_detail.defect_details')}</span>
                                             <span className="text-gray-900 font-medium text-xs">{complaint.complaint_type || '-'}</span>
 
                                             <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('table.date') || 'Tarikh'}</span>
