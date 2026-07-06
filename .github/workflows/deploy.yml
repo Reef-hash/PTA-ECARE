@@ -26,7 +26,7 @@ jobs:
         working-directory: ./frontend
         env:
           VITE_API_URL: "https://api.ptas.my/api"
-          VITE_GOOGLE_CLIENT_ID: "385770142030-f7hgo133ghlrgr89ml4770fllplhrrl4.apps.googleusercontent.com"
+          VITE_GOOGLE_CLIENT_ID: "385770142030-f7hgo133gh1rgr89ml4770fllp1hrrl4.apps.googleusercontent.com"
         run: npm run build
 
       # 2. BUILD BACKEND
