@@ -369,6 +369,19 @@ export default function UserDashboard() {
                                     </div>
                                     
                                     <div className="grid grid-cols-[auto_1fr_1fr] gap-x-3 gap-y-1 text-sm mt-2 items-center">
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_complaint_detail.name')}</span>
+                                        <span className="text-gray-900 font-medium text-xs col-span-2">{complaint.users?.full_name || '-'}</span>
+
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_complaint_detail.ic_no')}</span>
+                                        <span className="text-gray-900 font-medium text-xs col-span-2">{complaint.users?.ic_number || '-'}</span>
+
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_complaint_detail.date_created')}</span>
+                                        <span className="text-gray-900 font-medium text-xs col-span-2">
+                                            {complaint.created_at
+                                                ? new Date(complaint.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                                                : '-'}
+                                        </span>
+
                                         <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('complaint_form.category')}</span>
                                         <span className="text-gray-900 font-medium text-xs col-span-2">{complaint.categories?.name || '-'}</span>
                                         
