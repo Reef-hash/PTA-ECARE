@@ -100,7 +100,8 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
             try {
                 const emailHtml = buildUserSignupOtpEmailHtml(emailToUse, otp);
                 await sendEmail(emailToUse, 'Sahkan Pendaftaran Akaun E-CARE', emailHtml);
-            } catch (emailError) {
+            } catch (emailError: any) {
+                console.error('OTP email send failed:', emailError?.message || emailError);
                 res.status(500).json({ error: 'Gagal menghantar kod OTP ke e-mel anda. Sila cuba lagi.' });
                 return;
             }
@@ -110,6 +111,12 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
                 requires_otp: true,
                 email: emailToUse
             });
+            return;
+        }
+
+        if (requiresOtp && !emailToUse) {
+            console.error('OTP required but user has no email. userId:', userId);
+            res.status(400).json({ error: 'Emel pengguna tidak ditemui. Hubungi pentadbir.' });
             return;
         }
 

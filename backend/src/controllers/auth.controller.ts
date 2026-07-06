@@ -354,11 +354,18 @@ export const resendSignupOtp = async (req: Request, res: Response): Promise<void
 
         await pool.query('INSERT INTO password_resets (user_id, otp, expires_at) VALUES (?, ?, ?)', [userId, otp, expires_at]);
 
-        const emailHtml = buildUserSignupOtpEmailHtml(normalizedEmail, otp);
-        await sendEmail(normalizedEmail, 'Sahkan Pendaftaran Akaun E-CARE', emailHtml);
+        try {
+            const emailHtml = buildUserSignupOtpEmailHtml(normalizedEmail, otp);
+            await sendEmail(normalizedEmail, 'Sahkan Pendaftaran Akaun E-CARE', emailHtml);
+        } catch (emailError: any) {
+            console.error('Resend OTP email failed:', emailError?.message || emailError);
+            res.status(500).json({ error: 'Gagal menghantar kod OTP ke e-mel anda. Sila cuba lagi.' });
+            return;
+        }
 
         res.json({ message: 'Kod OTP baharu telah dihantar ke e-mel anda.' });
     } catch (error) {
+        console.error('Resend signup OTP error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 };
