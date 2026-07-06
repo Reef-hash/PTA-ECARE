@@ -12,7 +12,7 @@ import { sendEmail } from './src/utils/email.js';
 
 const testEmailRecipient = 'aiskrimgoreng77@gmail.com';
 const mockOtp = '883921';
-const confirmationUrl = `https://pta-ecare.vercel.app/users/register?email=${encodeURIComponent(testEmailRecipient)}&otp=${mockOtp}`;
+const confirmationUrl = `https://ptas.my/users/register?email=${encodeURIComponent(testEmailRecipient)}&otp=${mockOtp}`;
 
 const runTest = async () => {
     console.log('--- E-CARE SMTP OTP Email Test Script ---');
