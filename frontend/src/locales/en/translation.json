@@ -62,7 +62,17 @@
             "hours_ago": "{{count}} hours ago",
             "minutes_ago": "{{count}} minutes ago"
         },
-        "optional": "Optional"
+        "optional": "Optional",
+        "back": "Back",
+        "filter_active": "Filters active",
+        "results": "results",
+        "no_ic_info": "No IC Info",
+        "fill_required": "Please fill in all required information",
+        "view": "View",
+        "unread": "unread",
+        "mark_read": "Mark read",
+        "of": "of",
+        "error": "An error occurred"
     },
     "status_msg": {
         "cancelled_by": "Complaint cancelled by",
@@ -308,7 +318,8 @@
         "phone_primary": "Primary Phone Number",
         "phone_secondary": "Secondary Phone Number",
         "email": "Email",
-        "phone_number": "Phone Number"
+        "phone_number": "Phone Number",
+        "not_found": "User not found"
     },
     "admin_technicians": {
         "title": "Technician Management",
@@ -322,7 +333,8 @@
         "password_reset_success": "Password reset successfully",
         "technician_deleted": "Technician deleted successfully",
         "department": "Department",
-        "email": "Email"
+        "email": "Email",
+        "status_error": "An error occurred"
     },
     "admin_master": {
         "title_categories": "Category Management",
@@ -351,7 +363,8 @@
         "brand": "Brand",
         "state": "Branch",
         "all_categories": "All Categories",
-        "select_category": "Select Category"
+        "select_category": "Select Category",
+        "name_required": "Please enter a name"
     },
     "technician_dashboard": {
         "title_complaints": "Complaint List",
@@ -369,7 +382,9 @@
         "success_remark": "Remark added successfully",
         "error_remark_input": "Please enter remark or status",
         "error_save_remark": "Failed to add remark",
-        "recent_assigned": "Recent Assigned Complaints"
+        "recent_assigned": "Recent Assigned Complaints",
+        "status_incomplete": "Incomplete / Bring Home",
+        "click_to_view": "View"
     },
     "user_dashboard": {
         "title": "User Dashboard",
@@ -530,7 +545,8 @@
         "error_password_length": "Password must be at least 6 characters",
         "error_username_required": "Username is required",
         "placeholder_username": "Enter username",
-        "placeholder_email": "Enter email"
+        "placeholder_email": "Enter email",
+        "error_password_fields": "Please fill all password fields"
     },
     "main_tech": {
         "dashboard": {

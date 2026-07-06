@@ -62,7 +62,17 @@
             "hours_ago": "{{count}} jam yang lalu",
             "minutes_ago": "{{count}} minit yang lalu"
         },
-        "optional": "Pilihan"
+        "optional": "Pilihan",
+        "back": "Kembali",
+        "filter_active": "Penapis aktif",
+        "results": "hasil",
+        "no_ic_info": "Tiada Maklumat IC",
+        "fill_required": "Sila lengkapkan semua maklumat",
+        "view": "Papar",
+        "unread": "belum dibaca",
+        "mark_read": "Tanda telah dibaca",
+        "of": "daripada",
+        "error": "Berlaku ralat"
     },
     "status_msg": {
         "cancelled_by": "Aduan telah dibatalkan oleh",
@@ -308,7 +318,8 @@
         "phone_primary": "No Telefon Utama",
         "phone_secondary": "No Telefon Kedua",
         "email": "Emel",
-        "phone_number": "No Telefon"
+        "phone_number": "No Telefon",
+        "not_found": "Pengguna tidak dijumpai"
     },
     "admin_technicians": {
         "title": "Pengurusan Juruteknik",
@@ -322,7 +333,8 @@
         "password_reset_success": "Kata laluan berjaya ditukar",
         "technician_deleted": "Juruteknik berjaya dipadam",
         "department": "Jabatan",
-        "email": "Emel"
+        "email": "Emel",
+        "status_error": "Berlaku ralat"
     },
     "admin_master": {
         "title_categories": "Pengurusan Kategori",
@@ -351,7 +363,8 @@
         "brand": "Jenama",
         "state": "Cawangan",
         "all_categories": "Semua Kategori",
-        "select_category": "Pilih Kategori"
+        "select_category": "Pilih Kategori",
+        "name_required": "Sila masukkan nama"
     },
     "technician_dashboard": {
         "title_complaints": "Senarai Aduan",
@@ -369,7 +382,9 @@
         "success_remark": "Catatan berjaya ditambah",
         "error_remark_input": "Sila masukkan catatan atau status",
         "error_save_remark": "Gagal menambah catatan",
-        "recent_assigned": "Aduan Diagihkan Terkini"
+        "recent_assigned": "Aduan Diagihkan Terkini",
+        "status_incomplete": "Tidak Lengkap / Bawa Pulang",
+        "click_to_view": "Papar"
     },
     "user_dashboard": {
         "title": "Dashboard Pengguna",
@@ -530,7 +545,8 @@
         "error_password_length": "Kata laluan mestilah sekurang-kurangnya 6 aksara",
         "error_username_required": "Nama pengguna diperlukan",
         "placeholder_username": "Masukkan nama pengguna",
-        "placeholder_email": "Masukkan emel"
+        "placeholder_email": "Masukkan emel",
+        "error_password_fields": "Sila lengkapkan semua ruangan katalaluan"
     },
     "main_tech": {
         "dashboard": {
