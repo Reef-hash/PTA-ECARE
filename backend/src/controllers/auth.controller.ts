@@ -73,19 +73,46 @@ const ensureAllowedGoogleEmail = (email: string): void => {
     }
 };
 
+const verifyGoogleAccessToken = async (accessToken: string): Promise<VerifiedGoogleAccount> => {
+    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) throw new Error('Invalid Google access token');
+    const info: any = await res.json();
+    if (!info?.sub || !info.email) throw new Error('Invalid Google token payload');
+    if (!info.email_verified) throw new Error('Google email is not verified');
+
+    const emailDomain = info.email.split('@')[1]?.toLowerCase();
+    if (GOOGLE_ALLOWED_EMAIL_DOMAIN && emailDomain !== GOOGLE_ALLOWED_EMAIL_DOMAIN) {
+        throw new Error(`Only ${GOOGLE_ALLOWED_EMAIL_DOMAIN} Google accounts are allowed`);
+    }
+    return {
+        sub: info.sub,
+        email: info.email.toLowerCase(),
+        email_verified: Boolean(info.email_verified),
+        name: info.name,
+        picture: info.picture || null,
+    };
+};
+
 const verifyGoogleAuthRequest = async (credential?: string): Promise<VerifiedGoogleAccount> => {
     if (!credential) throw new Error('Google credential is required');
-    const payload = await verifyGoogleCredential(credential);
-    const email = payload.email!.toLowerCase();
-    ensureAllowedGoogleEmail(email);
 
-    return {
-        sub: payload.sub,
-        email,
-        email_verified: Boolean(payload.email_verified),
-        name: payload.name,
-        picture: payload.picture || null,
-    };
+    // If credential is a JWT (3 dot-separated parts), treat as ID token; otherwise treat as access token.
+    const isJwt = credential.split('.').length === 3;
+    if (isJwt) {
+        const payload = await verifyGoogleCredential(credential);
+        const email = payload.email!.toLowerCase();
+        ensureAllowedGoogleEmail(email);
+        return {
+            sub: payload.sub,
+            email,
+            email_verified: Boolean(payload.email_verified),
+            name: payload.name,
+            picture: payload.picture || null,
+        };
+    }
+    return verifyGoogleAccessToken(credential);
 };
 
 const notifyGoogleRegistration = async (user: UserRow): Promise<void> => {
