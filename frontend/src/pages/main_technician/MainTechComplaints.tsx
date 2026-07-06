@@ -136,6 +136,9 @@ export default function MainTechComplaints() {
                                                     </span>
                                                 </div>
 
+                                                <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_complaint_detail.defect_details', 'Butiran Kerosakan')}</span>
+                                                <span className="text-gray-900 text-xs line-clamp-2">{complaint.details || '-'}</span>
+
                                                 <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_complaint_detail.transport_note', 'Catatan Transport')}</span>
                                                 <span className="text-gray-600 text-xs line-clamp-1">{details.transport}</span>
 
@@ -178,6 +181,7 @@ export default function MainTechComplaints() {
                                     <tr>
                                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[140px]">{t('table.report_number')}</th>
                                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[150px]">{t('table.original_technician', 'Juruteknik Asal')}</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[200px]">{t('admin_complaint_detail.defect_details', 'Butiran Kerosakan')}</th>
                                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[200px]">{t('admin_complaint_detail.transport_note', 'Catatan Pengangkutan')}</th>
                                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[200px]">{t('admin_complaint_detail.checking', 'Pemeriksaan')}</th>
                                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[200px]">{t('table.incomplete_reason', 'Sebab Bawa Pulang')}</th>
@@ -187,7 +191,7 @@ export default function MainTechComplaints() {
                                 <tbody className="bg-white divide-y divide-gray-200">
                                     {isLoading ? (
                                         <tr>
-                                            <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                                            <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
                                                 <div className="flex justify-center items-center gap-3">
                                                     <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-500 border-t-transparent"></div>
                                                     {t('common.loading')}
@@ -196,7 +200,7 @@ export default function MainTechComplaints() {
                                         </tr>
                                     ) : complaints.length === 0 ? (
                                         <tr>
-                                            <td colSpan={6} className="px-6 py-12 text-center">
+                                            <td colSpan={7} className="px-6 py-12 text-center">
                                                 <div className="flex flex-col items-center justify-center text-gray-400">
                                                     <AlertTriangle className="w-12 h-12 mb-3 text-gray-300" />
                                                     <p className="text-lg font-medium text-gray-600">{t('main_tech.dashboard.empty')}</p>
@@ -218,6 +222,11 @@ export default function MainTechComplaints() {
                                                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700">
                                                             {isAssignedTo}
                                                         </span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <p className="text-sm text-gray-600 line-clamp-2" title={complaint.details}>
+                                                            {complaint.details || '-'}
+                                                        </p>
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <p className="text-sm text-gray-600 line-clamp-2" title={details.transport}>
