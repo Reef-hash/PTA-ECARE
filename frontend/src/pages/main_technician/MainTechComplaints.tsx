@@ -124,11 +124,13 @@ export default function MainTechComplaints() {
                                             <div className="flex justify-between items-start mb-3">
                                                 <div>
                                                     <div className="font-medium text-gray-900">{complaint.report_number || `ADU-${complaint.id}`}</div>
-                                                    <div className="text-xs text-gray-500 mt-1">{formatDate(complaint.created_at)}</div>
                                                 </div>
                                             </div>
                                             
                                             <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm mt-3 items-center">
+                                                <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_complaint_detail.date_created', 'Tarikh Dicipta')}</span>
+                                                <span className="text-gray-900 text-xs">{formatDate(complaint.created_at)}</span>
+
                                                 <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('table.original_technician', 'Juruteknik Asal')}</span>
                                                 <div>
                                                     <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700">
@@ -180,6 +182,7 @@ export default function MainTechComplaints() {
                                 <thead className="bg-gray-50">
                                     <tr>
                                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[140px]">{t('table.report_number')}</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[140px]">{t('admin_complaint_detail.date_created', 'Tarikh Dicipta')}</th>
                                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[150px]">{t('table.original_technician', 'Juruteknik Asal')}</th>
                                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[200px]">{t('admin_complaint_detail.defect_details', 'Butiran Kerosakan')}</th>
                                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[200px]">{t('admin_complaint_detail.transport_note', 'Catatan Pengangkutan')}</th>
@@ -191,7 +194,7 @@ export default function MainTechComplaints() {
                                 <tbody className="bg-white divide-y divide-gray-200">
                                     {isLoading ? (
                                         <tr>
-                                            <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                                            <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
                                                 <div className="flex justify-center items-center gap-3">
                                                     <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-500 border-t-transparent"></div>
                                                     {t('common.loading')}
@@ -200,7 +203,7 @@ export default function MainTechComplaints() {
                                         </tr>
                                     ) : complaints.length === 0 ? (
                                         <tr>
-                                            <td colSpan={7} className="px-6 py-12 text-center">
+                                            <td colSpan={8} className="px-6 py-12 text-center">
                                                 <div className="flex flex-col items-center justify-center text-gray-400">
                                                     <AlertTriangle className="w-12 h-12 mb-3 text-gray-300" />
                                                     <p className="text-lg font-medium text-gray-600">{t('main_tech.dashboard.empty')}</p>
@@ -216,7 +219,9 @@ export default function MainTechComplaints() {
                                                 <tr key={complaint.id} className="hover:bg-gray-50 transition-colors">
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <div className="font-medium text-gray-900">{complaint.report_number || `ADU-${complaint.id}`}</div>
-                                                        <div className="text-xs text-gray-500 mt-1">{formatDate(complaint.created_at)}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {formatDate(complaint.created_at)}
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700">
