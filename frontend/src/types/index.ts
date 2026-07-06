@@ -198,6 +198,7 @@ export interface TechnicianStats {
     pending: number;
     in_process: number;
     closed: number;
+    incomplete: number;
 }
 
 // Repair types

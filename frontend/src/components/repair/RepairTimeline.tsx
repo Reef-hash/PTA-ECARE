@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { RepairStatus } from '../../types';
 import TimelineStep, { StepRemark } from './TimelineStep';
 
@@ -16,13 +17,14 @@ interface RepairTimelineProps {
 }
 
 export default function RepairTimeline({ currentStatus: _currentStatus, timelineEvents, isClosed }: RepairTimelineProps) {
+    const { t } = useTranslation();
     // If not closed, we append a waiting placeholder at the end
     const nodes = [...timelineEvents];
-    
+
     if (!isClosed) {
         nodes.push({
             status: 'COMPLETE',
-            label: 'Complete (Ready to Pickup)',
+            label: t('common.waiting_next_step') || 'Waiting for next step...',
             date: null, // "Waiting..."
         });
     }
@@ -40,7 +42,7 @@ export default function RepairTimeline({ currentStatus: _currentStatus, timeline
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
         >
-            <h3 className="text-lg font-semibold mb-6">Track Repair Progress</h3>
+            <h3 className="text-lg font-semibold mb-6">{t('user_dashboard.track_repair')}</h3>
             <div>
                 {nodes.map((node, index) => {
                     const isCompleted = index < currentIndex;

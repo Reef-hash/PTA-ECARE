@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Clock, CheckCircle, AlertTriangle, PackageOpen } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 import { Complaint } from '../../types';
@@ -14,6 +14,7 @@ export default function TechDashboard() {
         pending: 0,
         in_process: 0,
         closed: 0,
+        incomplete: 0,
     });
     const [recentComplaints, setRecentComplaints] = useState<Complaint[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -155,7 +156,8 @@ export default function TechDashboard() {
     const statCards = [
         { label: t('dashboard.pending'), value: stats.pending, icon: Clock, color: 'yellow', path: '/admin/technician/complaints?status=pending' },
         { label: t('dashboard.in_process'), value: stats.in_process, icon: AlertTriangle, color: 'orange', path: '/admin/technician/complaints?status=in_process' },
-        { label: t('dashboard.closed'), value: stats.closed, icon: CheckCircle, color: 'green', path: '/admin/technician/complaints?status=closed' },
+        { label: t('dashboard.incomplete'), value: stats.incomplete, icon: PackageOpen, color: 'amber', path: '/admin/technician/complaints?status=incomplete' },
+        { label: t('dashboard.completed'), value: stats.closed, icon: CheckCircle, color: 'green', path: '/admin/technician/complaints?status=closed' },
     ];
 
     const getColorClasses = (color: string) => {
@@ -164,6 +166,7 @@ export default function TechDashboard() {
             yellow: { bg: 'bg-yellow-100', icon: 'text-yellow-600', border: 'border-l-yellow-500' },
             orange: { bg: 'bg-orange-100', icon: 'text-orange-600', border: 'border-l-orange-500' },
             green: { bg: 'bg-green-100', icon: 'text-green-600', border: 'border-l-green-500' },
+            amber: { bg: 'bg-amber-100', icon: 'text-amber-600', border: 'border-l-amber-500' },
         };
         return colors[color] || colors.blue;
     };

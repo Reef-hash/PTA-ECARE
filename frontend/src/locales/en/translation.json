@@ -72,7 +72,10 @@
         "unread": "unread",
         "mark_read": "Mark read",
         "of": "of",
-        "error": "An error occurred"
+        "error": "An error occurred",
+        "by": "by",
+        "waiting": "Waiting...",
+        "waiting_next_step": "Waiting for next step..."
     },
     "status_msg": {
         "cancelled_by": "Complaint cancelled by",
@@ -430,7 +433,8 @@
         "remark_checking": "Checking",
         "ic_immutable": "IC Number cannot be changed",
         "cancelled_title": "Complaint Cancelled",
-        "cancelled_message": "You cancelled this complaint on {{date}}"
+        "cancelled_message": "You cancelled this complaint on {{date}}",
+        "complaint_created": "Complaint Created"
     },
     "complaint_history": {
         "confirm_cancel": "Are you sure you want to cancel complaint {{report_number}}?",

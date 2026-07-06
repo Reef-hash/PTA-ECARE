@@ -72,7 +72,10 @@
         "unread": "belum dibaca",
         "mark_read": "Tanda telah dibaca",
         "of": "daripada",
-        "error": "Berlaku ralat"
+        "error": "Berlaku ralat",
+        "by": "oleh",
+        "waiting": "Menunggu...",
+        "waiting_next_step": "Menunggu langkah seterusnya..."
     },
     "status_msg": {
         "cancelled_by": "Aduan telah dibatalkan oleh",
@@ -430,7 +433,8 @@
         "remark_checking": "Pemeriksaan",
         "ic_immutable": "No Kad Pengenalan tidak boleh diubah",
         "cancelled_title": "Aduan Telah Dibatalkan",
-        "cancelled_message": "Anda telah membatalkan aduan ini pada {{date}}"
+        "cancelled_message": "Anda telah membatalkan aduan ini pada {{date}}",
+        "complaint_created": "Aduan Dicipta"
     },
     "complaint_history": {
         "confirm_cancel": "Adakah anda pasti mahu membatalkan aduan {{report_number}}?",

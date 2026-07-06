@@ -28,12 +28,14 @@ export const getTechnicianDashboardStats = async (req: Request, res: Response): 
             pending: 0,
             in_process: 0,
             closed: 0,
+            incomplete: 0,
         };
 
         complaints?.forEach((c: any) => {
             if (c.status === 'pending') stats.pending++;
             if (c.status === 'in_process') stats.in_process++;
             if (c.status === 'closed') stats.closed++;
+            if (c.status === 'incomplete') stats.incomplete++;
         });
 
         res.json({ stats });
@@ -852,6 +854,11 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
 
         if (!complaint) { res.status(404).json({ error: 'Complaint not found' }); return; }
 
+        const [techRows]: any = await pool.query('SELECT id, name, email FROM technicians WHERE id = ?', [technician_id]);
+        const techExists = techRows[0];
+
+        if (!techExists) { res.status(400).json({ error: 'Invalid technician ID - User is not a technician' }); return; }
+
         await pool.query(
             'UPDATE complaints SET assigned_to = ?, status = ?, updated_at = NOW() WHERE id = ?',
             [technician_id, status || 'in_process', id]
@@ -861,11 +868,6 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
             'INSERT INTO forward_history (complaint_id, forward_from, forward_to) VALUES (?, ?, ?)',
             [id, complaint.assigned_to || adminId, technician_id]
         );
-
-        const [techRows]: any = await pool.query('SELECT id, name, email FROM technicians WHERE id = ?', [technician_id]);
-        const techExists = techRows[0];
-
-        if (!techExists) { res.status(400).json({ error: 'Invalid technician ID - User is not a technician' }); return; }
 
         const forwardSuffix = `Complaint Forward to Technician : ${techExists.name}`;
         const remarkText = remark ? `${remark}\n__FORWARD__${forwardSuffix}` : `__FORWARD__${forwardSuffix}`;
@@ -886,7 +888,7 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
 
         try {
             const [mainTechs]: any = await pool.query('SELECT id FROM technicians WHERE username = "maintech"');
-            if (mainTechs) {
+            if (mainTechs && mainTechs.length > 0) {
                 for (const mt of mainTechs) {
                     await createNotification(mt.id, 'main_technician', `Job Forwarded: ${complaint.report_number}`, `Aduan ${complaint.report_number} berjaya di hantar kepada juruteknik ${techExists.name}.`, 'assignment', id);
                 }

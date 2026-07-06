@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Clock, CheckCircle, AlertCircle, Plus, XCircle, X } from 'lucide-react';
+import { FileText, Clock, CheckCircle, AlertCircle, Plus, XCircle, X, PackageOpen } from 'lucide-react';
 import UserLayout from '../../components/UserLayout';
 import api from '../../services/api';
 import { Complaint } from '../../types';
@@ -17,6 +17,7 @@ export default function UserDashboard() {
         in_process: 0,
         closed: 0,
         cancelled: 0,
+        incomplete: 0,
     });
     const [recentComplaints, setRecentComplaints] = useState<Complaint[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -48,12 +49,13 @@ export default function UserDashboard() {
             setRecentComplaints(sortedComplaints);
 
             // Load stats for each status by requesting count only
-            const [totalRes, pendingRes, inProcessRes, closedRes, cancelledRes] = await Promise.all([
+            const [totalRes, pendingRes, inProcessRes, closedRes, cancelledRes, incompleteRes] = await Promise.all([
                 api.get('/complaints?limit=1'),
                 api.get('/complaints?status=pending&limit=1'),
                 api.get('/complaints?status=in_process&limit=1'),
                 api.get('/complaints?status=closed&limit=1'),
                 api.get('/complaints?status=cancelled&limit=1'),
+                api.get('/complaints?status=incomplete&limit=1'),
             ]);
 
             setStats({
@@ -62,6 +64,7 @@ export default function UserDashboard() {
                 in_process: inProcessRes.data.pagination?.total || 0,
                 closed: closedRes.data.pagination?.total || 0,
                 cancelled: cancelledRes.data.pagination?.total || 0,
+                incomplete: incompleteRes.data.pagination?.total || 0,
             });
         } catch (error) {
             toast.error(t('common.error_load'));
@@ -254,7 +257,7 @@ export default function UserDashboard() {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
                 <Link to="/users/complaint-history" className="stat-card border-l-blue-500 hover:shadow-lg transition-shadow cursor-pointer">
                     <div className="flex items-center justify-between">
                         <div>
@@ -311,6 +314,18 @@ export default function UserDashboard() {
                         </div>
                         <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
                             <XCircle className="w-6 h-6 text-red-600" />
+                        </div>
+                    </div>
+                </Link>
+
+                <Link to="/users/complaint-history?status=incomplete" className="stat-card border-l-amber-500 hover:shadow-lg transition-shadow cursor-pointer">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-gray-500 text-sm">{t('dashboard.incomplete')}</p>
+                            <p className="text-3xl font-bold text-gray-800">{stats.incomplete}</p>
+                        </div>
+                        <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                            <PackageOpen className="w-6 h-6 text-amber-600" />
                         </div>
                     </div>
                 </Link>

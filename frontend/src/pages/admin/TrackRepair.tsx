@@ -87,7 +87,8 @@ export default function TrackRepair() {
         switch (status) {
             case 'pending': return 'PENDING';
             case 'in_process': return 'IN_PROCESS';
-            case 'incomplete': return 'IN_COMPLETE';
+            case 'incomplete':
+            case 'bawa_pulang': return 'IN_COMPLETE';
             case 'ready_pickup':
             case 'closed': return 'COMPLETE';
             default: return 'PENDING';
@@ -99,6 +100,7 @@ export default function TrackRepair() {
             pending: 'PENDING',
             in_process: 'IN_PROCESS',
             incomplete: 'IN_COMPLETE',
+            bawa_pulang: 'IN_COMPLETE',
             ready_pickup: 'COMPLETE',
             closed: 'COMPLETE',
         };
@@ -116,10 +118,10 @@ export default function TrackRepair() {
             });
 
             // Map standard labels
-            let label = 'Pending';
-            if (repairStatus === 'IN_PROCESS') label = 'In Process';
-            if (repairStatus === 'IN_COMPLETE') label = 'In Complete / Bawa Pulang';
-            if (repairStatus === 'COMPLETE') label = 'Complete (Ready to Pickup)';
+            let label = t('admin_users.status_pending') || 'Pending';
+            if (repairStatus === 'IN_PROCESS') label = t('admin_users.status_in_process') || 'In Process';
+            if (repairStatus === 'IN_COMPLETE') label = t('admin_users.status_incomplete') || 'In Complete / Bawa Pulang';
+            if (repairStatus === 'COMPLETE') label = t('admin_users.status_closed') || 'Complete (Ready to Pickup)';
 
             return {
                 status: repairStatus,
@@ -164,7 +166,27 @@ export default function TrackRepair() {
 
     const currentStatus = mapComplaintStatus(complaint.status);
     const timelineEvents = buildTimelineEvents(allRemarks);
-    const isClosed = complaint.status === 'closed';
+
+    // Ensure there's always a "Complaint Created" anchor at the start of the timeline.
+    // If the earliest remark happened after creation (or there are no remarks), prepend it.
+    const createdEvent = {
+        status: 'PENDING' as RepairStatus,
+        label: t('user_dashboard.complaint_created'),
+        date: (() => {
+            const locale = i18n.language === 'ms' ? 'ms-MY' : 'en-US';
+            return new Date(complaint.created_at).toLocaleDateString(locale, {
+                day: 'numeric', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit',
+            });
+        })(),
+        remark: undefined,
+    };
+    const earliestRemarkDate = allRemarks.length > 0 ? new Date(allRemarks[0].created_at).getTime() : null;
+    const fullTimelineEvents = (earliestRemarkDate === null || new Date(complaint.created_at).getTime() < earliestRemarkDate)
+        ? [createdEvent, ...timelineEvents]
+        : timelineEvents;
+
+    const isClosed = complaint.status === 'closed' || complaint.status === 'ready_pickup';
 
     return (
         <Layout title={t('user_dashboard.track_repair')} breadcrumb={t('user_dashboard.track_repair')}>
@@ -184,7 +206,7 @@ export default function TrackRepair() {
                 </div>
 
                 {/* BLOCK 1: Track Repair Progress (TOP) */}
-                <RepairTimeline currentStatus={currentStatus} timelineEvents={timelineEvents} isClosed={isClosed} />
+                <RepairTimeline currentStatus={currentStatus} timelineEvents={fullTimelineEvents} isClosed={isClosed} />
 
                 {/* BLOCK 2: Complaint Details (BELOW) */}
                 <div className="card mt-6">

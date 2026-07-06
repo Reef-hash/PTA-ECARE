@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Clock, AlertTriangle, Forward, CheckCircle, Users, XCircle, UserCheck, PackageOpen } from 'lucide-react';
-import AdminLayout from '../../components/AdminLayout';
+import { FileText, Clock, AlertTriangle, Forward, CheckCircle, Users, XCircle, UserCheck, PackageOpen } from 'lucide-react';import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 import { DashboardStats, TechnicianStats } from '../../types';
 import toast from 'react-hot-toast';
@@ -143,7 +142,7 @@ export default function AdminDashboard() {
                                         <span className="text-gray-900 font-medium text-xs">{tech.department}</span>
                                     </div>
                                     
-                                    <div className="mt-3 pt-3 border-t border-gray-100 grid grid-cols-3 gap-2 text-center">
+                                    <div className="mt-3 pt-3 border-t border-gray-100 grid grid-cols-4 gap-2 text-center">
                                         <div className="flex flex-col gap-1">
                                             <span className="text-gray-500 text-[10px] uppercase">{t('table.pending')}</span>
                                             <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 rounded-lg text-xs font-medium">{tech.pending}</span>
@@ -151,6 +150,10 @@ export default function AdminDashboard() {
                                         <div className="flex flex-col gap-1">
                                             <span className="text-gray-500 text-[10px] uppercase">{t('table.in_process')}</span>
                                             <span className="inline-block px-2 py-1 bg-orange-100 text-orange-700 rounded-lg text-xs font-medium">{tech.in_process}</span>
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-gray-500 text-[10px] uppercase">{t('table.incomplete')}</span>
+                                            <span className="inline-block px-2 py-1 bg-amber-100 text-amber-700 rounded-lg text-xs font-medium">{tech.incomplete}</span>
                                         </div>
                                         <div className="flex flex-col gap-1">
                                             <span className="text-gray-500 text-[10px] uppercase">{t('table.closed')}</span>
@@ -172,6 +175,7 @@ export default function AdminDashboard() {
                                         <th className="text-center px-4 py-3 whitespace-nowrap">{t('table.total')}</th>
                                         <th className="text-center px-4 py-3 whitespace-nowrap">{t('table.pending')}</th>
                                         <th className="text-center px-4 py-3 whitespace-nowrap">{t('table.in_process')}</th>
+                                        <th className="text-center px-4 py-3 whitespace-nowrap">{t('table.incomplete')}</th>
                                         <th className="text-center px-4 py-3 whitespace-nowrap">{t('table.closed')}</th>
                                     </tr>
                                 </thead>
@@ -201,6 +205,11 @@ export default function AdminDashboard() {
                                             <td className="px-4 py-3 text-center whitespace-nowrap">
                                                 <span className="inline-block px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-medium">
                                                     {tech.in_process}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-center whitespace-nowrap">
+                                                <span className="inline-block px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-medium">
+                                                    {tech.incomplete}
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3 text-center whitespace-nowrap">

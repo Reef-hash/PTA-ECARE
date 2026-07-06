@@ -78,12 +78,14 @@ export const getTechnicianStats = async (req: Request, res: Response): Promise<v
                     pending: 0,
                     in_process: 0,
                     closed: 0,
+                    incomplete: 0,
                 };
 
                 (complaints || []).forEach((c: any) => {
                     if (c.status === 'pending') stats.pending++;
                     if (c.status === 'in_process') stats.in_process++;
                     if (c.status === 'closed') stats.closed++;
+                    if (c.status === 'incomplete') stats.incomplete++;
                 });
 
                 return stats;
