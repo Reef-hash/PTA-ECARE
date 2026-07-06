@@ -310,6 +310,7 @@ export default function TechComplaints() {
                                                     {getStatusBadge(complaint.status)}
                                                 </div>
                                             </div>
+                                        </div>
                                         
                                         <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm items-start mb-3 mt-3">
                                             <span className="text-gray-500 text-[11px] uppercase tracking-wider mt-0.5">{t('admin_users.customer')}</span>
