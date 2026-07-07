@@ -134,14 +134,25 @@ const notifyGoogleRegistration = async (user: UserRow): Promise<void> => {
 };
 
 const buildOtpEmail = (name: string, otp: string) => `
-    <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; color: #111827;">
-        <h2 style="color: #0f766e;">E-CARE Password Reset</h2>
-        <p>Hi ${escapeHtml(name || 'Customer')},</p>
-        <p>Your password reset OTP is:</p>
-        <div style="font-size: 28px; font-weight: 700; letter-spacing: 6px; background: #f3f4f6; padding: 16px 20px; border-radius: 8px; text-align: center;">
-            ${otp}
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; background-color: #f8fafc; padding: 40px 0; width: 100%;">
+        <div style="max-width: 600px; background-color: #ffffff; margin: 0 auto; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0;">
+            <div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: #ffffff; padding: 40px 20px; text-align: center;">
+                <h1 style="margin: 0; font-size: 28px; letter-spacing: 1px; text-transform: uppercase; color: #ffffff;">PTA E-CARE</h1>
+                <p style="margin: 5px 0 0; font-size: 14px; opacity: 0.9; color: #ffffff;">Powered by DFKTVETMARABESUT</p>
+            </div>
+            <div style="padding: 40px; line-height: 1.6; color: #334155;">
+                <h2 style="color: #1e293b; margin-top: 0;">Password Reset OTP</h2>
+                <p>Hi ${escapeHtml(name || 'Customer')},</p>
+                <p>Your password reset OTP is:</p>
+                <div style="font-size: 32px; font-weight: 700; letter-spacing: 8px; background-color: #f1f5f9; padding: 15px; border-radius: 8px; text-align: center; color: #1e3a8a; margin: 20px 0;">
+                    ${otp}
+                </div>
+                <p>This OTP will expire in 15 minutes.</p>
+            </div>
+            <div style="background-color: #f1f5f9; padding: 30px; text-align: center; font-size: 12px; color: #64748b;">
+                <p style="margin: 0;">© 2026 <strong style="color: #1e3a8a;">DFKTVETMARABESUT</strong></p>
+            </div>
         </div>
-        <p>This OTP will expire in 15 minutes.</p>
     </div>
 `;
 
@@ -173,11 +184,15 @@ export const buildUserSignupOtpEmailHtml = (email: string, otp: string) => {
 <div style="font-family: 'Segoe UI', Arial, sans-serif; background-color: #f8fafc; padding: 40px 0; width: 100%;">
     <div style="max-width: 600px; background-color: #ffffff; margin: 0 auto; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0;">
         <div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: #ffffff; padding: 40px 20px; text-align: center;">
-            <h1 style="margin: 0; font-size: 28px;">E-CARE</h1>
+            <h1 style="margin: 0; font-size: 28px; letter-spacing: 1px; text-transform: uppercase; color: #ffffff;">PTA E-CARE</h1>
+            <p style="margin: 5px 0 0; font-size: 14px; opacity: 0.9; color: #ffffff;">Powered by DFKTVETMARABESUT</p>
         </div>
         <div style="padding: 40px; line-height: 1.6; color: #334155;">
             <p>Sahkan Pendaftaran Akaun dengan kod berikut:</p>
             <div style="font-size: 32px; font-weight: 700; letter-spacing: 8px; background-color: #f1f5f9; padding: 15px; border-radius: 8px; text-align: center; color: #1e3a8a; margin: 20px 0;">${otp}</div>
+        </div>
+        <div style="background-color: #f1f5f9; padding: 30px; text-align: center; font-size: 12px; color: #64748b;">
+            <p style="margin: 0;">© 2026 <strong style="color: #1e3a8a;">DFKTVETMARABESUT</strong></p>
         </div>
     </div>
 </div>
@@ -187,13 +202,17 @@ export const buildUserSignupOtpEmailHtml = (email: string, otp: string) => {
 export const buildActivationEmail = (name: string, otp: string, role: string) => `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #334155; line-height: 1.6;">
         <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-            <div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: #ffffff; padding: 30px; text-align: center;">
-                <h1 style="margin: 0; font-size: 24px;">E-CARE</h1>
+            <div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: #ffffff; padding: 40px 20px; text-align: center;">
+                <h1 style="margin: 0; font-size: 28px; letter-spacing: 1px; text-transform: uppercase; color: #ffffff;">PTA E-CARE</h1>
+                <p style="margin: 5px 0 0; font-size: 14px; opacity: 0.9; color: #ffffff;">Powered by DFKTVETMARABESUT</p>
             </div>
             <div style="padding: 30px;">
                 <h2 style="color: #1e293b; margin-top: 0;">Aktifkan Akaun ${role === 'technician' ? 'Juruteknik' : 'Admin'} Anda</h2>
                 <p>Hi ${escapeHtml(name)},</p>
                 <div style="font-size: 32px; font-weight: 700; letter-spacing: 8px; background-color: #f1f5f9; padding: 20px; border-radius: 8px; text-align: center; color: #1e3a8a; margin: 25px 0;">${otp}</div>
+            </div>
+            <div style="background-color: #f1f5f9; padding: 30px; text-align: center; font-size: 12px; color: #64748b;">
+                <p style="margin: 0;">© 2026 <strong style="color: #1e3a8a;">DFKTVETMARABESUT</strong></p>
             </div>
         </div>
     </div>
@@ -556,7 +575,13 @@ export const login = async (req: Request, res: Response): Promise<void> => {
                 await pool.query('UPDATE users SET status = "Active", email_verified = 1 WHERE id = ?', [user.id]);
             }
             try { await pool.query('INSERT INTO user_logs (user_id, username, user_ip, success) VALUES (?, ?, ?, 1)', [userIdToLog, usernameToLog, clientIp]); } catch (e) {}
-        } else if (role === 'admin' || role === 'technician') {
+        } else if (role === 'technician') {
+            if (!user.is_active) {
+                // Auto-activate technician without OTP
+                await pool.query('UPDATE technicians SET is_active = 1 WHERE id = ?', [user.id]);
+                user.is_active = 1;
+            }
+        } else if (role === 'admin') {
             if (!user.is_active) {
                 const [otpRecords]: any = await pool.query('SELECT * FROM password_resets WHERE user_id = ? AND expires_at >= NOW()', [user.id]);
                 if (otpRecords.length > 0) {
