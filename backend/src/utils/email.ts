@@ -1,47 +1,40 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-const getSmtpConfig = () => {
-    const host = process.env.SMTP_HOST || process.env.MAIL_HOST || 'smtp.gmail.com';
-    const port = parseInt(process.env.SMTP_PORT || process.env.MAIL_PORT || '587', 10);
-    const encryption = (process.env.MAIL_ENCRYPTION || '').toLowerCase();
-    const secure = process.env.SMTP_SECURE === 'true' || encryption === 'ssl' || port === 465;
-    const user = process.env.SMTP_USER || process.env.MAIL_USERNAME || process.env.EMAIL_USER;
-    const pass = process.env.SMTP_PASS || process.env.MAIL_PASSWORD || process.env.EMAIL_PASS;
+const getEmailConfig = () => {
+    const apiKey = process.env.RESEND_API_KEY;
     const fromName = process.env.SMTP_FROM_NAME || process.env.MAIL_FROM_NAME || 'E-CARE System';
-    const fromEmail = process.env.SMTP_FROM || process.env.MAIL_FROM_ADDRESS || user;
-
-    return { host, port, secure, user, pass, fromName, fromEmail };
+    // When domain is verified, we can use the domain emails. Fallback to a placeholder if not set.
+    const fromEmail = process.env.SMTP_FROM || process.env.MAIL_FROM_ADDRESS || 'onboarding@resend.dev';
+    
+    return { apiKey, fromName, fromEmail };
 };
 
 export const sendEmail = async (to: string, subject: string, html: string) => {
-    const smtp = getSmtpConfig();
+    const config = getEmailConfig();
 
-    if (!smtp.user || !smtp.pass) {
-        throw new Error('SMTP credentials are required to send email');
+    if (!config.apiKey) {
+        throw new Error('RESEND_API_KEY is required to send email');
     }
 
     try {
-        const transporter = nodemailer.createTransport({
-            host: smtp.host,
-            port: smtp.port,
-            secure: smtp.secure,
-            auth: {
-                user: smtp.user,
-                pass: smtp.pass,
-            },
-        });
-
-        const info = await transporter.sendMail({
-            from: `"${smtp.fromName}" <${smtp.fromEmail}>`,
-            replyTo: smtp.fromEmail,
-            to,
-            subject,
-            html,
+        const resend = new Resend(config.apiKey);
+        
+        const data = await resend.emails.send({
+            from: `${config.fromName} <${config.fromEmail}>`,
+            to: [to],
+            replyTo: config.fromEmail,
+            subject: subject,
+            html: html,
             headers: {
                 'X-Entity-Ref-ID': Date.now().toString(),
             }
         });
-        console.log(`Email sent: ${info.messageId}`);
+
+        if (data.error) {
+            throw new Error(data.error.message);
+        }
+
+        console.log(`Email sent via Resend: ${data.data?.id}`);
     } catch (error: any) {
         const errMsg = error?.message || String(error);
         console.error('Error sending email:', errMsg, error);
