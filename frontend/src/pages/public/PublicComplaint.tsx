@@ -464,29 +464,16 @@ export default function PublicComplaint() {
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
                                             {t('complaint_form.warranty_doc')} <span className="text-red-500">*</span>
                                         </label>
-                                        <div className="flex items-center gap-3">
-                                            <label className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg cursor-pointer flex items-center gap-2 transition-colors">
-                                                <Upload className="w-4 h-4" />
-                                                {t('complaint_form.upload_file')}
-                                                <input
-                                                    type="file"
-                                                    onChange={(e) => handleFileChange(e, 'warranty')}
-                                                    className="hidden"
-                                                />
-                                            </label>
-                                            {warrantyFile && (
-                                                <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                    <span>{warrantyFile.name}</span>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setWarrantyFile(null)}
-                                                        className="text-red-500 hover:text-red-700"
-                                                    >
-                                                        <X className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
+                                            <input
+                                                type="file"
+                                                onChange={(e) => handleFileChange(e, 'warranty')}
+                                                className="block w-full text-sm text-gray-500
+                                                    file:mr-4 file:py-2 file:px-4
+                                                    file:rounded-lg file:border-0
+                                                    file:text-sm file:font-semibold
+                                                    file:bg-indigo-50 file:text-indigo-700
+                                                    hover:file:bg-indigo-100 cursor-pointer"
+                                            />
                                         <p className="text-xs text-gray-500 mt-1">{t('complaint_form.format_hint')}</p>
                                     </div>
 
@@ -495,29 +482,16 @@ export default function PublicComplaint() {
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
                                             {t('complaint_form.receipt')} <span className="text-red-500">*</span>
                                         </label>
-                                        <div className="flex items-center gap-3">
-                                            <label className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg cursor-pointer flex items-center gap-2 transition-colors">
-                                                <Upload className="w-4 h-4" />
-                                                {t('complaint_form.upload_file')}
-                                                <input
-                                                    type="file"
-                                                    onChange={(e) => handleFileChange(e, 'receipt')}
-                                                    className="hidden"
-                                                />
-                                            </label>
-                                            {receiptFile && (
-                                                <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                    <span>{receiptFile.name}</span>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setReceiptFile(null)}
-                                                        className="text-red-500 hover:text-red-700"
-                                                    >
-                                                        <X className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
+                                            <input
+                                                type="file"
+                                                onChange={(e) => handleFileChange(e, 'receipt')}
+                                                className="block w-full text-sm text-gray-500
+                                                    file:mr-4 file:py-2 file:px-4
+                                                    file:rounded-lg file:border-0
+                                                    file:text-sm file:font-semibold
+                                                    file:bg-indigo-50 file:text-indigo-700
+                                                    hover:file:bg-indigo-100 cursor-pointer"
+                                            />
                                         <p className="text-xs text-gray-500 mt-1">{t('complaint_form.format_hint')}</p>
                                     </div>
                                 </div>
