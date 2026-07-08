@@ -126,11 +126,7 @@ export default function RegisterComplaint() {
                 formDataToSend.append('receipt_file', receiptFile);
             }
 
-            const response = await api.post('/complaints', formDataToSend, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
+            const response = await api.post('/complaints', formDataToSend);
 
             toast.success(t('complaint_form.success_submitted', { report_number: response.data.report_number }));
             navigate('/users/complaint-history');

@@ -7,9 +7,6 @@ if (API_URL === 'https://api.ptas.my') {
 
 const api = axios.create({
     baseURL: API_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
 });
 
 export const getFileUrl = (path: string | undefined | null) => {
