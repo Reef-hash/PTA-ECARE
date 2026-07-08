@@ -552,6 +552,7 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                                                     >
                                                         {complaint.report_number}
                                                     </Link>
+                                                </div>
                                             </div>
                                             <div className="flex-shrink-0">
                                                 {renderStatusBadge(complaint)}
