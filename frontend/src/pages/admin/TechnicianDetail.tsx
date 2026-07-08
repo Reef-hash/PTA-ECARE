@@ -13,7 +13,7 @@ export default function TechnicianDetail() {
     const [technician, setTechnician] = useState<Technician | null>(null);
     const [complaints, setComplaints] = useState<Complaint[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'assigned' | 'completed'>('assigned');
+    const [activeTab, setActiveTab] = useState<'pending' | 'in_process' | 'incomplete' | 'closed'>('pending');
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
@@ -40,15 +40,12 @@ export default function TechnicianDetail() {
         }
     };
 
-    const assignedComplaints = complaints.filter(c =>
-        ['pending', 'in_process'].includes(c.status)
-    );
+    const pendingComplaints = complaints.filter(c => c.status === 'pending');
+    const inProcessComplaints = complaints.filter(c => c.status === 'in_process');
+    const incompleteComplaints = complaints.filter(c => c.status === 'incomplete');
+    const closedComplaints = complaints.filter(c => c.status === 'closed');
 
-    const completedComplaints = complaints.filter(c =>
-        c.status === 'closed'
-    );
-
-    const filteredList = (activeTab === 'assigned' ? assignedComplaints : completedComplaints).filter(c =>
+    const filteredList = complaints.filter(c => c.status === activeTab).filter(c =>
         c.report_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
         c.users?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         c.brand_name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -154,26 +151,42 @@ export default function TechnicianDetail() {
                 </div>
 
                 {/* Stats Summary */}
-                <div className="grid grid-cols-2 gap-4">
-                    <div className={`p-4 rounded-xl border-l-4 shadow-sm bg-white ${activeTab === 'assigned' ? 'border-orange-500 ring-2 ring-orange-500/20' : 'border-gray-200'} cursor-pointer transition-all`}
-                        onClick={() => setActiveTab('assigned')}>
-                        <p className="text-sm font-medium text-gray-500">{t('tech_dashboard.total_assigned')}</p>
-                        <p className="text-3xl font-bold text-gray-800 mt-1">{assignedComplaints.length}</p>
-                        <p className="text-xs text-orange-500 mt-1 font-medium">{t('admin_users.status_in_process')}</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {/* Pending */}
+                    <div className={`p-4 rounded-xl border-l-4 shadow-sm bg-white ${activeTab === 'pending' ? 'border-yellow-500 ring-2 ring-yellow-500/20' : 'border-gray-200'} cursor-pointer transition-all`}
+                        onClick={() => setActiveTab('pending')}>
+                        <p className="text-sm font-medium text-gray-500">{t('admin_users.status_pending')}</p>
+                        <p className="text-3xl font-bold text-gray-800 mt-1">{pendingComplaints.length}</p>
+                        <p className="text-xs text-yellow-500 mt-1 font-medium">Pending</p>
                     </div>
-                    <div className={`p-4 rounded-xl border-l-4 shadow-sm bg-white ${activeTab === 'completed' ? 'border-green-500 ring-2 ring-green-500/20' : 'border-gray-200'} cursor-pointer transition-all`}
-                        onClick={() => setActiveTab('completed')}>
+                    {/* In Process */}
+                    <div className={`p-4 rounded-xl border-l-4 shadow-sm bg-white ${activeTab === 'in_process' ? 'border-orange-500 ring-2 ring-orange-500/20' : 'border-gray-200'} cursor-pointer transition-all`}
+                        onClick={() => setActiveTab('in_process')}>
+                        <p className="text-sm font-medium text-gray-500">{t('admin_users.status_in_process')}</p>
+                        <p className="text-3xl font-bold text-gray-800 mt-1">{inProcessComplaints.length}</p>
+                        <p className="text-xs text-orange-500 mt-1 font-medium">In Process</p>
+                    </div>
+                    {/* Incomplete */}
+                    <div className={`p-4 rounded-xl border-l-4 shadow-sm bg-white ${activeTab === 'incomplete' ? 'border-red-500 ring-2 ring-red-500/20' : 'border-gray-200'} cursor-pointer transition-all`}
+                        onClick={() => setActiveTab('incomplete')}>
+                        <p className="text-sm font-medium text-gray-500">{t('admin_users.status_incomplete')}</p>
+                        <p className="text-3xl font-bold text-gray-800 mt-1">{incompleteComplaints.length}</p>
+                        <p className="text-xs text-red-500 mt-1 font-medium">Incomplete</p>
+                    </div>
+                    {/* Closed */}
+                    <div className={`p-4 rounded-xl border-l-4 shadow-sm bg-white ${activeTab === 'closed' ? 'border-green-500 ring-2 ring-green-500/20' : 'border-gray-200'} cursor-pointer transition-all`}
+                        onClick={() => setActiveTab('closed')}>
                         <p className="text-sm font-medium text-gray-500">{t('admin_users.status_closed')}</p>
-                        <p className="text-3xl font-bold text-gray-800 mt-1">{completedComplaints.length}</p>
-                        <p className="text-xs text-green-500 mt-1 font-medium">{t('complaint_list.title_closed')}</p>
+                        <p className="text-3xl font-bold text-gray-800 mt-1">{closedComplaints.length}</p>
+                        <p className="text-xs text-green-500 mt-1 font-medium">Closed</p>
                     </div>
                 </div>
 
                 {/* Task List */}
                 <div className="card">
                     <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
-                        <h3 className="text-lg font-bold text-gray-800">
-                            {activeTab === 'assigned' ? t('technician_dashboard.recent_assigned') : t('complaint_list.title_closed')}
+                        <h3 className="text-lg font-bold text-gray-800 uppercase">
+                            {activeTab.replace('_', ' ')} Complaints
                         </h3>
                         <div className="relative w-full md:w-64">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -192,43 +205,83 @@ export default function TechnicianDetail() {
                             <p className="text-gray-500">{t('admin_master.no_data')}</p>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead>
-                                    <tr className="table-header text-xs uppercase">
-                                        <th className="px-4 py-3 text-left whitespace-nowrap">{t('admin_users.report_no')}</th>
-                                        <th className="px-4 py-3 text-left whitespace-nowrap">{t('admin_users.customer')}</th>
-                                        <th className="px-4 py-3 text-left whitespace-nowrap">{t('admin_master.brand')}</th>
-                                        <th className="px-4 py-3 text-left whitespace-nowrap">{t('admin_master.subcategory')}</th>
-                                        <th className="px-4 py-3 text-center whitespace-nowrap">{t('common_actions.status')}</th>
-                                        <th className="px-4 py-3 text-left whitespace-nowrap">{t('common_actions.date')}</th>
-                                        <th className="px-4 py-3 text-center whitespace-nowrap">{t('common_actions.action')}</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="text-sm">
-                                    {filteredList.map((complaint) => (
-                                        <tr key={complaint.id} className="table-row">
-                                            <td className="px-4 py-3 font-medium text-indigo-600 whitespace-nowrap">{complaint.report_number}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap">
-                                                <div className="font-medium text-gray-800">{complaint.users?.full_name}</div>
-                                            </td>
-                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.brand_name}</td>
-                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.subcategory}</td>
-                                            <td className="px-4 py-3 text-center whitespace-nowrap">{getStatusBadge(complaint.status)}</td>
-                                            <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{formatDate(complaint.created_at)}</td>
-                                            <td className="px-4 py-3 text-center whitespace-nowrap">
+                        <>
+                            {/* Desktop View */}
+                            <div className="hidden md:block overflow-x-auto">
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="table-header text-xs uppercase">
+                                            <th className="px-4 py-3 text-left whitespace-nowrap">{t('admin_users.report_no')}</th>
+                                            <th className="px-4 py-3 text-left whitespace-nowrap">{t('admin_users.customer')}</th>
+                                            <th className="px-4 py-3 text-left whitespace-nowrap">{t('admin_master.brand')}</th>
+                                            <th className="px-4 py-3 text-left whitespace-nowrap">{t('admin_master.subcategory')}</th>
+                                            <th className="px-4 py-3 text-center whitespace-nowrap">{t('common_actions.status')}</th>
+                                            <th className="px-4 py-3 text-left whitespace-nowrap">{t('common_actions.date')}</th>
+                                            <th className="px-4 py-3 text-center whitespace-nowrap">{t('common_actions.action')}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="text-sm">
+                                        {filteredList.map((complaint) => (
+                                            <tr key={complaint.id} className="table-row border-b last:border-b-0 border-gray-100 hover:bg-gray-50/50">
+                                                <td className="px-4 py-3 font-medium text-indigo-600 whitespace-nowrap">{complaint.report_number}</td>
+                                                <td className="px-4 py-3 whitespace-nowrap">
+                                                    <div className="font-medium text-gray-800">{complaint.users?.full_name}</div>
+                                                </td>
+                                                <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.brand_name}</td>
+                                                <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.subcategory}</td>
+                                                <td className="px-4 py-3 text-center whitespace-nowrap">{getStatusBadge(complaint.status)}</td>
+                                                <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{formatDate(complaint.created_at)}</td>
+                                                <td className="px-4 py-3 text-center whitespace-nowrap">
+                                                    <Link
+                                                        to={`/admin/complaint/${complaint.report_number}`}
+                                                        className="inline-flex items-center justify-center p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </Link>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Mobile View (Card-based list) */}
+                            <div className="md:hidden flex flex-col gap-3">
+                                {filteredList.map((complaint) => (
+                                    <div key={complaint.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100 flex flex-col gap-3">
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-bold text-gray-900 text-sm tracking-tight">{complaint.report_number}</span>
+                                                <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase">
+                                                    {complaint.brand_name}
+                                                </span>
+                                            </div>
+                                            <div>{getStatusBadge(complaint.status)}</div>
+                                        </div>
+                                        
+                                        <div className="flex justify-between items-center">
+                                            <div className="flex flex-col gap-1">
+                                                <span className="font-medium text-gray-800 text-sm">{complaint.users?.full_name}</span>
+                                                <span className="text-gray-700 bg-white border border-gray-200 text-[10px] px-2 py-0.5 rounded-full w-fit">
+                                                    {complaint.subcategory}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
+                                                    {formatDate(complaint.created_at)}
+                                                </span>
                                                 <Link
                                                     to={`/admin/complaint/${complaint.report_number}`}
-                                                    className="inline-flex items-center justify-center p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
+                                                    className="flex items-center justify-center w-8 h-8 bg-indigo-600 text-white rounded-lg shadow-sm shrink-0"
                                                 >
                                                     <Eye className="w-4 h-4" />
                                                 </Link>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </>
                     )}
                 </div>
             </div>
