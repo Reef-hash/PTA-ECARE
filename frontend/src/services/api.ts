@@ -14,6 +14,13 @@ const api = axios.create({
 
 export const getFileUrl = (path: string | undefined | null) => {
     if (!path) return '';
+    
+    // Fix older database entries that might have the wrong domain saved
+    if (path.includes('/uploads/')) {
+        const uploadIndex = path.indexOf('/uploads/');
+        path = path.substring(uploadIndex);
+    }
+    
     if (path.startsWith('http')) return path;
     const base = API_URL.endsWith('/api') ? API_URL.slice(0, -4) : API_URL;
     return `${base}${path.startsWith('/') ? '' : '/'}${path}`;
