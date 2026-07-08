@@ -305,7 +305,6 @@ export default function RegisterComplaint() {
                                             {t('complaint_form.upload_file')}
                                             <input
                                                 type="file"
-                                                accept="image/*,application/pdf"
                                                 onChange={(e) => handleFileChange(e, 'warranty')}
                                                 className="hidden"
                                             />
@@ -337,7 +336,6 @@ export default function RegisterComplaint() {
                                             {t('complaint_form.upload_file')}
                                             <input
                                                 type="file"
-                                                accept="image/*,application/pdf"
                                                 onChange={(e) => handleFileChange(e, 'receipt')}
                                                 className="hidden"
                                             />
