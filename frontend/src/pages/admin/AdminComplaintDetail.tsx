@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
-    ArrowLeft, FileText, User,
+    FileText, User,
     Forward, Send, Save, Printer, XCircle,
     Download, Eye, Wrench
 } from 'lucide-react';
@@ -185,15 +185,8 @@ export default function AdminComplaintDetail() {
 
     return (
         <Layout breadcrumb={t('admin_complaint_detail.title')}>
-            {/* Back Button */}
-            <div className="flex items-center justify-between mb-6">
-                <Link
-                    to={isMainTech ? '/main-tech/dashboard' : '/admin/all-complaints'}
-                    className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    {t('admin_complaint_detail.back')}
-                </Link>
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end mb-6">
                 <Link
                     to={`/admin/print/${id}`}
                     className="btn-secondary flex items-center gap-2"
