@@ -142,24 +142,7 @@ export default function AdminDashboard() {
                                         </div>
                                     </div>
                                     
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div className="flex flex-col bg-yellow-50/50 p-3 rounded-xl border border-yellow-100">
-                                            <span className="text-yellow-600 text-[10px] font-bold uppercase tracking-wider mb-1 line-clamp-1">{t('table.pending')}</span>
-                                            <span className="text-yellow-700 font-bold text-lg">{tech.pending}</span>
-                                        </div>
-                                        <div className="flex flex-col bg-orange-50/50 p-3 rounded-xl border border-orange-100">
-                                            <span className="text-orange-600 text-[10px] font-bold uppercase tracking-wider mb-1 line-clamp-1">{t('table.in_process')}</span>
-                                            <span className="text-orange-700 font-bold text-lg">{tech.in_process}</span>
-                                        </div>
-                                        <div className="flex flex-col bg-amber-50/50 p-3 rounded-xl border border-amber-100">
-                                            <span className="text-amber-600 text-[10px] font-bold uppercase tracking-wider mb-1 line-clamp-2" title={t('table.incomplete') || ''}>{t('table.incomplete')}</span>
-                                            <span className="text-amber-700 font-bold text-lg">{tech.incomplete}</span>
-                                        </div>
-                                        <div className="flex flex-col bg-green-50/50 p-3 rounded-xl border border-green-100">
-                                            <span className="text-green-600 text-[10px] font-bold uppercase tracking-wider mb-1 line-clamp-1">{t('table.closed')}</span>
-                                            <span className="text-green-700 font-bold text-lg">{tech.closed}</span>
-                                        </div>
-                                    </div>
+
                                 </div>
                             ))}
                         </div>
