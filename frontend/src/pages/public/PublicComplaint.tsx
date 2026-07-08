@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
-import { Send, Upload, X, ArrowLeft, UserCheck, AlertCircle } from 'lucide-react';
+import { Send, ArrowLeft, UserCheck, AlertCircle } from 'lucide-react';
 import api from '../../services/api';
 import { Category, Subcategory, Brand, State } from '../../types';
 import toast from 'react-hot-toast';
