@@ -587,36 +587,37 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                                             <div className="text-xs text-gray-500 leading-relaxed">
                                                 {renderStatusDescription(complaint)}
                                             </div>
-                                            <div className="flex items-center gap-2 mb-1 justify-end">
-                                                <Link
-                                                    to={`/admin/print/${complaint.report_number}`}
-                                                    className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
-                                                >
-                                                    <Printer className="w-4 h-4" />
-                                                </Link>
-                                                <button
-                                                    onClick={() => handleDelete(complaint.id, complaint.report_number)}
-                                                    className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-red-100"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-
-                                            <div className="flex flex-col gap-2">
-                                                <Link
-                                                    to={`/admin/complaint/${complaint.report_number}`}
-                                                    className="w-full flex justify-center items-center gap-2 px-3 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg transition-colors text-sm font-medium border border-indigo-100"
-                                                >
-                                                    <Eye className="w-4 h-4" />
-                                                    {t('complaint_list.view') || 'View Details'}
-                                                </Link>
-                                                <Link
-                                                    to={`/admin/complaint/${complaint.report_number}/track-repair`}
-                                                    className="w-full flex justify-center items-center gap-2 px-3 py-2 bg-white text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors text-sm font-medium border border-indigo-200"
-                                                >
-                                                    <MapPin className="w-4 h-4" />
-                                                    TRACK REPAIR
-                                                </Link>
+                                            <div className="flex items-end justify-between mt-1 gap-3">
+                                                <div className="flex flex-col gap-2 flex-1">
+                                                    <Link
+                                                        to={`/admin/complaint/${complaint.report_number}`}
+                                                        className="w-full flex justify-center items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg transition-colors text-xs font-medium border border-indigo-100"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                        {t('complaint_list.view') || 'View'}
+                                                    </Link>
+                                                    <Link
+                                                        to={`/admin/complaint/${complaint.report_number}/track-repair`}
+                                                        className="w-full flex justify-center items-center gap-2 px-3 py-1.5 bg-white text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors text-xs font-medium border border-indigo-200"
+                                                    >
+                                                        <MapPin className="w-4 h-4" />
+                                                        TRACK REPAIR
+                                                    </Link>
+                                                </div>
+                                                <div className="flex items-center gap-2 pb-0.5">
+                                                    <Link
+                                                        to={`/admin/print/${complaint.report_number}`}
+                                                        className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
+                                                    >
+                                                        <Printer className="w-4 h-4" />
+                                                    </Link>
+                                                    <button
+                                                        onClick={() => handleDelete(complaint.id, complaint.report_number)}
+                                                        className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-red-100"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
