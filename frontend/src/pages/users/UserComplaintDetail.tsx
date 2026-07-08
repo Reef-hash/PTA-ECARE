@@ -19,6 +19,9 @@ export default function UserComplaintDetail() {
         try {
             toast.loading('Memuat turun...', { id: 'download' });
             const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(response.status === 404 ? 'NOT_FOUND' : 'NETWORK_ERROR');
+            }
             const blob = await response.blob();
             const blobUrl = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
@@ -29,9 +32,13 @@ export default function UserComplaintDetail() {
             document.body.removeChild(link);
             window.URL.revokeObjectURL(blobUrl);
             toast.success('Muat turun berjaya!', { id: 'download' });
-        } catch (error) {
+        } catch (error: any) {
             console.error('Download failed:', error);
-            toast.error('Gagal memuat turun fail', { id: 'download' });
+            if (error.message === 'NOT_FOUND') {
+                toast.error('Fail tidak dijumpai di pelayan (mungkin telah dipadam)', { id: 'download' });
+            } else {
+                toast.error('Gagal memuat turun fail', { id: 'download' });
+            }
         }
     };
 
