@@ -136,7 +136,7 @@ export default function PublicComplaint() {
                 toast.error(t('complaint_form.error_file_size'));
                 return;
             }
-            if (!['image/jpeg', 'image/png', 'application/pdf'].includes(file.type)) {
+            if (file.type && !['image/jpeg', 'image/png', 'image/jpg', 'application/pdf', 'image/heic'].includes(file.type)) {
                 toast.error(t('complaint_form.error_file_format'));
                 return;
             }
