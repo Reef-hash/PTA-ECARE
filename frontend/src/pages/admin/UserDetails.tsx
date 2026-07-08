@@ -188,7 +188,7 @@ export default function UserDetails() {
                             <p className="font-medium text-gray-800 pl-6">{user.email || '-'}</p>
                         </div>
 
-                        {/* 2. Primary Phone (Top Right) */}
+                        {/* 2. Primary Phone */}
                         <div>
                             <div className="flex items-center gap-2 mb-1">
                                 <Phone className="w-4 h-4 text-gray-400" />
@@ -197,7 +197,18 @@ export default function UserDetails() {
                             <p className="font-medium text-gray-800 pl-6">{user.contact_no}</p>
                         </div>
 
-                        {/* 3. Address (Bottom Left) */}
+                        {/* 3. Secondary Phone */}
+                        {user.contact_no_2 && (
+                            <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Phone className="w-4 h-4 text-gray-400" />
+                                    <span className="text-gray-500">{t('admin_users.phone_secondary')}</span>
+                                </div>
+                                <p className="font-medium text-gray-800 pl-6">{user.contact_no_2}</p>
+                            </div>
+                        )}
+
+                        {/* 4. Address */}
                         <div>
                             <div className="flex items-center gap-2 mb-1">
                                 <MapPin className="w-4 h-4 text-gray-400" />
@@ -208,17 +219,6 @@ export default function UserDetails() {
                                 {user.state && <><br />{user.state}</>}
                             </p>
                         </div>
-
-                        {/* 4. Secondary Phone (Bottom Right) */}
-                        {user.contact_no_2 && (
-                            <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <Phone className="w-4 h-4 text-gray-400" />
-                                    <span className="text-gray-500">{t('admin_users.phone_secondary')}</span>
-                                </div>
-                                <p className="font-medium text-gray-800 pl-6">{user.contact_no_2}</p>
-                            </div>
-                        )}
 
                         {/* 5. Username (IC Number) */}
                         <div>
