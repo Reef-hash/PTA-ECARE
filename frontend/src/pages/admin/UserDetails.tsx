@@ -150,12 +150,7 @@ export default function UserDetails() {
     return (
         <AdminLayout title={t('admin_users.detail_title') || 'User Details'} breadcrumb={t('admin_users.detail_title') || 'User Details'}>
             <div className="max-w-6xl mx-auto space-y-6">
-                {/* Header / Back */}
-                <div className="flex items-center gap-4">
-                    <Link to="/admin/users" className="p-2 bg-white rounded-lg hover:bg-gray-50 text-gray-600 transition-colors shadow-sm">
-                        <ArrowLeft className="w-5 h-5" />
-                    </Link>
-                </div>
+
 
                 {/* User Info Card */}
                 <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 md:items-center justify-between">
