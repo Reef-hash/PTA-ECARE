@@ -107,7 +107,7 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
                         <Users className="w-5 h-5" />
-                        {t('dashboard.technician_stats')}
+                        Technician
                     </h2>
                 </div>
 
@@ -120,23 +120,23 @@ export default function AdminDashboard() {
                             {technicianStats.map((tech, index) => (
                                 <div key={tech.technician_id} className="bg-white border-b border-gray-200 p-5 last:border-b-0 hover:bg-gray-50 transition-colors">
                                     <div className="flex justify-between items-center mb-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 font-bold text-sm">
+                                        <div className="flex items-center gap-3 min-w-0 pr-3">
+                                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 font-bold text-sm shrink-0">
                                                 {index + 1}
                                             </div>
-                                            <div>
+                                            <div className="min-w-0">
                                                 <Link
                                                     to={`/admin/technicians/${tech.technician_id}`}
-                                                    className="text-gray-900 hover:text-indigo-600 font-bold text-base transition-colors line-clamp-1"
+                                                    className="text-gray-900 hover:text-indigo-600 font-bold text-base transition-colors truncate block"
                                                 >
                                                     {tech.technician_name}
                                                 </Link>
-                                                <span className="text-gray-500 text-xs font-medium uppercase tracking-wider">{tech.department}</span>
+                                                <span className="text-gray-500 text-xs font-medium uppercase tracking-wider truncate block">{tech.department}</span>
                                             </div>
                                         </div>
-                                        <div className="flex flex-col items-end">
-                                            <span className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5 text-right">Total Job<br/>Assigned</span>
-                                            <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-1 bg-indigo-600 text-white rounded-lg text-xs font-bold shadow-sm">
+                                        <div className="flex flex-col items-end shrink-0">
+                                            <span className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5 text-right whitespace-nowrap">Total Job<br/>Assigned</span>
+                                            <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-1 bg-indigo-600 text-white rounded-lg text-xs font-bold shadow-sm mt-1">
                                                 {tech.total}
                                             </span>
                                         </div>
