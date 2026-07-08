@@ -243,6 +243,28 @@ export default function UserDashboard() {
         );
     }
 
+    const statCards = [
+        { label: t('dashboard.total_complaints'), value: stats.total, icon: FileText, color: 'purple', path: '/users/complaint-history' },
+        { label: t('dashboard.pending'), value: stats.pending, icon: Clock, color: 'orange', path: '/users/complaint-history?status=pending' },
+        { label: t('dashboard.in_process'), value: stats.in_process, icon: AlertCircle, color: 'green', path: '/users/complaint-history?status=in_process' },
+        { label: t('dashboard.closed'), value: stats.closed, icon: CheckCircle, color: 'gray', path: '/users/complaint-history?status=closed' },
+        { label: t('dashboard.cancelled'), value: stats.cancelled || 0, icon: XCircle, color: 'red', path: '/users/complaint-history?status=cancelled' },
+        { label: t('dashboard.incomplete'), value: stats.incomplete || 0, icon: PackageOpen, color: 'yellow', path: '/users/complaint-history?status=incomplete' },
+    ];
+
+    const getColorClasses = (color: string) => {
+        const colors: Record<string, { bg: string; icon: string; border: string }> = {
+            blue: { bg: 'bg-blue-100', icon: 'text-blue-600', border: 'border-l-blue-500' },
+            yellow: { bg: 'bg-yellow-100', icon: 'text-yellow-600', border: 'border-l-yellow-500' },
+            orange: { bg: 'bg-orange-100', icon: 'text-orange-600', border: 'border-l-orange-500' },
+            red: { bg: 'bg-red-100', icon: 'text-red-600', border: 'border-l-red-500' },
+            green: { bg: 'bg-green-100', icon: 'text-green-600', border: 'border-l-green-500' },
+            purple: { bg: 'bg-purple-100', icon: 'text-purple-600', border: 'border-l-purple-500' },
+            gray: { bg: 'bg-gray-100', icon: 'text-gray-600', border: 'border-l-gray-500' },
+        };
+        return colors[color] || colors.blue;
+    };
+
     return (
         <UserLayout title={t('user_dashboard.title')} breadcrumb={t('user_dashboard.title')}>
             {/* Quick Action */}
@@ -257,78 +279,26 @@ export default function UserDashboard() {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-                <Link to="/users/complaint-history" className="stat-card border-l-blue-500 hover:shadow-lg transition-shadow cursor-pointer">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-500 text-sm">{t('dashboard.total_complaints')}</p>
-                            <p className="text-3xl font-bold text-gray-800">{stats.total}</p>
-                        </div>
-                        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <FileText className="w-6 h-6 text-blue-600" />
-                        </div>
-                    </div>
-                </Link>
-
-                <Link to="/users/complaint-history?status=pending" className="stat-card border-l-orange-500 hover:shadow-lg transition-shadow cursor-pointer">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-500 text-sm">{t('dashboard.pending')}</p>
-                            <p className="text-3xl font-bold text-gray-800">{stats.pending}</p>
-                        </div>
-                        <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                            <AlertCircle className="w-6 h-6 text-orange-600" />
-                        </div>
-                    </div>
-                </Link>
-
-                <Link to="/users/complaint-history?status=in_process" className="stat-card border-l-yellow-500 hover:shadow-lg transition-shadow cursor-pointer">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-500 text-sm">{t('dashboard.in_process')}</p>
-                            <p className="text-3xl font-bold text-gray-800">{stats.in_process}</p>
-                        </div>
-                        <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                            <Clock className="w-6 h-6 text-yellow-600" />
-                        </div>
-                    </div>
-                </Link>
-
-                <Link to="/users/complaint-history?status=closed" className="stat-card border-l-green-500 hover:shadow-lg transition-shadow cursor-pointer">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-500 text-sm">{t('dashboard.closed')}</p>
-                            <p className="text-3xl font-bold text-gray-800">{stats.closed}</p>
-                        </div>
-                        <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                            <CheckCircle className="w-6 h-6 text-green-600" />
-                        </div>
-                    </div>
-                </Link>
-
-                <Link to="/users/complaint-history?status=cancelled" className="stat-card border-l-red-500 hover:shadow-lg transition-shadow cursor-pointer">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-500 text-sm">{t('dashboard.cancelled') || 'Dibatalkan'}</p>
-                            <p className="text-3xl font-bold text-gray-800">{stats.cancelled}</p>
-                        </div>
-                        <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                            <XCircle className="w-6 h-6 text-red-600" />
-                        </div>
-                    </div>
-                </Link>
-
-                <Link to="/users/complaint-history?status=incomplete" className="stat-card border-l-amber-500 hover:shadow-lg transition-shadow cursor-pointer">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-500 text-sm">{t('dashboard.incomplete')}</p>
-                            <p className="text-3xl font-bold text-gray-800">{stats.incomplete}</p>
-                        </div>
-                        <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-                            <PackageOpen className="w-6 h-6 text-amber-600" />
-                        </div>
-                    </div>
-                </Link>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-8">
+                {statCards.map((card) => {
+                    const Icon = card.icon;
+                    const colors = getColorClasses(card.color);
+                    return (
+                        <Link
+                            key={card.label}
+                            to={card.path}
+                            className={`bg-white rounded-xl shadow-sm border-l-4 p-3 sm:p-5 ${colors.border} hover:shadow-lg transition-shadow flex flex-col justify-between`}
+                        >
+                            <div className="flex items-center justify-between mb-2">
+                                <p className="text-gray-500 text-[10px] sm:text-xs uppercase font-medium leading-tight line-clamp-2 pr-1">{card.label}</p>
+                                <div className={`w-8 h-8 sm:w-10 sm:h-10 ${colors.bg} rounded-md sm:rounded-lg flex items-center justify-center shrink-0`}>
+                                    <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${colors.icon}`} />
+                                </div>
+                            </div>
+                            <p className="text-xl sm:text-2xl font-bold text-gray-800">{card.value}</p>
+                        </Link>
+                    );
+                })}
             </div>
 
             {/* Recent Complaints */}
