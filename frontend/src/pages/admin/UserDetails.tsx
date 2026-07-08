@@ -362,16 +362,21 @@ export default function UserDetails() {
                                             <span className="text-gray-900 font-medium text-xs">{formatDate(complaint.created_at)}</span>
                                         </div>
                                         
-                                        <div className="mt-3 pt-3 border-t border-gray-100 flex flex-col gap-3">
-                                            <div className="flex items-center justify-between mt-1">
-                                                <Link
-                                                    to={`/admin/complaint/${complaint.report_number}`}
-                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg transition-colors text-xs font-medium border border-indigo-100"
-                                                >
-                                                    <Eye className="w-4 h-4" />
-                                                    {t('complaint_list.view') || 'View Details'}
-                                                </Link>
-                                            </div>
+                                        <div className="mt-3 pt-3 border-t border-gray-100 flex flex-col gap-2">
+                                            <Link
+                                                to={`/admin/complaint/${complaint.report_number}`}
+                                                className="w-full flex justify-center items-center gap-2 px-3 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg transition-colors text-sm font-medium border border-indigo-100"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                                {t('complaint_list.view') || 'View Details'}
+                                            </Link>
+                                            <Link
+                                                to={`/admin/complaint/${complaint.report_number}/track-repair`}
+                                                className="w-full flex justify-center items-center gap-2 px-3 py-2 bg-white text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors text-sm font-medium border border-indigo-200"
+                                            >
+                                                <MapPin className="w-4 h-4" />
+                                                TRACK REPAIR
+                                            </Link>
                                         </div>
                                     </div>
                                 ))}
