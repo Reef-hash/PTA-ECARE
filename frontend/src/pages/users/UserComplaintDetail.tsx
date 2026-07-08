@@ -104,14 +104,7 @@ export default function UserComplaintDetail() {
 
     return (
         <UserLayout title={t('user_dashboard.title_details')} breadcrumb={t('user_dashboard.title_details')}>
-            {/* Back Button */}
-            <Link
-                to="/users/complaint-history"
-                className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-6"
-            >
-                <ArrowLeft className="w-4 h-4" />
-                {t('user_dashboard.back_to_history')}
-            </Link>
+
 
             {/* Cancelled Banner */}
             {complaint.status === 'cancelled' && (
