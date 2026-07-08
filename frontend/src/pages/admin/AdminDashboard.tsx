@@ -135,7 +135,7 @@ export default function AdminDashboard() {
                                             </div>
                                         </div>
                                         <div className="flex flex-col items-end">
-                                            <span className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">{t('table.total')}</span>
+                                            <span className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5 whitespace-nowrap text-right">Total Job Assigned</span>
                                             <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-1 bg-indigo-600 text-white rounded-lg text-xs font-bold shadow-sm">
                                                 {tech.total}
                                             </span>
@@ -155,7 +155,7 @@ export default function AdminDashboard() {
                                         <th className="text-left px-4 py-3 whitespace-nowrap">#</th>
                                         <th className="text-left px-4 py-3 whitespace-nowrap">{t('table.name')}</th>
                                         <th className="text-left px-4 py-3 whitespace-nowrap">{t('table.department')}</th>
-                                        <th className="text-center px-4 py-3 whitespace-nowrap">{t('table.total')}</th>
+                                        <th className="text-center px-4 py-3 whitespace-nowrap">Total Job Assigned</th>
                                         <th className="text-center px-4 py-3 whitespace-nowrap">{t('table.pending')}</th>
                                         <th className="text-center px-4 py-3 whitespace-nowrap">{t('table.in_process')}</th>
                                         <th className="text-center px-4 py-3 whitespace-nowrap">{t('table.incomplete')}</th>
