@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, MapPin, Search, Eye, Clock, Key } from 'lucide-react';
+import { Mail, Phone, MapPin, Search, Eye, Clock, Key } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 import { User, Complaint } from '../../types';
