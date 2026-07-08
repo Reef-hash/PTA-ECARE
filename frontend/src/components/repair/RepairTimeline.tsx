@@ -16,24 +16,24 @@ interface RepairTimelineProps {
     isClosed: boolean;
 }
 
-export default function RepairTimeline({ currentStatus: _currentStatus, timelineEvents, isClosed }: RepairTimelineProps) {
+export default function RepairTimeline({ currentStatus, timelineEvents }: RepairTimelineProps) {
     const { t } = useTranslation();
-    // If not closed, we append a waiting placeholder at the end
-    const nodes = [...timelineEvents];
 
-    if (!isClosed) {
-        nodes.push({
-            status: 'COMPLETE',
-            label: t('common.waiting_next_step') || 'Waiting for next step...',
-            date: null, // "Waiting..."
-        });
-    }
+    const staticStages: { status: RepairStatus; label: string }[] = [
+        { status: 'PENDING', label: t('admin_users.status_pending') || 'Pending' },
+        { status: 'IN_PROCESS', label: t('admin_users.status_in_process') || 'In Process' },
+        { status: 'IN_COMPLETE', label: t('admin_users.status_incomplete') || 'Incomplete' },
+        { status: 'COMPLETE', label: t('admin_users.status_closed') || 'Complete' },
+    ];
 
-    // Determine the active index.
-    // For chronological nodes, all nodes with a date are completed or current.
-    // The last node with a date is "current".
-    const lastEventIndex = nodes.map(n => !!n.date).lastIndexOf(true);
-    const currentIndex = lastEventIndex >= 0 ? lastEventIndex : 0;
+    const stageOrder: Record<RepairStatus, number> = {
+        PENDING: 0,
+        IN_PROCESS: 1,
+        IN_COMPLETE: 2,
+        COMPLETE: 3,
+    };
+
+    const currentIndex = stageOrder[currentStatus] ?? 0;
 
     return (
         <motion.div
@@ -44,20 +44,27 @@ export default function RepairTimeline({ currentStatus: _currentStatus, timeline
         >
             <h3 className="text-lg font-semibold mb-6">{t('user_dashboard.track_repair')}</h3>
             <div>
-                {nodes.map((node, index) => {
+                {staticStages.map((stage, index) => {
                     const isCompleted = index < currentIndex;
                     const isCurrent = index === currentIndex;
-                    const isLast = index === nodes.length - 1;
+                    const isLast = index === staticStages.length - 1;
+
+                    // Cari events/remarks yang berkaitan dengan stage ini
+                    const eventsForStage = timelineEvents.filter(e => e.status === stage.status);
+                    
+                    // Ambil event terakhir untuk dipaparkan sebagai wakil, atau boleh paparkan semua jika mahu
+                    // Di sini kita paparkan event terakhir yang mempunyai date/remark
+                    const latestEvent = eventsForStage.length > 0 ? eventsForStage[eventsForStage.length - 1] : null;
 
                     return (
                         <TimelineStep
-                            key={`${node.status}-${index}`}
-                            label={node.label}
-                            date={node.date}
+                            key={`${stage.status}-${index}`}
+                            label={stage.label}
+                            date={latestEvent?.date || null}
                             isCurrent={isCurrent}
                             isCompleted={isCompleted}
                             isLast={isLast}
-                            remark={node.remark}
+                            remark={latestEvent?.remark}
                         />
                     );
                 })}

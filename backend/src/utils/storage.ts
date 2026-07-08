@@ -30,7 +30,8 @@ export const saveFile = (
     const filePath = path.join(dir, fileName);
     fs.writeFileSync(filePath, buffer);
 
-    const base = (baseUrl || process.env.FRONTEND_URL || '').replace(/\/$/, '');
+    // Gunakan API_URL supaya pautan menghala ke pelayan backend yang menyimpan fail sebenar.
+    const base = (baseUrl || process.env.API_URL || 'https://api.ptas.my').replace(/\/$/, '');
     const publicUrl = `${base}/uploads/${subdir}/${fileName}`;
     return { publicUrl, localPath: filePath };
 };

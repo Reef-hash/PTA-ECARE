@@ -52,14 +52,14 @@ export default function AdminDashboard() {
     }
 
     const statCards = [
-        { label: t('dashboard.total_complaints'), value: stats.total, icon: FileText, color: 'blue', path: '/admin/all-complaints' },
-        { label: t('dashboard.not_processed'), value: stats.pending, icon: Clock, color: 'yellow', path: '/admin/not-processed' },
-        { label: t('dashboard.in_progress'), value: stats.in_process, icon: AlertTriangle, color: 'orange', path: '/admin/in-progress' },
+        { label: t('dashboard.total_complaints'), value: stats.total, icon: FileText, color: 'purple', path: '/admin/all-complaints' },
+        { label: t('dashboard.not_processed'), value: stats.pending, icon: Clock, color: 'orange', path: '/admin/not-processed' },
+        { label: t('dashboard.in_progress'), value: stats.in_process, icon: AlertTriangle, color: 'green', path: '/admin/in-progress' },
         { label: t('dashboard.not_forwarded'), value: stats.not_forwarded, icon: Forward, color: 'red', path: '/admin/not-forwarded' },
-        { label: t('dashboard.job_assigned'), value: stats.assigned, icon: UserCheck, color: 'teal', path: '/admin/job-assigned' },
-        { label: t('dashboard.completed'), value: stats.closed, icon: CheckCircle, color: 'green', path: '/admin/closed' },
-        { label: t('dashboard.cancelled'), value: stats.cancelled, icon: XCircle, color: 'purple', path: '/admin/cancelled' },
-        { label: t('dashboard.incomplete'), value: stats.incomplete, icon: PackageOpen, color: 'amber', path: '/admin/incomplete-bawa-pulang' },
+        { label: t('dashboard.job_assigned'), value: stats.assigned, icon: UserCheck, color: 'blue', path: '/admin/job-assigned' },
+        { label: t('dashboard.completed'), value: stats.closed, icon: CheckCircle, color: 'gray', path: '/admin/closed' },
+        { label: t('dashboard.cancelled'), value: stats.cancelled, icon: XCircle, color: 'red', path: '/admin/cancelled' },
+        { label: t('dashboard.incomplete'), value: stats.incomplete, icon: PackageOpen, color: 'yellow', path: '/admin/incomplete-bawa-pulang' },
     ];
 
     const getColorClasses = (color: string) => {
@@ -72,6 +72,7 @@ export default function AdminDashboard() {
             teal: { bg: 'bg-teal-100', icon: 'text-teal-600', border: 'border-l-teal-500' },
             purple: { bg: 'bg-purple-100', icon: 'text-purple-600', border: 'border-l-purple-500' },
             amber: { bg: 'bg-amber-100', icon: 'text-amber-600', border: 'border-l-amber-500' },
+            gray: { bg: 'bg-gray-100', icon: 'text-gray-600', border: 'border-l-gray-500' },
         };
         return colors[color] || colors.blue;
     };
@@ -79,7 +80,7 @@ export default function AdminDashboard() {
     return (
         <AdminLayout title="Dashboard" breadcrumb="Dashboard">
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-8">
                 {statCards.map((card) => {
                     const Icon = card.icon;
                     const colors = getColorClasses(card.color);
@@ -87,17 +88,15 @@ export default function AdminDashboard() {
                         <Link
                             key={card.label}
                             to={card.path}
-                            className={`stat-card ${colors.border} hover:shadow-lg transition-shadow`}
+                            className={`bg-white rounded-xl shadow-sm border-l-4 p-3 sm:p-5 ${colors.border} hover:shadow-lg transition-shadow flex flex-col justify-between`}
                         >
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-gray-500 text-xs uppercase font-medium">{card.label}</p>
-                                    <p className="text-2xl font-bold text-gray-800 mt-1">{card.value}</p>
-                                </div>
-                                <div className={`w-10 h-10 ${colors.bg} rounded-lg flex items-center justify-center`}>
-                                    <Icon className={`w-5 h-5 ${colors.icon}`} />
+                            <div className="flex items-center justify-between mb-2">
+                                <p className="text-gray-500 text-[10px] sm:text-xs uppercase font-medium leading-tight line-clamp-2 pr-1">{card.label}</p>
+                                <div className={`w-8 h-8 sm:w-10 sm:h-10 ${colors.bg} rounded-md sm:rounded-lg flex items-center justify-center shrink-0`}>
+                                    <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${colors.icon}`} />
                                 </div>
                             </div>
+                            <p className="text-xl sm:text-2xl font-bold text-gray-800">{card.value}</p>
                         </Link>
                     );
                 })}

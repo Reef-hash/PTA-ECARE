@@ -77,7 +77,7 @@ export default function UserRegister() {
         e.preventDefault();
 
         // Validation
-        if (!formData.full_name || !formData.ic_number || !formData.contact_no || !formData.contact_no_2 || !formData.address || !formData.password) {
+        if (!formData.full_name || !formData.ic_number || !formData.email || !formData.contact_no || !formData.address || !formData.password) {
             toast.error(t('user_auth.fill_required'));
             return;
         }

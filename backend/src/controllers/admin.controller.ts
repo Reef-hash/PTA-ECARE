@@ -124,7 +124,7 @@ export const getTechnician = async (req: Request, res: Response): Promise<void> 
 export const getTechnicians = async (req: Request, res: Response): Promise<void> => {
     try {
         const [rows]: any = await pool.query(
-            'SELECT id, name, department, email, contact_number, username, is_active, created_at FROM technicians ORDER BY created_at DESC'
+            'SELECT id, name, department, email, contact_number, username, is_active, created_at FROM technicians WHERE username != "maintech" ORDER BY created_at DESC'
         );
         res.json({ technicians: rows || [] });
     } catch (error) {
