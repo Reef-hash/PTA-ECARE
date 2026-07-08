@@ -119,7 +119,7 @@ export default function AdminMainTechQueue() {
                 </div>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
                     {statCards.map((card) => {
                         const Icon = card.icon;
                         const colors = getColorClasses(card.color);
@@ -128,18 +128,18 @@ export default function AdminMainTechQueue() {
                             <button
                                 key={card.label}
                                 onClick={() => setActiveFilter(card.filter)}
-                                className={`text-left w-full rounded-xl shadow-sm border p-5 ${colors.border} border-l-4 transition-all duration-200 ${
+                                className={`text-left w-full rounded-xl shadow-sm border p-3 sm:p-5 ${colors.border} border-l-4 transition-all duration-200 flex flex-col justify-between h-full ${
                                     isActive ? 'bg-gray-50 ring-2 ring-indigo-500 border-indigo-500 scale-[1.02]' : 'bg-white border-gray-100 hover:bg-gray-50'
                                 }`}
                             >
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className={`text-xs uppercase font-medium ${isActive ? 'text-indigo-600' : 'text-gray-500'}`}>{card.label}</p>
-                                        <p className="text-2xl font-bold text-gray-800 mt-1">{card.value}</p>
+                                <div className="flex items-start justify-between w-full mb-2">
+                                    <p className={`text-[10px] sm:text-xs uppercase font-medium leading-tight pr-2 ${isActive ? 'text-indigo-600' : 'text-gray-500'}`}>{card.label}</p>
+                                    <div className={`w-8 h-8 sm:w-10 sm:h-10 shrink-0 ${colors.bg} rounded-lg flex items-center justify-center`}>
+                                        <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${colors.icon}`} />
                                     </div>
-                                    <div className={`w-10 h-10 ${colors.bg} rounded-lg flex items-center justify-center`}>
-                                        <Icon className={`w-5 h-5 ${colors.icon}`} />
-                                    </div>
+                                </div>
+                                <div>
+                                    <p className="text-xl sm:text-2xl font-bold text-gray-800">{card.value}</p>
                                 </div>
                             </button>
                         );
