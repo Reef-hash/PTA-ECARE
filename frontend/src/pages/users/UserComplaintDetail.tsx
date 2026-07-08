@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, FileText, User, Calendar, MapPin, Wrench, XCircle, Eye, Download } from 'lucide-react';
+import { FileText, User, Calendar, MapPin, Wrench, XCircle, Eye, Download } from 'lucide-react';
 import UserLayout from '../../components/UserLayout';
 import api, { getFileUrl } from '../../services/api';
 import { Complaint } from '../../types';
