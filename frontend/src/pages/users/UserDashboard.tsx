@@ -341,12 +341,6 @@ export default function UserDashboard() {
                                                     {complaint.report_number}
                                                 </Link>
                                             </div>
-                                            <Link
-                                                to={`/users/complaint/${complaint.report_number}/track-repair`}
-                                                className="text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit shadow-sm"
-                                            >
-                                                TRACK REPAIR
-                                            </Link>
                                         </div>
                                         <div className="flex-shrink-0">
                                             {getStatusBadge(complaint.status)}
@@ -381,20 +375,28 @@ export default function UserDashboard() {
                                         <div className="text-xs text-gray-500 leading-relaxed">
                                             {renderStatusDescription(complaint)}
                                         </div>
-                                        {complaint.status === 'pending' && (
-                                            <button
-                                                onClick={() => handleCancelClick(complaint.id, complaint.report_number)}
-                                                disabled={cancellingId === complaint.id}
-                                                className="inline-flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors disabled:opacity-50 w-full"
+                                        <div className="flex flex-col gap-2">
+                                            {complaint.status === 'pending' && (
+                                                <button
+                                                    onClick={() => handleCancelClick(complaint.id, complaint.report_number)}
+                                                    disabled={cancellingId === complaint.id}
+                                                    className="inline-flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors disabled:opacity-50 w-full"
+                                                >
+                                                    {cancellingId === complaint.id ? (
+                                                        <div className="w-3.5 h-3.5 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                                                    ) : (
+                                                        <X className="w-3.5 h-3.5" />
+                                                    )}
+                                                    {t('common_actions.cancel') || 'Cancel'}
+                                                </button>
+                                            )}
+                                            <Link
+                                                to={`/users/complaint/${complaint.report_number}/track-repair`}
+                                                className="inline-flex items-center justify-center gap-1 px-3 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors w-full shadow-sm"
                                             >
-                                                {cancellingId === complaint.id ? (
-                                                    <div className="w-3.5 h-3.5 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
-                                                ) : (
-                                                    <X className="w-3.5 h-3.5" />
-                                                )}
-                                                {t('common_actions.cancel') || 'Cancel'}
-                                            </button>
-                                        )}
+                                                TRACK REPAIR
+                                            </Link>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
