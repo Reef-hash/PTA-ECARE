@@ -328,35 +328,50 @@ export default function UserDetails() {
                             </div>
 
                             {/* Mobile View (Card-based list) */}
-                            <div className="md:hidden flex flex-col gap-3">
-                                {filteredComplaints.map((complaint) => (
-                                    <div key={complaint.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100 flex flex-col gap-3">
-                                        <div className="flex justify-between items-start">
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-bold text-gray-900 text-sm tracking-tight">{complaint.report_number}</span>
-                                                <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase">
-                                                    {complaint.brand_name}
-                                                </span>
+                            <div className="md:hidden flex flex-col">
+                                {filteredComplaints.map((complaint, index) => (
+                                    <div key={complaint.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div className="flex flex-col gap-1.5">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-gray-400 font-medium text-xs">#{index + 1}</span>
+                                                    <Link
+                                                        to={`/admin/complaint/${complaint.report_number}`}
+                                                        className="text-indigo-600 hover:text-indigo-800 font-bold text-sm"
+                                                    >
+                                                        {complaint.report_number}
+                                                    </Link>
+                                                </div>
                                             </div>
-                                            <div>{getStatusBadge(complaint.status)}</div>
+                                            <div className="flex-shrink-0">
+                                                {getStatusBadge(complaint.status)}
+                                            </div>
                                         </div>
                                         
-                                        <div className="flex justify-between items-center">
-                                            <div className="flex flex-col gap-1">
-                                                <span className="text-gray-700 bg-white border border-gray-200 text-xs px-3 py-1 rounded-full w-fit">
-                                                    {complaint.subcategory}
-                                                </span>
-                                                <span className="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
-                                                    <Clock className="w-3 h-3" />
-                                                    {formatDate(complaint.created_at)}
-                                                </span>
+                                        <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm mt-3 items-center">
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('complaint_form.subcategory') || 'Subcategory'}</span>
+                                            <span className="text-gray-900 font-medium text-xs">{complaint.subcategory}</span>
+                                            
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('complaint_form.brand') || 'Brand'}</span>
+                                            <span className="text-gray-900 font-medium text-xs">{complaint.brand_name}</span>
+
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_complaint_detail.defect_details') || 'Defect'}</span>
+                                            <span className="text-gray-900 font-medium text-xs line-clamp-2" title={complaint.details || ''}>{complaint.details || '-'}</span>
+
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('table.date') || 'Date'}</span>
+                                            <span className="text-gray-900 font-medium text-xs">{formatDate(complaint.created_at)}</span>
+                                        </div>
+                                        
+                                        <div className="mt-3 pt-3 border-t border-gray-100 flex flex-col gap-3">
+                                            <div className="flex items-center justify-between mt-1">
+                                                <Link
+                                                    to={`/admin/complaint/${complaint.report_number}`}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg transition-colors text-xs font-medium border border-indigo-100"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                    {t('complaint_list.view') || 'View Details'}
+                                                </Link>
                                             </div>
-                                            <Link
-                                                to={`/admin/complaint/${complaint.report_number}`}
-                                                className="flex items-center justify-center w-8 h-8 bg-indigo-600 text-white rounded-lg shadow-sm shrink-0"
-                                            >
-                                                <Eye className="w-4 h-4" />
-                                            </Link>
                                         </div>
                                     </div>
                                 ))}
