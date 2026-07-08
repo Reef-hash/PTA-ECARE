@@ -24,6 +24,7 @@ import {
     ChevronDown,
     ArrowLeft,
     UserCheck,
+    Home,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -327,11 +328,17 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
                             <ArrowLeft className="w-5 h-5" />
                         </button>
                         {breadcrumb && (
-                            <p className="text-xs sm:text-sm text-gray-500 truncate">
-                                <span className="text-gray-400">Pages</span>
+                            <div className="flex items-center text-xs sm:text-sm text-gray-500 truncate">
+                                <Link 
+                                    to={isTechnician ? '/admin/technician/dashboard' : '/admin/dashboard'} 
+                                    className="text-gray-400 hover:text-indigo-600 transition-colors flex items-center"
+                                    title={t('sidebar.dashboard') || 'Dashboard'}
+                                >
+                                    <Home className="w-4 h-4" />
+                                </Link>
                                 <span className="mx-1 sm:mx-2 text-gray-400">/</span>
                                 <span className="font-medium text-gray-700">{breadcrumb}</span>
-                            </p>
+                            </div>
                         )}
                     </div>
 
