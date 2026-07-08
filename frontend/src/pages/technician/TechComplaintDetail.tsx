@@ -97,31 +97,21 @@ export default function TechComplaintDetail() {
     };
 
     // Download file from URL (works for cross-origin)
-    const handleDownload = async (url: string, filename: string) => {
-        try {
-            toast.loading('Memuat turun...', { id: 'download' });
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(response.status === 404 ? 'NOT_FOUND' : 'NETWORK_ERROR');
-            }
-            const blob = await response.blob();
-            const blobUrl = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = blobUrl;
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(blobUrl);
-            toast.success('Muat turun berjaya!', { id: 'download' });
-        } catch (error: any) {
-            console.error('Download failed:', error);
-            if (error.message === 'NOT_FOUND') {
-                toast.error('Fail tidak dijumpai di pelayan (mungkin telah dipadam)', { id: 'download' });
-            } else {
-                toast.error('Gagal memuat turun fail', { id: 'download' });
-            }
-        }
+    const handleDownload = (url: string, filename: string) => {
+        toast.loading('Memuat turun...', { id: 'download' });
+        const baseApi = import.meta.env.VITE_API_URL || '/api';
+        const apiUrl = baseApi === 'https://api.ptas.my' ? 'https://api.ptas.my/api' : baseApi;
+        
+        const downloadUrl = `${apiUrl}/download?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}`;
+        
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        setTimeout(() => toast.success('Berjaya memuat turun fail!', { id: 'download' }), 1000);
     };
 
     const formatDate = (dateString: string) => {

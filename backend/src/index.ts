@@ -45,6 +45,36 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Download endpoint to bypass CORS/Nginx issues for static files
+app.get('/api/download', (req, res) => {
+    try {
+        const fileUrl = req.query.url as string;
+        const filename = req.query.filename as string;
+        if (!fileUrl) {
+            res.status(400).send('No URL provided');
+            return;
+        }
+        
+        const uploadIndex = fileUrl.indexOf('/uploads/');
+        if (uploadIndex === -1) {
+            res.status(400).send('Invalid file URL');
+            return;
+        }
+        
+        const relativePath = fileUrl.substring(uploadIndex + 9);
+        const normalizedPath = path.normalize(relativePath).replace(/^(\.\.(\/|\\|$))+/, '');
+        const absolutePath = path.join(uploadsDir, normalizedPath);
+        
+        if (fs.existsSync(absolutePath)) {
+            res.download(absolutePath, filename || path.basename(absolutePath));
+        } else {
+            res.status(404).send('File not found');
+        }
+    } catch (e) {
+        res.status(500).send('Server error');
+    }
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
