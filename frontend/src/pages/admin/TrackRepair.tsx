@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
-import { ArrowLeft, Clock, Wrench, CheckCircle, AlertTriangle, XCircle, PackageOpen } from 'lucide-react';
+import { Clock, Wrench, CheckCircle, AlertTriangle, XCircle, PackageOpen } from 'lucide-react';
 import { motion } from 'framer-motion';
 import AdminLayout from '../../components/AdminLayout';
 import UserLayout from '../../components/UserLayout';
@@ -22,13 +22,6 @@ export default function TrackRepair() {
     const isUser = location.pathname.startsWith('/users');
     const isMainTech = location.pathname.startsWith('/main-tech');
     const Layout = isUser ? UserLayout : isMainTech ? MainTechLayout : AdminLayout;
-    const backLink = isUser 
-        ? `/users/complaint/${id}` 
-        : isMainTech 
-            ? `/main-tech/complaint/${id}` 
-            : location.pathname.includes('/admin/technician') 
-                ? `/admin/technician/complaint/${id}` 
-                : `/admin/complaint/${id}`;
 
     useEffect(() => {
         loadComplaint();
@@ -195,15 +188,7 @@ export default function TrackRepair() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
             >
-                <div className="flex items-center justify-between mb-6">
-                    <Link
-                        to={backLink}
-                        className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        {t('admin_complaint_detail.back')}
-                    </Link>
-                </div>
+
 
                 {/* BLOCK 1: Track Repair Progress (TOP) */}
                 <RepairTimeline currentStatus={currentStatus} timelineEvents={fullTimelineEvents} isClosed={isClosed} />
