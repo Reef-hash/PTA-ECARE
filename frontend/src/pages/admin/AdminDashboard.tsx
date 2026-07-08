@@ -135,7 +135,7 @@ export default function AdminDashboard() {
                                             </div>
                                         </div>
                                         <div className="flex flex-col items-end">
-                                            <span className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5 whitespace-nowrap text-right">Total Job Assigned</span>
+                                            <span className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5 text-right">Total Job<br/>Assigned</span>
                                             <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-1 bg-indigo-600 text-white rounded-lg text-xs font-bold shadow-sm">
                                                 {tech.total}
                                             </span>
