@@ -389,6 +389,13 @@ export const createComplaint = async (req: Request, res: Response): Promise<void
 
         const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
 
+        console.log('[DEBUG UPLOAD] req.body:', req.body);
+        console.log('[DEBUG UPLOAD] req.files:', files ? Object.keys(files) : 'No files parsed');
+        if (files) {
+            if (files.warranty_file) console.log('warranty_file:', files.warranty_file[0].originalname, files.warranty_file[0].size);
+            if (files.receipt_file) console.log('receipt_file:', files.receipt_file[0].originalname, files.receipt_file[0].size);
+        }
+
         let warranty_file: string | null = null;
         let receipt_file: string | null = null;
 
