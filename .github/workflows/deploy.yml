@@ -66,6 +66,11 @@ jobs:
           local-dir: ./backend/dist/
           # UBAH INI KEPADA FOLDER SEBENAR DI HOSTINGER (Berdasarkan ftp_script.txt anda)
           server-dir: ./domains/api.ptas.my/nodejs/
+          exclude: |
+            **/.env
+            **/node_modules/**
+            **/uploads/**
+            uploads/**
           
       # 6. TRIGGER HOSTINGER NODE.JS RESTART
       - name: Create Restart File
