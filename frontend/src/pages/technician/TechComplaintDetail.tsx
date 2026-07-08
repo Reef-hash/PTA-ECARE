@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, FileText, User, Wrench, Save, Printer, Eye, Download } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
-import api from '../../services/api';
+import api, { getFileUrl } from '../../services/api';
 import { Complaint, ComplaintRemark, TechnicianRemark } from '../../types';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -271,7 +271,7 @@ export default function TechComplaintDetail() {
                                             </div>
                                             <div className="flex gap-2">
                                                 <a
-                                                    href={complaint.warranty_file}
+                                                    href={getFileUrl(complaint.warranty_file)}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="p-2 text-blue-500 hover:text-indigo-600 hover:bg-white rounded-full transition-all shadow-sm"
@@ -280,7 +280,7 @@ export default function TechComplaintDetail() {
                                                     <Eye className="w-4 h-4" />
                                                 </a>
                                                 <button
-                                                    onClick={() => handleDownload(complaint.warranty_file!, `Warranty-${complaint.report_number}.png`)}
+                                                    onClick={() => handleDownload(getFileUrl(complaint.warranty_file)!, `Warranty-${complaint.report_number}.png`)}
                                                     className="p-2 text-blue-500 hover:text-green-600 hover:bg-white rounded-full transition-all shadow-sm"
                                                     title="Download"
                                                 >
@@ -302,7 +302,7 @@ export default function TechComplaintDetail() {
                                             </div>
                                             <div className="flex gap-2">
                                                 <a
-                                                    href={complaint.receipt_file}
+                                                    href={getFileUrl(complaint.receipt_file)}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="p-2 text-green-500 hover:text-indigo-600 hover:bg-white rounded-full transition-all shadow-sm"
@@ -311,7 +311,7 @@ export default function TechComplaintDetail() {
                                                     <Eye className="w-4 h-4" />
                                                 </a>
                                                 <button
-                                                    onClick={() => handleDownload(complaint.receipt_file!, `Receipt-${complaint.report_number}.png`)}
+                                                    onClick={() => handleDownload(getFileUrl(complaint.receipt_file)!, `Receipt-${complaint.report_number}.png`)}
                                                     className="p-2 text-green-500 hover:text-green-600 hover:bg-white rounded-full transition-all shadow-sm"
                                                     title="Download"
                                                 >

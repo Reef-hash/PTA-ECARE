@@ -12,6 +12,13 @@ const api = axios.create({
     },
 });
 
+export const getFileUrl = (path: string | undefined | null) => {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    const base = API_URL.endsWith('/api') ? API_URL.slice(0, -4) : API_URL;
+    return `${base}${path.startsWith('/') ? '' : '/'}${path}`;
+};
+
 // Helper to get cookie (duplicated to avoid circular dependency)
 function getCookie(name: string) {
     const nameEQ = name + "=";

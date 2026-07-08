@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
 import MainTechLayout from '../../components/MainTechLayout';
-import api from '../../services/api';
+import api, { getFileUrl } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { Complaint, ComplaintRemark, TechnicianRemark, Technician } from '../../types';
 import toast from 'react-hot-toast';
@@ -325,7 +325,7 @@ export default function AdminComplaintDetail() {
                                             </div>
                                             <div className="flex gap-2">
                                                 <a
-                                                    href={complaint.warranty_file}
+                                                    href={getFileUrl(complaint.warranty_file)}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="p-2 text-blue-500 hover:text-indigo-600 hover:bg-white rounded-full transition-all shadow-sm"
@@ -334,7 +334,7 @@ export default function AdminComplaintDetail() {
                                                     <Eye className="w-4 h-4" />
                                                 </a>
                                                 <button
-                                                    onClick={() => handleDownload(complaint.warranty_file!, `Warranty-${complaint.report_number}.png`)}
+                                                    onClick={() => handleDownload(getFileUrl(complaint.warranty_file)!, `Warranty-${complaint.report_number}.png`)}
                                                     className="p-2 text-blue-500 hover:text-green-600 hover:bg-white rounded-full transition-all shadow-sm"
                                                     title="Download"
                                                 >
@@ -356,7 +356,7 @@ export default function AdminComplaintDetail() {
                                             </div>
                                             <div className="flex gap-2">
                                                 <a
-                                                    href={complaint.receipt_file}
+                                                    href={getFileUrl(complaint.receipt_file)}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="p-2 text-green-500 hover:text-indigo-600 hover:bg-white rounded-full transition-all shadow-sm"
@@ -365,7 +365,7 @@ export default function AdminComplaintDetail() {
                                                     <Eye className="w-4 h-4" />
                                                 </a>
                                                 <button
-                                                    onClick={() => handleDownload(complaint.receipt_file!, `Receipt-${complaint.report_number}.png`)}
+                                                    onClick={() => handleDownload(getFileUrl(complaint.receipt_file)!, `Receipt-${complaint.report_number}.png`)}
                                                     className="p-2 text-green-500 hover:text-green-600 hover:bg-white rounded-full transition-all shadow-sm"
                                                     title="Download"
                                                 >
