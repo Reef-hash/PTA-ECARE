@@ -279,6 +279,10 @@ export default function AdminComplaintDetail() {
                                     <p className="text-gray-500">{t('admin_complaint_detail.address')}</p>
                                     <p className="font-medium">{complaint.users?.address || '-'}</p>
                                 </div>
+                                <div className="md:col-span-2 pt-2 mt-2 border-t border-gray-200 border-dashed">
+                                    <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Date Complaint Create</p>
+                                    <p className="font-medium text-indigo-700">{formatDate(complaint.created_at)}</p>
+                                </div>
                             </div>
                         </div>
 
@@ -390,7 +394,12 @@ export default function AdminComplaintDetail() {
                     {/* Add Remark Form - Hide for cancelled complaints */}
                     {complaint.status !== 'cancelled' && (
                         <div className="card">
-                            <h3 className="text-lg font-semibold mb-4">{t('admin_complaint_detail.add_remark')}</h3>
+                            <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-2">
+                                <h3 className="text-lg font-semibold">{t('admin_complaint_detail.add_remark')}</h3>
+                                <div className="text-xs text-gray-500 bg-gray-50 px-2.5 py-1 rounded-full border border-gray-200">
+                                    Last Updated: <span className="font-medium">{formatDate(complaint.updated_at)}</span>
+                                </div>
+                            </div>
 
                             {(() => {
                                 const isEscalated = complaint.status === 'incomplete' || complaint.status === 'bawa_pulang';
@@ -524,20 +533,7 @@ export default function AdminComplaintDetail() {
 
                 {/* Sidebar */}
                 <div className="space-y-6">
-                    {/* Dates */}
-                    <div className="card">
-                        <h3 className="font-semibold mb-4">{t('admin_complaint_detail.dates')}</h3>
-                        <div className="space-y-3 text-sm">
-                            <div>
-                                <p className="text-gray-500">{t('admin_complaint_detail.date_created')}</p>
-                                <p className="font-medium">{formatDate(complaint.created_at)}</p>
-                            </div>
-                            <div>
-                                <p className="text-gray-500">{t('admin_complaint_detail.date_updated')}</p>
-                                <p className="font-medium">{formatDate(complaint.updated_at)}</p>
-                            </div>
-                        </div>
-                    </div>
+
 
                 </div>
             </div>
