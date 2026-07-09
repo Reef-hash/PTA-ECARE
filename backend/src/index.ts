@@ -33,8 +33,10 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded files from local filesystem
-const uploadsDir = path.resolve(process.cwd(), 'uploads');
+// Serve uploaded files - guna UPLOAD_DIR env var supaya fail selamat dari deployment
+const uploadsDir = process.env.UPLOAD_DIR 
+    ? path.resolve(process.env.UPLOAD_DIR) 
+    : path.resolve(process.cwd(), 'uploads');
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }

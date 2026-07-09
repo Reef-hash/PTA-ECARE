@@ -150,7 +150,7 @@
         "pending": "Belum Diproses",
         "in_process": "Dalam Proses",
         "closed": "Selesai",
-        "incomplete": "Incomplete (Bawa Pulang Bengkel)",
+        "incomplete": "Tidak Siap / Bawa Balik Bengkel",
         "bawa_pulang": "Bawa Pulang",
         "status": "Status",
         "action": "Tindakan",
@@ -306,7 +306,7 @@
         "status_pending": "Menunggu",
         "status_in_process": "Dalam Proses",
         "status_closed": "Selesai",
-        "status_incomplete": "Incomplete (Bawa Pulang Bengkel)",
+        "status_incomplete": "Tidak Siap / Bawa Balik Bengkel",
         "status_bawa_pulang": "Bawa Pulang",
         "status_closed_detailed": "Aduan telah selesai dibaiki oleh {{name}} pada {{date}}. Barang sedia untuk diambil.",
         "status_pending_detailed": "Terima kasih. Aduan akan diproses secepat mungkin.",
@@ -386,7 +386,7 @@
         "error_remark_input": "Sila masukkan catatan atau status",
         "error_save_remark": "Gagal menambah catatan",
         "recent_assigned": "Aduan Diagihkan Terkini",
-        "status_incomplete": "Tidak Lengkap / Bawa Pulang",
+        "status_incomplete": "Tidak Siap / Bawa Balik Bengkel",
         "click_to_view": "Papar"
     },
     "user_dashboard": {

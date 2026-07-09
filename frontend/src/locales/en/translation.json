@@ -150,7 +150,7 @@
         "pending": "Pending",
         "in_process": "In Process",
         "closed": "Closed",
-        "incomplete": "Incomplete (Bawa Pulang Bengkel)",
+        "incomplete": "Incomplete / Bring to Workshop",
         "bawa_pulang": "Brought Back",
         "status": "Status",
         "action": "Action",
@@ -306,7 +306,7 @@
         "status_pending": "Pending",
         "status_in_process": "In Process",
         "status_closed": "Closed",
-        "status_incomplete": "Incomplete (Bawa Pulang Bengkel)",
+        "status_incomplete": "Incomplete / Bring to Workshop",
         "status_bawa_pulang": "Brought Back",
         "status_closed_detailed": "Complaint was repaired by {{name}} on {{date}}. Item ready for pickup.",
         "status_pending_detailed": "Thank you. Complaint will be processed as soon as possible.",
@@ -386,7 +386,7 @@
         "error_remark_input": "Please enter remark or status",
         "error_save_remark": "Failed to add remark",
         "recent_assigned": "Recent Assigned Complaints",
-        "status_incomplete": "Incomplete / Bring Home",
+        "status_incomplete": "Incomplete / Bring to Workshop",
         "click_to_view": "View"
     },
     "user_dashboard": {

@@ -1,7 +1,12 @@
 import fs from 'fs';
 import path from 'path';
 
-const UPLOAD_ROOT = path.resolve(process.cwd(), 'uploads');
+// Guna UPLOAD_DIR env var supaya uploads disimpan di luar folder deployment
+// Server: UPLOAD_DIR=/home/u134652667/uploads
+// Local dev: fallback ke ./uploads
+const UPLOAD_ROOT = process.env.UPLOAD_DIR 
+    ? path.resolve(process.env.UPLOAD_DIR) 
+    : path.resolve(process.cwd(), 'uploads');
 
 const SUBDIRS = ['warranty-docs', 'receipt-docs', 'user-images'];
 
