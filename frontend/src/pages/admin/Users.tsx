@@ -5,7 +5,7 @@ import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 import { User } from '../../types';
 import toast from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, Trans } from 'react-i18next';
 
 export default function Users() {
     const { t } = useTranslation();
@@ -64,10 +64,10 @@ export default function Users() {
         try {
             await api.delete(`/admin/users/${userToDelete.id}`);
             setUsers(users.filter(u => u.id !== userToDelete.id));
-            toast.success('Pelanggan berjaya dipadam.');
+            toast.success(t('admin_users.delete_success'));
             setUserToDelete(null);
         } catch (error: any) {
-            toast.error(error.response?.data?.error || 'Gagal memadam pelanggan.');
+            toast.error(error.response?.data?.error || t('admin_users.delete_error'));
         } finally {
             setIsDeleting(false);
         }
@@ -258,7 +258,7 @@ export default function Users() {
                                         <button
                                             onClick={() => setUserToDelete({ id: user.id, name: user.full_name })}
                                             className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-red-100"
-                                            title="Padam Pelanggan"
+                                            title={t('admin_users.delete_title')}
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </button>
@@ -322,7 +322,7 @@ export default function Users() {
                                                     <button
                                                         onClick={() => setUserToDelete({ id: user.id, name: user.full_name })}
                                                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                        title="Padam Pelanggan"
+                                                        title={t('admin_users.delete_title')}
                                                     >
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
@@ -565,9 +565,11 @@ export default function Users() {
                             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <Trash2 className="w-8 h-8 text-red-600" />
                             </div>
-                            <h2 className="text-xl font-bold text-gray-800 mb-2">Padam Pelanggan</h2>
+                            <h2 className="text-xl font-bold text-gray-800 mb-2">{t('admin_users.delete_title')}</h2>
                             <p className="text-gray-600 mb-6">
-                                Adakah anda pasti untuk memadam pelanggan <span className="font-semibold text-gray-900">{userToDelete.name}</span>? Tindakan ini tidak boleh diundur.
+                                <Trans i18nKey="admin_users.delete_confirm" values={{ name: userToDelete.name }}>
+                                    Adakah anda pasti untuk memadam pelanggan <span className="font-semibold text-gray-900">{userToDelete.name}</span>? Tindakan ini tidak boleh diundur.
+                                </Trans>
                             </p>
                             <div className="flex gap-3">
                                 <button
@@ -575,7 +577,7 @@ export default function Users() {
                                     disabled={isDeleting}
                                     className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
                                 >
-                                    Batal
+                                    {t('common_actions.cancel')}
                                 </button>
                                 <button
                                     onClick={confirmDeleteUser}
@@ -585,7 +587,7 @@ export default function Users() {
                                     {isDeleting ? (
                                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                                     ) : (
-                                        'Ya, Padam'
+                                        t('admin_users.btn_delete')
                                     )}
                                 </button>
                             </div>
