@@ -393,7 +393,7 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
 
                 {/* Footer */}
                 <footer className="p-4 text-center text-sm text-gray-500">
-                    © 2026 DFKTVETMARABESUT. All rights reserved.
+                    © 2026 DFK TVETMARA BESUT. All Right Reserved.
                 </footer>
             </main>
         </div>

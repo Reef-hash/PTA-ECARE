@@ -518,7 +518,7 @@ export default function PublicComplaint() {
 
                 {/* Footer */}
                 <footer className="text-center text-sm text-white/60 mt-8">
-                    © 2026 DFKTVETMARABESUT. All rights reserved.
+                    © 2026 DFK TVETMARA BESUT. All Right Reserved.
                 </footer>
             </div>
         </div>
