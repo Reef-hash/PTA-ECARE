@@ -4,7 +4,7 @@ import { z } from 'zod';
 export const registerSchema = z.object({
     full_name: z.string().min(2, 'Name must be at least 2 characters'),
     ic_number: z.string().length(12, 'IC number must be 12 digits').regex(/^\d+$/, 'IC number must contain only digits'),
-    email: z.string().email('Email is required'),
+    email: z.string().email('E-mel tidak sah').optional().or(z.literal('')),
     contact_no: z.string().min(10, 'Invalid phone number'),
     contact_no_2: z.string().optional(),
     address: z.string().min(5, 'Address is required'),

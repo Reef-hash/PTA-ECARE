@@ -1,0 +1,1 @@
+const mysql = require('mysql2/promise'); async function run() { const c = await mysql.createConnection({host:'localhost',user:'u134652667_ecare',password:'4!8plFEVFy',database:'u134652667_ecare_db'}); const [r] = await c.query('DESCRIBE users'); console.log(r); c.end(); } run();
