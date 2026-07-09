@@ -61,7 +61,7 @@ export default function MainTechDashboard() {
                 </div>
 
                 {/* Stats Grid - incomplete lifecycle */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-6">
                     {statCards.map((card) => {
                         const Icon = card.icon;
                         const colors = getColorClasses(card.color);
@@ -69,17 +69,15 @@ export default function MainTechDashboard() {
                             <Link
                                 key={card.label}
                                 to={`/main-tech/complaints?status=${card.filter}`}
-                                className={`block text-left w-full rounded-xl shadow-sm border p-5 ${colors.border} border-l-4 transition-all duration-200 bg-white hover:bg-gray-50`}
+                                className={`bg-white rounded-xl shadow-sm border-l-4 p-3 sm:p-5 ${colors.border} hover:shadow-lg transition-shadow cursor-pointer flex flex-col justify-between`}
                             >
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-xs uppercase font-medium text-gray-500">{card.label}</p>
-                                        <p className="text-2xl font-bold text-gray-800 mt-1">{card.value}</p>
-                                    </div>
-                                    <div className={`w-10 h-10 ${colors.bg} rounded-lg flex items-center justify-center`}>
-                                        <Icon className={`w-5 h-5 ${colors.icon}`} />
+                                <div className="flex items-center justify-between mb-2">
+                                    <p className="text-gray-500 text-[10px] sm:text-xs uppercase font-medium leading-tight line-clamp-2 pr-1">{card.label}</p>
+                                    <div className={`w-8 h-8 sm:w-10 sm:h-10 ${colors.bg} rounded-md sm:rounded-lg flex items-center justify-center shrink-0`}>
+                                        <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${colors.icon}`} />
                                     </div>
                                 </div>
+                                <p className="text-xl sm:text-2xl font-bold text-gray-800">{card.value}</p>
                             </Link>
                         );
                     })}
