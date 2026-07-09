@@ -287,16 +287,16 @@ export default function UserRegister() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            {t('user_dashboard.label_phone2')} <span className="text-red-500">*</span>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            {t('user_dashboard.label_phone2')}
                                         </label>
+                                        <p className="text-xs text-gray-400 mb-2">Jika tiada No Phone 2, masukkan nombor phone yang sama</p>
                                         <input
                                             type="tel"
                                             value={formData.contact_no_2}
                                             onChange={(e) => setFormData({ ...formData, contact_no_2: e.target.value.replace(/\D/g, '') })}
                                             placeholder="0198765432"
                                             className="input-field"
-                                            required
                                         />
                                     </div>
 
