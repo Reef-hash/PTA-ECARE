@@ -25,7 +25,6 @@ export default function Users() {
         contact_no_2: '',
         address: '',
         state: '',
-        state: '',
         password: '',
     });
 
