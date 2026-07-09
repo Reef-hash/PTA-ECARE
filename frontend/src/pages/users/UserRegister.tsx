@@ -287,10 +287,9 @@ export default function UserRegister() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            {t('user_dashboard.label_phone2')}
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            {t('user_dashboard.label_phone2')} <span className="text-gray-400 text-xs font-normal ml-1">(Jika tiada No Phone 2, masukkan nombor phone yang sama)</span>
                                         </label>
-                                        <p className="text-xs text-gray-400 mb-2">Jika tiada No Phone 2, masukkan nombor phone yang sama</p>
                                         <input
                                             type="tel"
                                             value={formData.contact_no_2}
