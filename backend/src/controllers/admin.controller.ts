@@ -326,6 +326,12 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
 export const deleteUser = async (req: Request, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
+        
+        // Delete dependent records that are safe to delete first
+        await pool.query('DELETE FROM user_logs WHERE user_id = ?', [id]);
+        await pool.query('DELETE FROM password_resets WHERE user_id = ?', [id]);
+        
+        // Then delete the user (will still fail if they have complaints)
         await pool.query('DELETE FROM users WHERE id = ?', [id]);
         res.json({ message: 'User deleted' });
     } catch (error: any) {
