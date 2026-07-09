@@ -174,7 +174,7 @@ export default function TechDashboard() {
     return (
         <AdminLayout title={t('tech_dashboard.title')} breadcrumb={t('tech_dashboard.title')}>
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-8">
                 {statCards.map((card) => {
                     const Icon = card.icon;
                     const colors = getColorClasses(card.color);
@@ -182,17 +182,15 @@ export default function TechDashboard() {
                         <Link
                             key={card.label}
                             to={card.path}
-                            className={`stat-card ${colors.border} hover:shadow-lg transition-shadow cursor-pointer`}
+                            className={`bg-white rounded-xl shadow-sm border-l-4 p-3 sm:p-5 ${colors.border} hover:shadow-lg transition-shadow cursor-pointer flex flex-col justify-between`}
                         >
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-gray-500 text-sm">{card.label}</p>
-                                    <p className="text-3xl font-bold text-gray-800 mt-1">{card.value}</p>
-                                </div>
-                                <div className={`w-12 h-12 ${colors.bg} rounded-lg flex items-center justify-center`}>
-                                    <Icon className={`w-6 h-6 ${colors.icon}`} />
+                            <div className="flex items-center justify-between mb-2">
+                                <p className="text-gray-500 text-[10px] sm:text-xs uppercase font-medium leading-tight line-clamp-2 pr-1">{card.label}</p>
+                                <div className={`w-8 h-8 sm:w-10 sm:h-10 ${colors.bg} rounded-md sm:rounded-lg flex items-center justify-center shrink-0`}>
+                                    <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${colors.icon}`} />
                                 </div>
                             </div>
+                            <p className="text-xl sm:text-2xl font-bold text-gray-800">{card.value}</p>
                         </Link>
                     );
                 })}
