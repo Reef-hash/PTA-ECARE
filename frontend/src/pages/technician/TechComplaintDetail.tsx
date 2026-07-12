@@ -175,6 +175,7 @@ export default function TechComplaintDetail() {
                             <div>
                                 <p className="text-sm text-gray-500">Report No</p>
                                 <h2 className="text-2xl font-bold text-gray-800">{complaint.report_number}</h2>
+                                <p className="text-sm text-gray-500 mt-1">{t('user_dashboard.label_date_created')}: {formatDate(complaint.created_at)}</p>
                             </div>
                             <div className="self-start sm:self-auto w-fit">
                                 {getStatusBadge(complaint.status)}
@@ -329,7 +330,13 @@ export default function TechComplaintDetail() {
 
                     {/* Add Remark Form */}
                     <div className="card">
-                        <h3 className="text-lg font-semibold mb-4">{t('technician_dashboard.add_remark_title')}</h3>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 pb-4 border-b border-gray-100 gap-2">
+                            <h3 className="text-lg font-semibold">{t('technician_dashboard.add_remark_title')}</h3>
+                            <div className="text-left sm:text-right">
+                                <p className="text-xs text-gray-500">{t('user_dashboard.label_date_updated')}</p>
+                                <p className="text-sm font-medium text-gray-800">{formatDate(complaint.updated_at)}</p>
+                            </div>
+                        </div>
 
                         {/* Show limit warning only if NOT editing and limit reached */}
                         {(() => {
@@ -415,20 +422,7 @@ export default function TechComplaintDetail() {
 
                 {/* Sidebar */}
                 <div className="space-y-6">
-                    {/* Dates */}
-                    <div className="card">
-                        <h3 className="font-semibold mb-4">{t('common_actions.date')}</h3>
-                        <div className="space-y-3 text-sm">
-                            <div>
-                                <p className="text-gray-500">{t('user_dashboard.label_date_created')}</p>
-                                <p className="font-medium">{formatDate(complaint.created_at)}</p>
-                            </div>
-                            <div>
-                                <p className="text-gray-500">{t('user_dashboard.label_date_updated')}</p>
-                                <p className="font-medium">{formatDate(complaint.updated_at)}</p>
-                            </div>
-                        </div>
-                    </div>
+
 
                 </div>
             </div>
