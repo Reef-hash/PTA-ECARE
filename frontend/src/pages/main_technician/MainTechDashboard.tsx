@@ -3,7 +3,7 @@ import { Wrench, AlertCircle, Clock, UserCheck, CheckCircle } from 'lucide-react
 import { Link } from 'react-router-dom';
 import MainTechLayout from '../../components/MainTechLayout';
 import api from '../../services/api';
-import { DashboardStats } from '../../types';
+import { Complaint, DashboardStats } from '../../types';
 import { useTranslation } from 'react-i18next';
 
 export default function MainTechDashboard() {
@@ -13,6 +13,8 @@ export default function MainTechDashboard() {
         cancelled: 0, incomplete: 0,
         incomplete_total: 0, incomplete_not_assigned: 0, incomplete_assigned: 0, incomplete_completed: 0,
     });
+    const [recentComplaints, setRecentComplaints] = useState<Complaint[]>([]);
+    const [isLoadingRecent, setIsLoadingRecent] = useState(true);
 
     const loadStats = useCallback(async () => {
         try {
@@ -23,9 +25,22 @@ export default function MainTechDashboard() {
         }
     }, []);
 
+    const loadRecent = useCallback(async () => {
+        setIsLoadingRecent(true);
+        try {
+            const res = await api.get('/complaints?status=incomplete&limit=5');
+            setRecentComplaints(res.data.complaints || res.data.data || []);
+        } catch (error) {
+            console.error('Failed to load recent complaints', error);
+        } finally {
+            setIsLoadingRecent(false);
+        }
+    }, []);
+
     useEffect(() => {
         loadStats();
-    }, [loadStats]);
+        loadRecent();
+    }, [loadStats, loadRecent]);
 
     // Incomplete lifecycle cards. Each maps to a backend status filter.
     const statCards = [
@@ -81,6 +96,78 @@ export default function MainTechDashboard() {
                             </Link>
                         );
                     })}
+                </div>
+
+                {/* Recent Complaints */}
+                <div className="card overflow-hidden">
+                    <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                        <h2 className="text-lg font-semibold text-gray-800">
+                            {t('main_tech.dashboard.recent_complaints', 'Aduan Terkini (Bawa Pulang)')}
+                        </h2>
+                        <Link
+                            to="/main-tech/complaints"
+                            className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
+                        >
+                            {t('common.view_all', 'Lihat Semua')} →
+                        </Link>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{t('admin_users.report_no', 'No. Laporan')}</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{t('admin_complaint_detail.date_created', 'Tarikh Dicipta')}</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('table.original_technician', 'Juruteknik Asal')}</th>
+                                    <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common_actions.action', 'Tindakan')}</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {isLoadingRecent ? (
+                                    <tr>
+                                        <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                                            <div className="flex justify-center items-center gap-3">
+                                                <div className="animate-spin rounded-full h-5 w-5 border-2 border-indigo-500 border-t-transparent"></div>
+                                                Loading...
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ) : recentComplaints.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                                            Tiada aduan terkini
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    recentComplaints.map(complaint => (
+                                        <tr key={complaint.id} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                                                {complaint.report_number || `ADU-${complaint.id}`}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {new Date(complaint.created_at).toLocaleDateString('ms-MY', {
+                                                    day: 'numeric', month: 'short', year: 'numeric'
+                                                })}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-gray-500">
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700">
+                                                    {complaint.technicians?.name || complaint.assigned_to || 'Tidak Diketahui'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                <Link
+                                                    to={`/main-tech/complaint/${complaint.report_number}`}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-medium rounded transition-colors shadow-sm"
+                                                >
+                                                    Papar
+                                                </Link>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </MainTechLayout>
