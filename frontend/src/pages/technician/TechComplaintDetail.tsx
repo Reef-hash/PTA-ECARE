@@ -408,7 +408,16 @@ export default function TechComplaintDetail() {
                             const maxRemarks = isEscalated ? 6 : 3;
                             const totalRemarks = adminRemarks.length + techRemarks.length;
                             const absoluteMax = 6;
-                            
+                            // If the complaint is already marked as incomplete/bawa_pulang, the technician cannot update it anymore
+                            if ((complaint.status === 'incomplete' || complaint.status === 'bawa_pulang') && !editingId) {
+                                return (
+                                    <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded relative mb-4" role="alert">
+                                        <strong className="font-bold">Perhatian: </strong>
+                                        <span className="block sm:inline">Aduan ini telah dikemaskini sebagai 'Incomplete / Bawa Pulang' dan telah diserahkan kembali kepada Main Technician. Anda tidak lagi boleh menambah komen atau menukar status.</span>
+                                    </div>
+                                );
+                            }
+
                             // If absolute max is reached, hide form completely
                             if (totalRemarks >= absoluteMax && !editingId) {
                                 return (
