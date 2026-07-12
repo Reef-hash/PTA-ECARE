@@ -14,7 +14,8 @@ export default function TechDashboard() {
         pending: 0,
         in_process: 0,
         closed: 0,
-        incomplete: 0,
+        incomplete_in: 0,
+        incomplete_out: 0,
     });
     const [recentComplaints, setRecentComplaints] = useState<Complaint[]>([]);
     const [historyComplaints, setHistoryComplaints] = useState<Complaint[]>([]);
@@ -173,7 +174,8 @@ export default function TechDashboard() {
     const statCards = [
         { label: t('dashboard.pending'), value: stats.pending, icon: Clock, color: 'yellow', path: '/admin/technician/complaints?status=pending' },
         { label: t('dashboard.in_process'), value: stats.in_process, icon: AlertTriangle, color: 'orange', path: '/admin/technician/complaints?status=in_process' },
-        { label: t('dashboard.incomplete'), value: stats.incomplete, icon: PackageOpen, color: 'amber', path: '/admin/technician/complaints?status=incomplete' },
+        { label: t('dashboard.incomplete_in'), value: stats.incomplete_in, icon: PackageOpen, color: 'red', path: '/admin/technician/complaints?status=incomplete' },
+        { label: t('dashboard.incomplete_out'), value: stats.incomplete_out, icon: Package, color: 'amber', path: '/admin/technician/complaints?view=history' },
         { label: t('dashboard.completed'), value: stats.closed, icon: CheckCircle, color: 'green', path: '/admin/technician/complaints?status=closed' },
     ];
 
@@ -184,6 +186,7 @@ export default function TechDashboard() {
             orange: { bg: 'bg-orange-100', icon: 'text-orange-600', border: 'border-l-orange-500' },
             green: { bg: 'bg-green-100', icon: 'text-green-600', border: 'border-l-green-500' },
             amber: { bg: 'bg-amber-100', icon: 'text-amber-600', border: 'border-l-amber-500' },
+            red: { bg: 'bg-red-100', icon: 'text-red-600', border: 'border-l-red-500' },
         };
         return colors[color] || colors.blue;
     };
@@ -191,7 +194,7 @@ export default function TechDashboard() {
     return (
         <AdminLayout title={t('tech_dashboard.title')} breadcrumb={t('tech_dashboard.title')}>
             {/* Stats Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-8">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2 sm:gap-4 mb-8">
                 {statCards.map((card) => {
                     const Icon = card.icon;
                     const colors = getColorClasses(card.color);

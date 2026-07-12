@@ -144,6 +144,8 @@
         "closed": "Selesai",
         "cancelled": "Dibatalkan",
         "incomplete": "Tidak Siap / Bawa Balik Bengkel",
+        "incomplete_in": "Tidak Siap / Bawa Balik Bengkel (IN)",
+        "incomplete_out": "Tidak Siap / Bawa Balik Bengkel (OUT)",
         "technician_stats": "Statistik Juruteknik",
         "no_technicians": "Tiada juruteknik"
     },

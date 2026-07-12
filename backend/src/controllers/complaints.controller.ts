@@ -28,15 +28,23 @@ export const getTechnicianDashboardStats = async (req: Request, res: Response): 
             pending: 0,
             in_process: 0,
             closed: 0,
-            incomplete: 0,
+            incomplete_in: 0,
+            incomplete_out: 0,
         };
 
         complaints?.forEach((c: any) => {
             if (c.status === 'pending') stats.pending++;
             if (c.status === 'in_process') stats.in_process++;
             if (c.status === 'closed') stats.closed++;
-            if (c.status === 'incomplete') stats.incomplete++;
+            if (c.status === 'incomplete' || c.status === 'bawa_pulang') stats.incomplete_in++;
         });
+
+        // Get count of incomplete cases that Ali surrendered in the past
+        const [historyIncomplete]: any = await pool.query(
+            'SELECT COUNT(DISTINCT complaint_id) as count FROM technician_remarks WHERE remark_by = ? AND status IN ("incomplete", "bawa_pulang")',
+            [technicianId]
+        );
+        stats.incomplete_out = historyIncomplete[0]?.count || 0;
 
         res.json({ stats });
     } catch (error) {
