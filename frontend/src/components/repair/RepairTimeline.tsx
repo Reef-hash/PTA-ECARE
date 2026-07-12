@@ -49,10 +49,20 @@ export default function RepairTimeline({ currentStatus, timelineEvents }: Repair
     // Determine the highest status reached from the actual events
     const currentIndex = stageOrder[currentStatus] ?? 0;
 
+    // Determine if the timeline already has an IN_COMPLETE event (so we don't show it again as waiting)
+    const hasIncomplete = timelineEvents.some(ev => ev.status === 'IN_COMPLETE');
+
     // Build the "future" stages that come AFTER the current status
     // These are stages that haven't been reached yet → shown as "Waiting..."
     const futureStages = lifecycleOrder
-        .filter(stage => stageOrder[stage.status] > currentIndex)
+        .filter(stage => {
+            if (stageOrder[stage.status] <= currentIndex) return false;
+            
+            // If the stage is IN_COMPLETE and we already encountered it, skip it in future stages
+            if (stage.status === 'IN_COMPLETE' && hasIncomplete) return false;
+            
+            return true;
+        })
         .map(stage => ({
             status: stage.status,
             label: stage.label,
