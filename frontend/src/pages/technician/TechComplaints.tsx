@@ -324,6 +324,12 @@ export default function TechComplaints() {
 
                                             <span className="text-gray-500 text-[11px] uppercase tracking-wider mt-0.5">{t('admin_master.brand')}</span>
                                             <span className="text-gray-600 text-xs">{complaint.brand_name}</span>
+
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider mt-0.5">{t('common.date') || 'Tarikh'}</span>
+                                            <span className="text-gray-600 text-xs">{new Date(complaint.created_at).toLocaleDateString(i18n.language === 'en' ? 'en-MY' : 'ms-MY')}</span>
+
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider mt-0.5">{t('complaint_form.defect_details') || 'Kerosakan'}</span>
+                                            <span className="text-gray-600 text-xs line-clamp-2" title={complaint.details}>{complaint.details || '-'}</span>
                                         </div>
 
                                         <div className="bg-gray-50 p-2.5 rounded-md text-xs border border-gray-100 mb-3">

@@ -263,6 +263,12 @@ export default function TechDashboard() {
 
                                         <span className="text-gray-500 text-[11px] uppercase tracking-wider mt-0.5">{t('complaint_form.brand')}</span>
                                         <span className="text-gray-600 text-xs">{complaint.brand_name}</span>
+
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider mt-0.5">{t('common.date') || 'Tarikh'}</span>
+                                        <span className="text-gray-600 text-xs">{new Date(complaint.created_at).toLocaleDateString(i18n.language === 'en' ? 'en-MY' : 'ms-MY')}</span>
+
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider mt-0.5">{t('complaint_form.defect_details') || 'Kerosakan'}</span>
+                                        <span className="text-gray-600 text-xs line-clamp-2" title={complaint.details}>{complaint.details || '-'}</span>
                                     </div>
 
                                     <div className="mt-4">
