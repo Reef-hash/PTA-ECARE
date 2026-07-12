@@ -232,7 +232,7 @@ export default function NotificationBell() {
 
     const fetchNotifications = async () => {
         try {
-            const res = await api.get('/notifications');
+            const res = await api.get(`/notifications?_t=${new Date().getTime()}`);
             const newUnreadCount = res.data?.unread_count || 0;
             const newNotifications = res.data?.notifications || [];
             const latestNotif = newNotifications.length > 0 ? newNotifications[0] : null;
@@ -262,12 +262,25 @@ export default function NotificationBell() {
         }
     };
 
+    const fetchNotificationsRef = useRef(fetchNotifications);
+
+    // Update ref to latest function on every render
     useEffect(() => {
-        fetchNotifications();
+        fetchNotificationsRef.current = fetchNotifications;
+    });
+
+    useEffect(() => {
+        if (fetchNotificationsRef.current) {
+            fetchNotificationsRef.current();
+        }
         // Poll every 5 seconds (reduced from 10)
-        const interval = setInterval(fetchNotifications, 5000);
+        const interval = setInterval(() => {
+            if (fetchNotificationsRef.current) {
+                fetchNotificationsRef.current();
+            }
+        }, 5000);
         return () => clearInterval(interval);
-    }, [playNotificationSound]);
+    }, []);
 
     // Close dropdown when clicking outside
     useEffect(() => {
