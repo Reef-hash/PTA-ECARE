@@ -550,7 +550,8 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
 
         if (role === 'admin' || role === 'technician') {
             const [complaintRows]: any = await pool.query('SELECT status FROM complaints WHERE id = ?', [id]);
-            const isMainTechEscalated = complaintRows[0]?.status === 'incomplete' || complaintRows[0]?.status === 'bawa_pulang';
+            const currentStatus = complaintRows[0]?.status;
+            const isMainTechEscalated = currentStatus === 'incomplete' || currentStatus === 'bawa_pulang' || status === 'incomplete' || status === 'bawa_pulang';
             const MAX_REMARKS = isMainTechEscalated ? 5 : 3;
 
             const [adminCountRow]: any = await pool.query('SELECT COUNT(*) as count FROM complaint_remarks WHERE complaint_id = ?', [id]);

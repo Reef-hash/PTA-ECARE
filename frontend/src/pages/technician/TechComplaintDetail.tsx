@@ -338,22 +338,34 @@ export default function TechComplaintDetail() {
                             </div>
                         </div>
 
-                        {/* Show limit warning only if NOT editing and limit reached */}
                         {(() => {
-                            const isEscalated = complaint.status === 'incomplete' || complaint.status === 'bawa_pulang';
+                            // Check if escalated based on DB status OR selected status
+                            const isEscalated = complaint.status === 'incomplete' || complaint.status === 'bawa_pulang' || remarkData.status === 'incomplete' || remarkData.status === 'bawa_pulang';
                             const maxRemarks = isEscalated ? 5 : 3;
-                            const limitReached = (adminRemarks.length + techRemarks.length) >= maxRemarks;
+                            const totalRemarks = adminRemarks.length + techRemarks.length;
+                            const absoluteMax = 5;
                             
-                            if (limitReached && !editingId) {
+                            // If absolute max is reached, hide form completely
+                            if (totalRemarks >= absoluteMax && !editingId) {
                                 return (
                                     <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
                                         <strong className="font-bold">Limit Reached: </strong>
-                                        <span className="block sm:inline">Maximum {maxRemarks} remarks allowed per complaint.</span>
+                                        <span className="block sm:inline">Maximum {absoluteMax} remarks allowed per complaint.</span>
                                     </div>
                                 );
                             }
+                            
+                            // If current limit is reached based on selection, show warning but still render form so they can change selection
+                            const currentLimitReached = totalRemarks >= maxRemarks && !editingId;
+
                             return (
                             <form onSubmit={handleAddRemark} className="space-y-4">
+                                {currentLimitReached && (
+                                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                                        <strong className="font-bold">Limit Reached: </strong>
+                                        <span className="block sm:inline">Maximum {maxRemarks} remarks allowed per complaint. Please select 'Incomplete / Bawa Pulang' to escalate.</span>
+                                    </div>
+                                )}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">{t('common_actions.status')}</label>
@@ -401,7 +413,7 @@ export default function TechComplaintDetail() {
                                     />
                                 </div>
                                 <div className="flex gap-2">
-                                    <button type="submit" disabled={isSaving} className="btn-success flex items-center gap-2">
+                                    <button type="submit" disabled={isSaving || currentLimitReached} className="btn-success flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                                         {isSaving ? (
                                             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                                         ) : (
