@@ -195,14 +195,16 @@ export default function TechDashboard() {
         <AdminLayout title={t('tech_dashboard.title')} breadcrumb={t('tech_dashboard.title')}>
             {/* Stats Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2 sm:gap-4 mb-8">
-                {statCards.map((card) => {
+                {statCards.map((card, index) => {
                     const Icon = card.icon;
                     const colors = getColorClasses(card.color);
+                    // Make the 5th card (last card) span 2 columns on mobile to center it
+                    const colSpanClass = index === statCards.length - 1 ? 'col-span-2 lg:col-span-1' : '';
                     return (
                         <Link
                             key={card.label}
                             to={card.path}
-                            className={`bg-white rounded-xl shadow-sm border-l-4 p-3 sm:p-5 ${colors.border} hover:shadow-lg transition-shadow cursor-pointer flex flex-col justify-between`}
+                            className={`bg-white rounded-xl shadow-sm border-l-4 p-3 sm:p-5 ${colors.border} hover:shadow-lg transition-shadow cursor-pointer flex flex-col justify-between ${colSpanClass}`}
                         >
                             <div className="flex items-center justify-between mb-2">
                                 <p className="text-gray-500 text-[10px] sm:text-xs uppercase font-medium leading-tight line-clamp-2 pr-1">{card.label}</p>
