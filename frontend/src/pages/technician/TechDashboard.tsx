@@ -306,10 +306,10 @@ export default function TechDashboard() {
 
                                     <div className="mt-4">
                                         <Link
-                                            to={`/admin/technician/complaint/${complaint.report_number}/track-repair`}
+                                            to={`/admin/technician/complaint/${complaint.report_number}`}
                                             className="block w-full text-[11px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-2.5 rounded-lg transition-colors text-center shadow-sm uppercase tracking-wider"
                                         >
-                                            Update Repair Progress
+                                            UPDATE REPAIR PROGRESS
                                         </Link>
                                     </div>
 
@@ -368,10 +368,10 @@ export default function TechDashboard() {
                                                         {getStatusMessage(complaint)}
                                                     </div>
                                                     <Link
-                                                        to={`/admin/technician/complaint/${complaint.report_number}/track-repair`}
+                                                        to={`/admin/technician/complaint/${complaint.report_number}`}
                                                         className="inline-block text-[10px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-2.5 py-1 rounded transition-colors w-fit uppercase tracking-wider"
                                                     >
-                                                        Update Repair Progress
+                                                        UPDATE REPAIR PROGRESS
                                                     </Link>
                                                 </div>
                                             </td>
