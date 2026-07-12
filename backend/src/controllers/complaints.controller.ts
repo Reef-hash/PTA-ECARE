@@ -63,7 +63,7 @@ export const getComplaints = async (req: Request, res: Response): Promise<void> 
             queryParams.push(userId);
         } else if (role === 'technician') {
             if (view === 'history') {
-                whereClauses.push('(c.assigned_to = ? OR c.id IN (SELECT complaint_id FROM technician_remarks WHERE remark_by = ?))');
+                whereClauses.push('(c.assigned_to = ? OR c.id IN (SELECT complaint_id FROM technician_remarks WHERE remark_by = ? AND status IN ("incomplete", "bawa_pulang")))');
                 queryParams.push(userId, userId);
             } else {
                 whereClauses.push('c.assigned_to = ?');
