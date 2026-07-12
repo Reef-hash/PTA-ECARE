@@ -15,6 +15,7 @@ export default function TechComplaints() {
     const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'all');
+    const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 15;
 
@@ -27,7 +28,7 @@ export default function TechComplaints() {
 
     useEffect(() => {
         loadComplaints();
-    }, []);
+    }, [activeTab]);
 
     const loadComplaints = async () => {
         setIsLoading(true);
@@ -36,6 +37,9 @@ export default function TechComplaints() {
                 page: '1',
                 limit: '1000',
             });
+            if (activeTab === 'history') {
+                params.append('view', 'history');
+            }
 
             const response = await api.get(`/complaints?${params.toString()}`);
 
@@ -99,10 +103,10 @@ export default function TechComplaints() {
         return results;
     }, [allComplaints, search, statusFilter]);
 
-    // Reset page when search or filter changes
+    // Reset page when search, filter or tab changes
     useEffect(() => {
         setCurrentPage(1);
-    }, [search, statusFilter]);
+    }, [search, statusFilter, activeTab]);
 
     // Pagination computed from filtered results
     const totalPages = Math.ceil(filteredComplaints.length / itemsPerPage);
@@ -248,9 +252,26 @@ export default function TechComplaints() {
 
     return (
         <AdminLayout title={t('technician_dashboard.title_complaints')} breadcrumb={t('technician_dashboard.title_complaints')}>
-            <div className="card">
-                {/* Filters */}
-                <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="max-w-7xl mx-auto space-y-4">
+
+                {/* Tabs */}
+                <div className="flex border-b border-gray-200 bg-white px-6 pt-4 rounded-t-xl shadow-sm">
+                    <button
+                        onClick={() => setActiveTab('active')}
+                        className={`py-3 px-6 text-sm font-medium transition-colors ${activeTab === 'active' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                        Tugasan Aktif
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('history')}
+                        className={`py-3 px-6 text-sm font-medium transition-colors ${activeTab === 'history' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                        Sejarah Tugasan
+                    </button>
+                </div>
+
+                <div className="card">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <div className="flex-1">
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -476,6 +497,7 @@ export default function TechComplaints() {
                         )}
                     </>
                 )}
+            </div>
             </div>
         </AdminLayout>
     );

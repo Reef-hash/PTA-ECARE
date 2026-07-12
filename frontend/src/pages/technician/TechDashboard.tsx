@@ -17,6 +17,8 @@ export default function TechDashboard() {
         incomplete: 0,
     });
     const [recentComplaints, setRecentComplaints] = useState<Complaint[]>([]);
+    const [historyComplaints, setHistoryComplaints] = useState<Complaint[]>([]);
+    const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -43,6 +45,21 @@ export default function TechDashboard() {
             });
 
             setRecentComplaints(sortedComplaints);
+
+            // Fetch history complaints
+            const historyResponse = await api.get('/complaints?limit=10&view=history');
+            const hComplaints = historyResponse.data.complaints || [];
+            
+            // Filter out complaints that are currently assigned to the user
+            // to only show jobs they handled in the past but don't own now,
+            // or just show all their history. The backend history query returns both.
+            // For clarity in history tab, we can just show all of them sorted.
+            const sortedHistory = hComplaints.sort((a: Complaint, b: Complaint) => {
+                const dateA = new Date(a.updated_at || a.created_at).getTime();
+                const dateB = new Date(b.updated_at || b.created_at).getTime();
+                return dateB - dateA;
+            });
+            setHistoryComplaints(sortedHistory);
         } catch (error) {
             toast.error(t('common.error_load'));
         } finally {
@@ -198,7 +215,7 @@ export default function TechDashboard() {
 
             {/* Recent Assigned Complaints */}
             <div className="card">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-2">
                     <h2 className="text-lg font-semibold text-gray-800">{t('tech_dashboard.recent_assigned')}</h2>
                     <Link
                         to="/admin/technician/complaints"
@@ -208,13 +225,29 @@ export default function TechDashboard() {
                     </Link>
                 </div>
 
-                {recentComplaints.length === 0 ? (
+                {/* Tabs */}
+                <div className="flex border-b border-gray-200 mb-4">
+                    <button
+                        onClick={() => setActiveTab('active')}
+                        className={`py-2 px-4 text-sm font-medium transition-colors ${activeTab === 'active' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                        Tugasan Aktif
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('history')}
+                        className={`py-2 px-4 text-sm font-medium transition-colors ${activeTab === 'history' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                        Sejarah Tugasan
+                    </button>
+                </div>
+
+                {(activeTab === 'active' ? recentComplaints : historyComplaints).length === 0 ? (
                     <p className="text-gray-500 text-center py-8">{t('tech_dashboard.no_complaints')}</p>
                 ) : (
                     <div className="overflow-hidden sm:rounded-lg">
                         {/* Mobile Layout (List-Item Compact) */}
                         <div className="block md:hidden border-t border-gray-200">
-                            {recentComplaints.map((complaint, index) => (
+                            {(activeTab === 'active' ? recentComplaints : historyComplaints).map((complaint, index) => (
                                 <div key={complaint.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
                                     <div className="flex justify-between items-start mb-2">
                                         <div className="flex flex-col gap-1">
@@ -302,9 +335,9 @@ export default function TechDashboard() {
                                         <th className="text-left px-4 py-3 whitespace-nowrap">{t('common_actions.status')}</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    {recentComplaints.map((complaint, index) => (
-                                        <tr key={complaint.id} className="table-row">
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {(activeTab === 'active' ? recentComplaints : historyComplaints).map((complaint, index) => (
+                                        <tr key={complaint.id} className="hover:bg-gray-50 transition-colors">
                                             <td className="px-4 py-3 text-center text-gray-500 font-medium whitespace-nowrap">
                                                 {index + 1}
                                             </td>

@@ -56,12 +56,19 @@ export const getComplaints = async (req: Request, res: Response): Promise<void> 
         let whereClauses: string[] = ['1=1'];
 
         // Role-based filtering
+        const view = req.query.view as string;
+
         if (role === 'user') {
             whereClauses.push('c.user_id = ?');
             queryParams.push(userId);
         } else if (role === 'technician') {
-            whereClauses.push('c.assigned_to = ?');
-            queryParams.push(userId);
+            if (view === 'history') {
+                whereClauses.push('(c.assigned_to = ? OR c.id IN (SELECT complaint_id FROM technician_remarks WHERE remark_by = ?))');
+                queryParams.push(userId, userId);
+            } else {
+                whereClauses.push('c.assigned_to = ?');
+                queryParams.push(userId);
+            }
         } else if (role === 'admin') {
             if (assigned_to) {
                 whereClauses.push('c.assigned_to = ?');
