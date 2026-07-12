@@ -38,6 +38,7 @@
         "note": "* Language selection will be applied to the system display."
     },
     "common": {
+        "date": "Date",
         "loading": "Loading...",
         "success_save": "Settings saved successfully",
         "select": "Select",
@@ -161,6 +162,7 @@
         "incomplete_reason": "Incomplete Reason"
     },
     "complaint_form": {
+        "defect_details": "Damage Details",
         "full_name": "Full Name",
         "ic_no": "IC Number",
         "category": "Category",

@@ -38,6 +38,7 @@
         "note": "* Pilihan bahasa akan digunakan untuk paparan sistem."
     },
     "common": {
+        "date": "Tarikh",
         "loading": "Memuatkan...",
         "success_save": "Tetapan berjaya disimpan",
         "select": "Pilih",
@@ -161,6 +162,7 @@
         "incomplete_reason": "Sebab Bawa Pulang"
     },
     "complaint_form": {
+        "defect_details": "Kerosakan",
         "full_name": "Nama Penuh",
         "ic_no": "No IC",
         "category": "Kategori",
