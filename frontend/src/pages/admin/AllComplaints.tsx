@@ -598,11 +598,11 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                                                         {t('complaint_list.view') || 'View'}
                                                     </Link>
                                                     <Link
-                                                        to={`/admin/complaint/${complaint.report_number}`}
+                                                        to={`/admin/complaint/${complaint.report_number}/track-repair`}
                                                         className="w-full flex justify-center items-center gap-2 px-3 py-1.5 bg-white text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors text-xs font-medium border border-indigo-200"
                                                     >
                                                         <MapPin className="w-4 h-4" />
-                                                        UPDATE REPAIR PROGRESS
+                                                        TRACK REPAIR
                                                     </Link>
                                                 </div>
                                                 <div className="flex items-center gap-2 pb-0.5">
@@ -654,10 +654,10 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                                                         {complaint.report_number}
                                                     </Link>
                                                     <Link
-                                                        to={`/admin/complaint/${complaint.report_number}`}
+                                                        to={`/admin/complaint/${complaint.report_number}/track-repair`}
                                                         className="block mt-1 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
                                                     >
-                                                        UPDATE REPAIR PROGRESS
+                                                        TRACK REPAIR
                                                     </Link>
                                                 </td>
                                                 <td className="px-4 py-3">

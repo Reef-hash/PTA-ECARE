@@ -166,7 +166,7 @@ export default function MainTechComplaints() {
                                                         className="w-full inline-flex justify-center items-center gap-1.5 px-3 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-medium rounded-lg transition-colors border border-indigo-100"
                                                     >
                                                         <Eye className="w-4 h-4" />
-                                                        {t('common.view', 'View Details')}
+                                                        UPDATE REPAIR PROGRESS
                                                     </Link>
                                                 )}
                                             </div>
@@ -263,7 +263,7 @@ export default function MainTechComplaints() {
                                                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-medium rounded transition-colors shadow-sm"
                                                             >
                                                                 <Eye className="w-3.5 h-3.5" />
-                                                                {t('common.view', 'Papar')}
+                                                                UPDATE REPAIR PROGRESS
                                                             </Link>
                                                         )}
                                                     </td>
