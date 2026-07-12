@@ -198,13 +198,17 @@ export default function TechDashboard() {
                 {statCards.map((card, index) => {
                     const Icon = card.icon;
                     const colors = getColorClasses(card.color);
-                    // Make the 5th card (last card) span 2 columns on mobile to center it
-                    const colSpanClass = index === statCards.length - 1 ? 'col-span-2 lg:col-span-1' : '';
+                    // Center the 5th card on mobile without stretching it
+                    const isLastCard = index === statCards.length - 1;
+                    const layoutClass = isLastCard 
+                        ? 'col-span-2 justify-self-center w-[calc(50%-0.25rem)] sm:w-[calc(50%-0.5rem)] lg:col-span-1 lg:justify-self-auto lg:w-full' 
+                        : 'w-full';
+                        
                     return (
                         <Link
                             key={card.label}
                             to={card.path}
-                            className={`bg-white rounded-xl shadow-sm border-l-4 p-3 sm:p-5 ${colors.border} hover:shadow-lg transition-shadow cursor-pointer flex flex-col justify-between ${colSpanClass}`}
+                            className={`bg-white rounded-xl shadow-sm border-l-4 p-3 sm:p-5 ${colors.border} hover:shadow-lg transition-shadow cursor-pointer flex flex-col justify-between ${layoutClass}`}
                         >
                             <div className="flex items-center justify-between mb-2">
                                 <p className="text-gray-500 text-[10px] sm:text-xs uppercase font-medium leading-tight line-clamp-2 pr-1">{card.label}</p>
