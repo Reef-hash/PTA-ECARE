@@ -356,7 +356,7 @@ export default function TechComplaints() {
                                                 </Link>
                                             </div>
                                             <Link
-                                                to={`/admin/technician/complaint/${complaint.report_number}/track-repair`}
+                                                to={`/admin/technician/complaint/${complaint.report_number}`}
                                                 className="text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded-lg transition-colors w-full text-center"
                                             >
                                                 UPDATE REPAIR PROGRESS
@@ -395,7 +395,7 @@ export default function TechComplaints() {
                                                             {complaint.report_number}
                                                         </Link>
                                                         <Link
-                                                            to={`/admin/technician/complaint/${complaint.report_number}/track-repair`}
+                                                            to={`/admin/technician/complaint/${complaint.report_number}`}
                                                             className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
                                                         >
                                                             UPDATE REPAIR PROGRESS
