@@ -97,6 +97,7 @@ export interface Complaint {
     category_name?: string;
     customer?: User;
     model?: string;
+    tracks?: any[];
 }
 
 export interface ComplaintRemark {
