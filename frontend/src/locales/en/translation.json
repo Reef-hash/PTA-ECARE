@@ -77,7 +77,9 @@
         "error": "An error occurred",
         "by": "by",
         "waiting": "Waiting...",
-        "waiting_next_step": "Waiting for next step..."
+        "waiting_next_step": "Waiting for next step...",
+        "name": "Name",
+        "department": "Department"
     },
     "status_msg": {
         "cancelled_by": "Complaint cancelled by",
