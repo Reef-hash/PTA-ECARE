@@ -359,7 +359,7 @@ export default function TechComplaints() {
                                                 to={`/admin/technician/complaint/${complaint.report_number}/track-repair`}
                                                 className="text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded-lg transition-colors w-full text-center"
                                             >
-                                                TRACK REPAIR
+                                                UPDATE REPAIR PROGRESS
                                             </Link>
                                         </div>
                                     </div>
@@ -398,7 +398,7 @@ export default function TechComplaints() {
                                                             to={`/admin/technician/complaint/${complaint.report_number}/track-repair`}
                                                             className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
                                                         >
-                                                            TRACK REPAIR
+                                                            UPDATE REPAIR PROGRESS
                                                         </Link>
                                                     </div>
                                                 </td>
