@@ -564,20 +564,6 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
             }
         }
 
-        if (role === 'admin') {
-            await pool.query(
-                'INSERT INTO complaint_remarks (complaint_id, note_transport, checking, remark, status, remark_by) VALUES (?, ?, ?, ?, ?, ?)',
-                [id, note_transport || null, checking || null, remark || null, status || null, userId]
-            );
-        } else if (role === 'technician') {
-            await pool.query(
-                'INSERT INTO technician_remarks (complaint_id, note_transport, checking, remark, status, remark_by) VALUES (?, ?, ?, ?, ?, ?)',
-                [id, note_transport || null, checking || null, remark || null, status || null, userId]
-            );
-        } else {
-            res.status(403).json({ error: 'Access denied' }); return;
-        }
-
         let previousStatus: string | null = null;
         if (status) {
             const [complaintRows]: any = await pool.query('SELECT status FROM complaints WHERE id = ?', [id]);
@@ -585,6 +571,36 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
             await pool.query('UPDATE complaints SET status = ?, updated_at = NOW() WHERE id = ?', [status, id]);
         }
 
+        try {
+            if (role === 'admin') {
+                await pool.query(
+                    'INSERT INTO complaint_remarks (complaint_id, note_transport, checking, remark, status, remark_by) VALUES (?, ?, ?, ?, ?, ?)',
+                    [id, note_transport || null, checking || null, remark || null, status || null, userId]
+                );
+            } else if (role === 'technician') {
+                await pool.query(
+                    'INSERT INTO technician_remarks (complaint_id, note_transport, checking, remark, status, remark_by) VALUES (?, ?, ?, ?, ?, ?)',
+                    [id, note_transport || null, checking || null, remark || null, status || null, userId]
+                );
+            } else {
+                res.status(403).json({ error: 'Access denied' }); return;
+            }
+        } catch (insertError) {
+            console.warn('[addRemark] DB insertion error (possible missing ENUM), falling back to NULL status for remark:', insertError);
+            if (role === 'admin') {
+                await pool.query(
+                    'INSERT INTO complaint_remarks (complaint_id, note_transport, checking, remark, status, remark_by) VALUES (?, ?, ?, ?, NULL, ?)',
+                    [id, note_transport || null, checking || null, remark || null, userId]
+                );
+            } else if (role === 'technician') {
+                await pool.query(
+                    'INSERT INTO technician_remarks (complaint_id, note_transport, checking, remark, status, remark_by) VALUES (?, ?, ?, ?, NULL, ?)',
+                    [id, note_transport || null, checking || null, remark || null, userId]
+                );
+            }
+        }
+        // === NOTIFICATION BLOCK (non-fatal — DB status already updated above) ===
+        try {
         if (role === 'technician') {
             const [techRows]: any = await pool.query('SELECT name FROM technicians WHERE id = ?', [userId]);
             const techName = techRows[0]?.name || 'Technician';
@@ -655,13 +671,15 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                             const custHtml = buildNotificationEmailHtml(customerName, subject, `${reportNumber} aduan anda telah update status progress repair kerosakan ${subcategoryName} oleh juruteknik kami (${techName}). Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'user');
                             await sendEmail(customerData.email, subject, custHtml);
                         }
-                    } catch (err) {}
 
-                    const [mainTechs]: any = await pool.query('SELECT id FROM technicians WHERE username = "maintech"');
-                    if (mainTechs) {
-                        for (const mt of mainTechs) {
-                            await createNotification(mt.id, 'main_technician', `Status Update: ${reportNumber}`, `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}.`, 'status_update_detailed', id);
+                        const [mainTechs]: any = await pool.query('SELECT id FROM technicians WHERE username = "maintech"');
+                        if (mainTechs) {
+                            for (const mt of mainTechs) {
+                                await createNotification(mt.id, 'main_technician', `Status Update: ${reportNumber}`, `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}.`, 'status_update_detailed', id);
+                            }
                         }
+                    } catch (incompleteNotifErr) {
+                        console.error('[addRemark] Incomplete notification error (non-fatal):', incompleteNotifErr);
                     }
                 }
 
@@ -714,6 +732,9 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
             if (c.length > 0 && c[0].assigned_to) {
                 await createNotification(c[0].assigned_to, 'technician', `Job Update: ${c[0].report_number}`, `Technician updated complaint ${c[0].report_number} to '${status}'.`, 'status_update', id);
             }
+        }
+        } catch (notifError) {
+            console.error('[addRemark] Non-fatal notification error:', notifError);
         }
 
         res.status(201).json({ message: 'Remark added successfully' });

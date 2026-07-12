@@ -98,8 +98,15 @@ export default function TrackRepair() {
             closed: 'COMPLETE',
         };
 
-        return remarks.map(remark => {
-            const repairStatus = remark.status ? statusMap[remark.status] || 'PENDING' : 'PENDING';
+        return remarks.map((remark, index) => {
+            // Fix for missing ENUM in DB causing status to be empty:
+            // If remark.status is missing, fallback to complaint.status for the latest remark
+            let rStatus = remark.status;
+            if (!rStatus && index === remarks.length - 1 && complaint) {
+                rStatus = complaint.status;
+            }
+
+            const repairStatus = rStatus ? statusMap[rStatus] || 'PENDING' : 'PENDING';
             const locale = i18n.language === 'ms' ? 'ms-MY' : 'en-US';
             const d = new Date(remark.created_at);
             const dateStr = d.toLocaleDateString(locale, {
