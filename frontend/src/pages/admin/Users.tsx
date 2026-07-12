@@ -5,7 +5,7 @@ import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 import { User } from '../../types';
 import toast from 'react-hot-toast';
-import { useTranslation, Trans } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 
 export default function Users() {
     const { t } = useTranslation();
@@ -556,38 +556,58 @@ export default function Users() {
 
             {/* Delete Confirmation Modal */}
             {userToDelete && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => !isDeleting && setUserToDelete(null)}>
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 transition-all duration-300" onClick={() => !isDeleting && setUserToDelete(null)}>
                     <div
-                        className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-fade-in"
+                        className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all duration-300 scale-100"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="p-6 text-center">
-                            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Trash2 className="w-8 h-8 text-red-600" />
+                        {/* Header Warning Strip */}
+                        <div className="h-2 w-full bg-gradient-to-r from-red-500 to-rose-600"></div>
+                        
+                        <div className="p-8 text-center relative">
+                            {/* Close Button */}
+                            <button 
+                                onClick={() => setUserToDelete(null)}
+                                disabled={isDeleting}
+                                className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+
+                            <div className="relative w-20 h-20 mx-auto mb-6">
+                                <div className="absolute inset-0 bg-red-100 rounded-full animate-ping opacity-70"></div>
+                                <div className="relative w-full h-full bg-red-100 text-red-600 rounded-full flex items-center justify-center border-4 border-white shadow-sm mx-auto">
+                                    <Trash2 className="w-8 h-8" />
+                                </div>
                             </div>
-                            <h2 className="text-xl font-bold text-gray-800 mb-2">{t('admin_users.delete_title')}</h2>
-                            <p className="text-gray-600 mb-6">
-                                <Trans i18nKey="admin_users.delete_confirm" values={{ name: userToDelete.name }}>
-                                    Adakah anda pasti untuk memadam pelanggan <span className="font-semibold text-gray-900">{userToDelete.name}</span>? Tindakan ini tidak boleh diundur.
-                                </Trans>
-                            </p>
+                            
+                            <h2 className="text-2xl font-bold text-gray-900 mb-3">{t('admin_users.delete_title') || 'Padam Pelanggan'}</h2>
+                            
+                            <div className="bg-red-50 rounded-xl p-4 mb-8 text-left border border-red-100">
+                                <p className="text-gray-700 text-sm leading-relaxed text-center">
+                                    Adakah anda pasti untuk memadam pelanggan <span className="font-bold text-gray-900">{userToDelete.name}</span>? 
+                                    <br/>
+                                    <span className="text-red-600 font-semibold mt-1 inline-block">Tindakan ini tidak boleh diundur.</span>
+                                </p>
+                            </div>
+
                             <div className="flex gap-3">
                                 <button
                                     onClick={() => setUserToDelete(null)}
                                     disabled={isDeleting}
-                                    className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                                    className="flex-1 px-5 py-3 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:text-gray-900 transition-colors focus:ring-4 focus:ring-gray-100 focus:outline-none"
                                 >
-                                    {t('common_actions.cancel')}
+                                    {t('common_actions.cancel') || 'Batal'}
                                 </button>
                                 <button
                                     onClick={confirmDeleteUser}
                                     disabled={isDeleting}
-                                    className="flex-1 px-4 py-2.5 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+                                    className="flex-1 px-5 py-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-semibold rounded-xl shadow-lg shadow-red-500/30 transition-all focus:ring-4 focus:ring-red-500/50 focus:outline-none flex items-center justify-center gap-2 disabled:opacity-70"
                                 >
                                     {isDeleting ? (
                                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                                     ) : (
-                                        t('admin_users.btn_delete')
+                                        t('admin_users.btn_delete') || 'Ya, Padam'
                                     )}
                                 </button>
                             </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, CheckCircle, AlertTriangle, PackageOpen } from 'lucide-react';
+import { Clock, CheckCircle, AlertTriangle, PackageOpen, Eye, Printer } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 import { Complaint } from '../../types';
@@ -53,17 +53,17 @@ export default function TechDashboard() {
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'pending':
-                return <span className="badge badge-pending">{t('table.pending')}</span>;
+                return <span className="badge badge-pending">{t('admin_users.status_pending')}</span>;
             case 'in_process':
-                return <span className="badge badge-in-process">{t('table.in_process')}</span>;
+                return <span className="badge badge-in-process">{t('admin_users.status_in_process')}</span>;
             case 'incomplete':
-                return <span className="badge badge-incomplete">{t('table.incomplete')}</span>;
+                return <span className="badge badge-incomplete">{t('admin_users.status_incomplete')}</span>;
             case 'bawa_pulang':
-                return <span className="badge badge-incomplete">{t('table.bawa_pulang')}</span>;
+                return <span className="badge badge-incomplete">{t('admin_users.status_bawa_pulang')}</span>;
             case 'ready_pickup':
                 return <span className="badge bg-indigo-100 text-indigo-700 border-indigo-200">Ready Pickup</span>;
             case 'closed':
-                return <span className="badge badge-closed">{t('table.closed')}</span>;
+                return <span className="badge badge-closed">{t('admin_users.status_closed')}</span>;
             case 'cancelled':
                 return <span className="badge bg-red-100 text-red-700">{t('admin_users.status_cancelled') || 'Dibatalkan'}</span>;
             default:
@@ -231,12 +231,24 @@ export default function TechDashboard() {
                                                 {getStatusBadge(complaint.status)}
                                             </div>
                                         </div>
-                                        <Link
-                                            to={`/admin/technician/complaint/${complaint.report_number}/track-repair`}
-                                            className="text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2.5 py-1.5 rounded transition-colors"
-                                        >
-                                            TRACK REPAIR
-                                        </Link>
+                                        <div className="flex items-center gap-2">
+                                            <Link
+                                                to={`/admin/technician/complaint/${complaint.report_number}`}
+                                                className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                                title={t('technician_dashboard.click_to_view') || 'View'}
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                            </Link>
+                                            <Link
+                                                to={`/admin/print/${complaint.report_number}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                title="Cetak Resit"
+                                            >
+                                                <Printer className="w-4 h-4" />
+                                            </Link>
+                                        </div>
                                     </div>
                                     
                                     <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm items-start mb-3 mt-3">
@@ -270,7 +282,7 @@ export default function TechDashboard() {
                                         <th className="text-left px-4 py-3 whitespace-nowrap">{t('complaint_list.customer')}</th>
                                         <th className="text-left px-4 py-3 whitespace-nowrap">{t('complaint_form.subcategory')}</th>
                                         <th className="text-left px-4 py-3 whitespace-nowrap">{t('complaint_form.brand')}</th>
-                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('table.status')}</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('common_actions.status')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -287,12 +299,6 @@ export default function TechDashboard() {
                                                     >
                                                         {complaint.report_number}
                                                     </Link>
-                                                    <Link
-                                                        to={`/admin/technician/complaint/${complaint.report_number}/track-repair`}
-                                                        className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
-                                                    >
-                                                        TRACK REPAIR
-                                                    </Link>
                                                 </div>
                                             </td>
                                             <td className="px-4 py-3 whitespace-nowrap">
@@ -306,11 +312,17 @@ export default function TechDashboard() {
                                             <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.subcategory}</td>
                                             <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.brand_name}</td>
                                             <td className="px-4 py-3 whitespace-nowrap">
-                                                <div>
+                                                <div className="text-xs">
                                                     {getStatusBadge(complaint.status)}
-                                                    <div className="mt-2">
+                                                    <div className="mt-2 mb-2">
                                                         {getStatusMessage(complaint)}
                                                     </div>
+                                                    <Link
+                                                        to={`/admin/technician/complaint/${complaint.report_number}/track-repair`}
+                                                        className="inline-block text-[10px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-2.5 py-1 rounded transition-colors w-fit uppercase tracking-wider"
+                                                    >
+                                                        Update Repair Progress
+                                                    </Link>
                                                 </div>
                                             </td>
                                         </tr>

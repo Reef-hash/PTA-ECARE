@@ -91,16 +91,19 @@ export default function NotificationBell() {
         }
 
         // 2. Legacy Processing (Regex & String Matching)
+        const safeTitle = notification.title || '';
+        const safeMessage = notification.message || '';
+
         // Extract data from original message/title for translation
-        let reportMatch = notification.title.match(/[A-Z]\d+/);
+        let reportMatch = safeTitle.match(/[A-Z]\d+/);
         if (!reportMatch) {
-            reportMatch = notification.message.match(/[A-Z]\d+/);
+            reportMatch = safeMessage.match(/[A-Z]\d+/);
         }
         const reportNumber = reportMatch ? reportMatch[0] : '';
         const complaintId = notification.reference_id;
 
         // Try to extract status from message
-        const statusMatch = notification.message.match(/'([^']+)'/);
+        const statusMatch = safeMessage.match(/'([^']+)'/);
         const rawStatus = statusMatch ? statusMatch[1] : '';
 
         // Translate status
@@ -114,76 +117,76 @@ export default function NotificationBell() {
         }
 
         // User-specific notifications (profile, password, cancelled complaint)
-        if (notification.title.includes('Profil Dikemaskini') || notification.title.includes('Profile Updated')) {
+        if (safeTitle.includes('Profil Dikemaskini') || safeTitle.includes('Profile Updated')) {
             return {
-                title: notification.title,
-                message: notification.message
+                title: safeTitle,
+                message: safeMessage
             };
         }
-        if (notification.title.includes('Kata Laluan Ditukar') || notification.title.includes('Password Changed')) {
+        if (safeTitle.includes('Kata Laluan Ditukar') || safeTitle.includes('Password Changed')) {
             return {
-                title: notification.title,
-                message: notification.message
+                title: safeTitle,
+                message: safeMessage
             };
         }
-        if (notification.title.includes('Aduan Dibatalkan') || notification.title.includes('Complaint Cancelled')) {
+        if (safeTitle.includes('Aduan Dibatalkan') || safeTitle.includes('Complaint Cancelled')) {
             return {
-                title: notification.title,
-                message: notification.message
+                title: safeTitle,
+                message: safeMessage
             };
         }
-        if (notification.title.includes('Aduan Berjaya Didaftarkan') || notification.title.includes('Complaint Successfully Registered')) {
+        if (safeTitle.includes('Aduan Berjaya Didaftarkan') || safeTitle.includes('Complaint Successfully Registered')) {
             return {
                 title: t('notification.user_complaint_created_title') as string,
-                message: (t('notification.user_complaint_created_msg', { report_number: reportNumber }) || notification.message) as string
+                message: (t('notification.user_complaint_created_msg', { report_number: reportNumber }) || safeMessage) as string
             };
         }
-        if (notification.title.includes('Status Aduan Dikemaskini') || notification.title.includes('Complaint Status Updated')) {
+        if (safeTitle.includes('Status Aduan Dikemaskini') || safeTitle.includes('Complaint Status Updated')) {
             return {
                 title: t('notification.user_status_updated_title') as string,
-                message: (t('notification.user_status_updated_msg', { report_number: reportNumber, status: translatedStatus }) || notification.message) as string
+                message: (t('notification.user_status_updated_msg', { report_number: reportNumber, status: translatedStatus }) || safeMessage) as string
             };
         }
 
         // Translate based on notification type
         if (notification.type === 'status_update') {
             // Check if it's a new complaint or status update
-            if (notification.title.includes('Aduan Baru') || notification.title.includes('New Complaint')) {
+            if (safeTitle.includes('Aduan Baru') || safeTitle.includes('New Complaint')) {
                 // Try to extract username from backend message: "Aduan baru daripada [Name]. Sila..."
                 // More robust regex: Match "daripada " then capture until ". Sila" OR just "."
-                const nameMatch = notification.message.match(/daripada\s+(.*?)(?:\.\s+Sila|\.)/);
+                const nameMatch = safeMessage.match(/daripada\s+(.*?)(?:\.\s+Sila|\.)/);
 
                 const userName = nameMatch ? nameMatch[1].trim() : 'User';
 
                 return {
-                    title: (t('notification.new_complaint_title', { report_number: reportNumber }) || notification.title) as string,
-                    message: (t('notification.new_complaint_msg', { user_name: userName }) || notification.message) as string
+                    title: (t('notification.new_complaint_title', { report_number: reportNumber }) || safeTitle) as string,
+                    message: (t('notification.new_complaint_msg', { user_name: userName }) || safeMessage) as string
                 };
             } else {
                 return {
-                    title: (t('notification.status_update_title', { report_number: reportNumber || complaintId }) || notification.title) as string,
-                    message: (t('notification.status_update_msg', { report_number: reportNumber || complaintId, status: translatedStatus }) || notification.message) as string
+                    title: (t('notification.status_update_title', { report_number: reportNumber || complaintId }) || safeTitle) as string,
+                    message: (t('notification.status_update_msg', { report_number: reportNumber || complaintId, status: translatedStatus }) || safeMessage) as string
                 };
             }
         } else if (notification.type === 'assignment') {
             return {
-                title: (t('notification.job_assigned_title', { report_number: reportNumber || complaintId }) || notification.title) as string,
-                message: (t('notification.job_assigned_msg', { report_number: reportNumber || complaintId }) || notification.message) as string
+                title: (t('notification.job_assigned_title', { report_number: reportNumber || complaintId }) || safeTitle) as string,
+                message: (t('notification.job_assigned_msg', { report_number: reportNumber || complaintId }) || safeMessage) as string
             };
         }
 
         // Match "Status Update [A00015]: Service ..."
         // Regex matches "Complaint is being processed by [Name] on [Date]"
-        const statusDetailMatch = notification.message.match(/Complaint (?:is being processed|was complete repaired) by (.*?) on (.*)/) ||
-            notification.message.match(/Status Update \[([A-Z0-9]+)\]: Service (.*?) by Technician (.*?) on (.*?)\./);
+        const statusDetailMatch = safeMessage.match(/Complaint (?:is being processed|was complete repaired) by (.*?) on (.*)/) ||
+            safeMessage.match(/Status Update \[([A-Z0-9]+)\]: Service (.*?) by Technician (.*?) on (.*?)\./);
 
         // Try to extract Report Number from Title "Status Update: A00017"
-        const titleMatch = notification.title.match(/([A-Z][0-9]+)/);
-        const reportNo = titleMatch ? titleMatch[1] : (notification.message.match(/Complaint ([A-Z0-9]+)/)?.[1] || '---');
+        const titleMatch = safeTitle.match(/([A-Z][0-9]+)/);
+        const reportNo = titleMatch ? titleMatch[1] : (safeMessage.match(/Complaint ([A-Z0-9]+)/)?.[1] || '---');
 
         if (statusDetailMatch) {
             let techName, dateString;
-            const isCompleted = notification.message.toLowerCase().includes('completed') || notification.message.toLowerCase().includes('repaired');
+            const isCompleted = safeMessage.toLowerCase().includes('completed') || safeMessage.toLowerCase().includes('repaired');
 
             // Handle different regex groups depending on match
             if (statusDetailMatch.length === 3) {
@@ -211,8 +214,8 @@ export default function NotificationBell() {
                 : (t?.('notification.notif_processing_title', { id: reportNo }) || `Status Update: ${reportNo}`) as string;
 
             const bodyText = isCompleted
-                ? (t?.('notification.notif_completed_body', { id: reportNo, name: techName, date: dateOnly, time: timeOnly }) || notification.message) as string
-                : (t?.('notification.notif_processing_body', { id: reportNo, name: techName, date: dateOnly, time: timeOnly }) || notification.message) as string;
+                ? (t?.('notification.notif_completed_body', { id: reportNo, name: techName, date: dateOnly, time: timeOnly }) || safeMessage) as string
+                : (t?.('notification.notif_processing_body', { id: reportNo, name: techName, date: dateOnly, time: timeOnly }) || safeMessage) as string;
 
             return {
                 title: titleText,
@@ -222,16 +225,16 @@ export default function NotificationBell() {
 
         // Return original if no match, but strip internal data like uid
         return {
-            title: notification.title,
-            message: notification.message.replace(/\|\s*uid:[a-zA-Z0-9-]+/, '').trim()
+            title: safeTitle,
+            message: safeMessage.replace(/\|\s*uid:[a-zA-Z0-9-]+/, '').trim()
         };
     };
 
     const fetchNotifications = async () => {
         try {
             const res = await api.get('/notifications');
-            const newUnreadCount = res.data.unread_count;
-            const newNotifications = res.data.notifications;
+            const newUnreadCount = res.data?.unread_count || 0;
+            const newNotifications = res.data?.notifications || [];
             const latestNotif = newNotifications.length > 0 ? newNotifications[0] : null;
 
             setNotifications(newNotifications);
@@ -452,7 +455,11 @@ export default function NotificationBell() {
                                                     </p>
                                                     <p className="text-[10px] text-gray-400 mt-2">
                                                         {(() => {
+                                                            if (!notification.created_at) return '';
+                                                            
                                                             const date = new Date(notification.created_at);
+                                                            if (isNaN(date.getTime())) return ''; // Check for invalid date
+
                                                             const isMalay = i18n.language === 'ms';
                                                             const locale = isMalay ? 'ms-MY' : 'en-US';
 

@@ -76,17 +76,17 @@ export default function UserDashboard() {
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'pending':
-                return <span className="badge badge-pending">{t('table.pending')}</span>;
+                return <span className="badge badge-pending">{t('admin_users.status_pending')}</span>;
             case 'in_process':
-                return <span className="badge badge-in-process">{t('table.in_process')}</span>;
+                return <span className="badge badge-in-process">{t('admin_users.status_in_process')}</span>;
             case 'incomplete':
-                return <span className="badge badge-incomplete">{t('table.incomplete')}</span>;
+                return <span className="badge badge-incomplete">{t('admin_users.status_incomplete')}</span>;
             case 'bawa_pulang':
-                return <span className="badge badge-incomplete">{t('table.bawa_pulang')}</span>;
+                return <span className="badge badge-incomplete">{t('admin_users.status_bawa_pulang')}</span>;
             case 'ready_pickup':
                 return <span className="badge bg-indigo-100 text-indigo-700 border-indigo-200">Ready Pickup</span>;
             case 'closed':
-                return <span className="badge badge-closed">{t('table.closed')}</span>;
+                return <span className="badge badge-closed">{t('admin_users.status_closed')}</span>;
             case 'cancelled':
                 return <span className="badge bg-red-100 text-red-700">{t('admin_users.status_cancelled') || 'Dibatalkan'}</span>;
             default:
@@ -206,6 +206,13 @@ export default function UserDashboard() {
             return (
                 <div className="text-xs text-gray-500">
                     <p>{t('admin_users.status_pending_detailed')}</p>
+                </div>
+            );
+        }
+        if (status === 'incomplete' || status === 'bawa_pulang') {
+            return (
+                <div className="text-xs text-gray-500">
+                    <p>{t('admin_users.status_incomplete')}</p>
                 </div>
             );
         }
@@ -411,8 +418,8 @@ export default function UserDashboard() {
                                         <th className="text-left px-4 py-3 whitespace-nowrap">{t('complaint_list.report_no')}</th>
                                         <th className="text-left px-4 py-3 whitespace-nowrap">{t('complaint_form.category')}</th>
                                         <th className="text-left px-4 py-3 whitespace-nowrap">{t('complaint_form.brand')}</th>
-                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('table.status')}</th>
-                                        <th className="text-center px-4 py-3 whitespace-nowrap">{t('table.action')}</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('common_actions.status')}</th>
+                                        <th className="text-center px-4 py-3 whitespace-nowrap">{t('common_actions.action')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>

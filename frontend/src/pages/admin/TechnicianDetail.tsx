@@ -271,7 +271,7 @@ export default function TechnicianDetail() {
                                             <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_complaint_detail.defect_details') || 'Defect'}</span>
                                             <span className="text-gray-900 font-medium text-xs line-clamp-2" title={complaint.details || ''}>{complaint.details || '-'}</span>
 
-                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('table.date') || 'Date'}</span>
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('common_actions.date') || 'Date'}</span>
                                             <span className="text-gray-900 font-medium text-xs">{formatDate(complaint.created_at)}</span>
                                         </div>
                                         

@@ -153,13 +153,13 @@ export default function AdminDashboard() {
                                 <thead>
                                     <tr className="table-header">
                                         <th className="text-left px-4 py-3 whitespace-nowrap">#</th>
-                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('table.name')}</th>
-                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('table.department')}</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('common.name')}</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('common.department')}</th>
                                         <th className="text-center px-4 py-3 whitespace-nowrap">Total Job Assigned</th>
-                                        <th className="text-center px-4 py-3 whitespace-nowrap">{t('table.pending')}</th>
-                                        <th className="text-center px-4 py-3 whitespace-nowrap">{t('table.in_process')}</th>
-                                        <th className="text-center px-4 py-3 whitespace-nowrap">{t('table.incomplete')}</th>
-                                        <th className="text-center px-4 py-3 whitespace-nowrap">{t('table.closed')}</th>
+                                        <th className="text-center px-4 py-3 whitespace-nowrap">{t('admin_users.status_pending')}</th>
+                                        <th className="text-center px-4 py-3 whitespace-nowrap">{t('admin_users.status_in_process')}</th>
+                                        <th className="text-center px-4 py-3 whitespace-nowrap">{t('admin_users.status_incomplete')}</th>
+                                        <th className="text-center px-4 py-3 whitespace-nowrap">{t('admin_users.status_closed')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>

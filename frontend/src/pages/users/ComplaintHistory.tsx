@@ -168,7 +168,7 @@ export default function ComplaintHistory() {
 
         if (status === 'pending') {
             if (technicians) {
-                return <span className="badge bg-blue-100 text-blue-700 border-blue-200">{t('table.assigned') || 'Diagihkan'}</span>;
+                return <span className="badge bg-blue-100 text-blue-700 border-blue-200">{t('admin_users.status_assigned') || 'Diagihkan'}</span>;
             }
             return <span className="badge badge-pending">{t('admin_users.status_pending')}</span>;
         }

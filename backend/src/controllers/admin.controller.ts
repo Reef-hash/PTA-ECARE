@@ -656,3 +656,33 @@ export const resetUserPassword = async (req: Request, res: Response): Promise<vo
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+// Delete user
+export const deleteUser = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { id } = req.params;
+
+        const [rows]: any = await pool.query('SELECT id FROM users WHERE id = ?', [id]);
+        if (rows.length === 0) {
+            res.status(404).json({ error: 'User not found' });
+            return;
+        }
+
+        // Must delete related records manually since cascade might not be set or we might want to check constraints
+        // Let's rely on ON DELETE CASCADE if it exists, otherwise just try deleting the user directly.
+        // It's usually better to just delete the user directly and let DB constraints handle logic,
+        // but E-care might have complaints linked.
+        
+        // Let's just delete the user
+        await pool.query('DELETE FROM users WHERE id = ?', [id]);
+        
+        res.json({ message: 'User deleted successfully' });
+    } catch (error: any) {
+        console.error('Delete user error:', error);
+        if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+            res.status(400).json({ error: 'Cannot delete user because they have existing records (e.g. complaints)' });
+        } else {
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+};

@@ -232,20 +232,20 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
 
         if (status === 'pending') {
             if (technicians) {
-                return <span className="badge bg-blue-100 text-blue-700 border-blue-200">{t('table.assigned')}</span>;
+                return <span className="badge bg-blue-100 text-blue-700 border-blue-200">{t('admin_users.status_assigned')}</span>;
             }
-            return <span className="badge badge-pending">{t('table.pending')}</span>;
+            return <span className="badge badge-pending">{t('admin_users.status_pending')}</span>;
         }
 
         switch (status) {
             case 'in_process':
-                return <span className="badge badge-in-process">{t('table.in_process')}</span>;
+                return <span className="badge badge-in-process">{t('admin_users.status_in_process')}</span>;
             case 'closed':
-                return <span className="badge badge-closed">{t('table.closed')}</span>;
+                return <span className="badge badge-closed">{t('admin_users.status_closed')}</span>;
             case 'incomplete':
-                return <span className="badge badge-incomplete">{t('table.incomplete')}</span>;
+                return <span className="badge badge-incomplete">{t('admin_users.status_incomplete')}</span>;
             case 'bawa_pulang':
-                return <span className="badge badge-incomplete">{t('table.bawa_pulang')}</span>;
+                return <span className="badge badge-incomplete">{t('admin_users.status_bawa_pulang')}</span>;
             case 'cancelled':
                 return <span className="badge bg-red-100 text-red-700">{t('dashboard.cancelled') || 'Dibatalkan'}</span>;
             default:
@@ -415,7 +415,7 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                                 <option value="pending">{t('admin_users.status_pending') || 'Pending'}</option>
                                 <option value="in_process">{t('admin_users.status_in_process') || 'In Process'}</option>
                                 <option value="closed">{t('admin_users.status_closed') || 'Closed'}</option>
-                                <option value="assigned">{t('table.assigned') || 'Assigned'}</option>
+                                <option value="assigned">{t('admin_users.status_assigned') || 'Assigned'}</option>
                                 <option value="not_assigned">{t('complaint_list.not_assigned') || 'Job Not Assigned'}</option>
                                 <option value="cancelled">{t('admin_users.status_cancelled') || 'Cancelled'}</option>
                             </select>
@@ -441,7 +441,7 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
                             {/* Date Filter */}
                             <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-1">{t('table.date') || 'Date'}</label>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">{t('common_actions.date') || 'Date'}</label>
                                 <input
                                     type="date"
                                     value={filterDate}
@@ -575,7 +575,7 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                                             <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_complaint_detail.defect_details')}</span>
                                             <span className="text-gray-900 font-medium text-xs line-clamp-2" title={complaint.details || ''}>{complaint.details || '-'}</span>
 
-                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('table.date') || 'Tarikh'}</span>
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('common_actions.date') || 'Tarikh'}</span>
                                             <span className="text-gray-900 font-medium text-xs">{new Date(complaint.created_at).toLocaleDateString(i18n.language === 'en' ? 'en-MY' : 'ms-MY', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
 
                                             <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('complaint_list.technician')}</span>
@@ -636,8 +636,8 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                                             <th className="text-left px-4 py-3 whitespace-nowrap min-w-[150px]">{t('complaint_form.subcategory')}</th>
                                             <th className="text-left px-4 py-3 whitespace-nowrap min-w-[120px]">{t('complaint_form.brand')}</th>
                                             <th className="text-left px-4 py-3 whitespace-nowrap min-w-[150px]">{t('complaint_list.technician')}</th>
-                                            <th className="text-left px-4 py-3 min-w-[250px]">{t('table.status')}</th>
-                                            <th className="text-center px-4 py-3 whitespace-nowrap min-w-[100px]">{t('table.action')}</th>
+                                            <th className="text-left px-4 py-3 min-w-[250px]">{t('common_actions.status')}</th>
+                                            <th className="text-center px-4 py-3 whitespace-nowrap min-w-[100px]">{t('common_actions.action')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>

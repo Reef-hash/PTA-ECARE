@@ -8,14 +8,14 @@ export const getNotifications = async (req: Request, res: Response): Promise<voi
         const userId = (req as any).user.id;
         const role = (req as any).user.role;
 
-        console.log(`[NOTIFICATIONS] Fetching for user: ${userId}, role: ${role}`);
+        console.log(`[NOTIFICATIONS] Fetching for user: ${userId} (type: ${typeof userId}), role: ${role}`);
 
         const [rows]: any = await pool.query(
             'SELECT * FROM notifications WHERE recipient_id = ? AND recipient_role = ? ORDER BY created_at DESC LIMIT 50',
             [userId, role]
         );
 
-        console.log(`[NOTIFICATIONS] Found ${rows?.length || 0} notifications`);
+        console.log(`[NOTIFICATIONS] Found ${rows?.length || 0} notifications for recipient_id=${userId}`);
 
         const [countResult]: any = await pool.query(
             'SELECT COUNT(*) as unread_count FROM notifications WHERE recipient_id = ? AND recipient_role = ? AND is_read = 0',
