@@ -571,11 +571,16 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
         if (!id) { res.status(404).json({ error: 'Complaint not found' }); return; }
 
         if (role === 'admin' || role === 'technician') {
-            const [checkWorkflow]: any = await pool.query(
-                `SELECT COUNT(*) as isIncomplete FROM complaint_tracks WHERE complaint_id = ? AND status IN ('incomplete', 'bawa_pulang')`,
+            const [adminIncomplete]: any = await pool.query(
+                `SELECT COUNT(*) as count FROM complaint_remarks WHERE complaint_id = ? AND status IN ('incomplete', 'bawa_pulang')`,
                 [id]
             );
-            const isCriticalWorkflow = checkWorkflow[0].isIncomplete > 0 || status === 'incomplete' || status === 'bawa_pulang';
+            const [techIncomplete]: any = await pool.query(
+                `SELECT COUNT(*) as count FROM technician_remarks WHERE complaint_id = ? AND status IN ('incomplete', 'bawa_pulang')`,
+                [id]
+            );
+            const isIncompleteHistory = adminIncomplete[0].count > 0 || techIncomplete[0].count > 0;
+            const isCriticalWorkflow = isIncompleteHistory || status === 'incomplete' || status === 'bawa_pulang';
             const MAX_REMARKS = isCriticalWorkflow ? 6 : 3;
 
             const [adminCountRow]: any = await pool.query('SELECT COUNT(*) as count FROM complaint_remarks WHERE complaint_id = ?', [id]);
@@ -590,9 +595,13 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
 
         let previousStatus: string | null = null;
         if (status) {
-            const [complaintRows]: any = await pool.query('SELECT status FROM complaints WHERE id = ?', [id]);
-            previousStatus = complaintRows[0]?.status || null;
-            await pool.query('UPDATE complaints SET status = ?, updated_at = NOW() WHERE id = ?', [status, id]);
+            try {
+                const [complaintRows]: any = await pool.query('SELECT status FROM complaints WHERE id = ?', [id]);
+                previousStatus = complaintRows[0]?.status || null;
+                await pool.query('UPDATE complaints SET status = ?, updated_at = NOW() WHERE id = ?', [status, id]);
+            } catch (err) {
+                console.warn('[addRemark] Failed to update complaints table status (possible ENUM error), ignoring:', err);
+            }
         }
 
         try {
