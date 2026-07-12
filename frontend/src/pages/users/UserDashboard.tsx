@@ -397,9 +397,7 @@ export default function UserDashboard() {
                                             <Link
                                                 to={`/users/complaint/${complaint.report_number}/track-repair`}
                                                 className="inline-flex items-center justify-center gap-1 px-3 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors w-full shadow-sm"
-                                            >
-                                                TRACK REPAIR
-                                            </Link>
+                                            >{t('user_dashboard.view_track_repair', 'TRACK REPAIR')}</Link>
                                         </div>
                                     </div>
                                 </div>
@@ -436,9 +434,7 @@ export default function UserDashboard() {
                                                     <Link
                                                         to={`/users/complaint/${complaint.report_number}/track-repair`}
                                                         className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
-                                                    >
-                                                        TRACK REPAIR
-                                                    </Link>
+                                                    >{t('user_dashboard.view_track_repair', 'TRACK REPAIR')}</Link>
                                                 </div>
                                             </td>
                                             <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.subcategory}</td>

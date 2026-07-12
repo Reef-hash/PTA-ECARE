@@ -369,9 +369,7 @@ export default function UserDetails() {
                                                 to={`/admin/complaint/${complaint.report_number}/track-repair`}
                                                 className="w-full flex justify-center items-center gap-2 px-3 py-2 bg-white text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors text-sm font-medium border border-indigo-200"
                                             >
-                                                <MapPin className="w-4 h-4" />
-                                                TRACK REPAIR
-                                            </Link>
+                                                <MapPin className="w-4 h-4" />{t('user_dashboard.view_track_repair', 'TRACK REPAIR')}</Link>
                                         </div>
                                     </div>
                                 ))}
