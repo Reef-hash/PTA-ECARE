@@ -320,8 +320,15 @@ export const getComplaint = async (req: Request, res: Response): Promise<void> =
             return;
         }
         if (role === 'technician' && complaint.assigned_to !== userId) {
-            res.status(403).json({ error: 'Access denied' });
-            return;
+            // Check if they are in the history
+            const [historyCheck]: any = await pool.query(
+                'SELECT 1 FROM technician_remarks WHERE complaint_id = ? AND remark_by = ? LIMIT 1',
+                [complaintId, userId]
+            );
+            if (historyCheck.length === 0) {
+                res.status(403).json({ error: 'Access denied' });
+                return;
+            }
         }
 
         // Get remarks
