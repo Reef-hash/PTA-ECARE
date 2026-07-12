@@ -275,14 +275,14 @@ export default function ComplaintHistory() {
                                                     : '-'}
                                             </span>
 
-                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('complaint_form.defect_details') || 'Kerosakan'}</span>
-                                            <span className="text-gray-900 font-medium text-xs col-span-2">{complaint.details || '-'}</span>
-
                                             <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_master.category')}</span>
                                             <span className="text-gray-900 font-medium text-xs col-span-2">{complaint.categories?.name || '-'}</span>
                                             
                                             <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_master.subcategory')}</span>
                                             <span className="text-gray-900 font-medium text-xs col-span-2">{complaint.subcategory}</span>
+
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('complaint_form.defect_details') || 'Kerosakan'}</span>
+                                            <span className="text-gray-900 font-medium text-xs col-span-2">{complaint.details || '-'}</span>
                                             
                                             <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_complaint_detail.assigned_to') || 'Technician'}</span>
                                             <span className="text-gray-900 font-medium text-xs col-span-2">{complaint.technicians?.name || t('admin_complaint_detail.not_assigned')}</span>
