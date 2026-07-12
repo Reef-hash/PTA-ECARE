@@ -455,8 +455,8 @@ export default function AdminComplaintDetail() {
                             </div>
 
                             {(() => {
-                                const isEscalated = complaint.status === 'incomplete' || complaint.status === 'bawa_pulang';
-                                const maxRemarks = isEscalated ? 5 : 3;
+                                const isEscalated = (complaint.tracks && complaint.tracks.some(track => track.status === 'incomplete' || track.status === 'bawa_pulang')) || complaint.status === 'incomplete' || complaint.status === 'bawa_pulang';
+                                const maxRemarks = isEscalated ? 6 : 3;
                                 const limitReached = (adminRemarks.length + techRemarks.length) >= maxRemarks;
 
                                 if (limitReached) {

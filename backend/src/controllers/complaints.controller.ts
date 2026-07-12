@@ -556,10 +556,12 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
         if (!id) { res.status(404).json({ error: 'Complaint not found' }); return; }
 
         if (role === 'admin' || role === 'technician') {
-            const [complaintRows]: any = await pool.query('SELECT status FROM complaints WHERE id = ?', [id]);
-            const currentStatus = complaintRows[0]?.status;
-            const isMainTechEscalated = currentStatus === 'incomplete' || currentStatus === 'bawa_pulang' || status === 'incomplete' || status === 'bawa_pulang';
-            const MAX_REMARKS = isMainTechEscalated ? 5 : 3;
+            const [checkWorkflow]: any = await pool.query(
+                `SELECT COUNT(*) as isIncomplete FROM complaint_tracks WHERE complaint_id = ? AND status IN ('incomplete', 'bawa_pulang')`,
+                [id]
+            );
+            const isCriticalWorkflow = checkWorkflow[0].isIncomplete > 0 || status === 'incomplete' || status === 'bawa_pulang';
+            const MAX_REMARKS = isCriticalWorkflow ? 6 : 3;
 
             const [adminCountRow]: any = await pool.query('SELECT COUNT(*) as count FROM complaint_remarks WHERE complaint_id = ?', [id]);
             const [techCountRow]: any = await pool.query('SELECT COUNT(*) as count FROM technician_remarks WHERE complaint_id = ?', [id]);

@@ -405,11 +405,11 @@ export default function TechComplaintDetail() {
                         </div>
 
                         {(() => {
-                            // Check if escalated based on DB status OR selected status
-                            const isEscalated = complaint.status === 'incomplete' || complaint.status === 'bawa_pulang' || remarkData.status === 'incomplete' || remarkData.status === 'bawa_pulang';
-                            const maxRemarks = isEscalated ? 5 : 3;
+                            // Check if escalated based on track history OR current DB status OR selected status
+                            const isEscalated = (complaint.tracks && complaint.tracks.some(track => track.status === 'incomplete' || track.status === 'bawa_pulang')) || complaint.status === 'incomplete' || complaint.status === 'bawa_pulang' || remarkData.status === 'incomplete' || remarkData.status === 'bawa_pulang';
+                            const maxRemarks = isEscalated ? 6 : 3;
                             const totalRemarks = adminRemarks.length + techRemarks.length;
-                            const absoluteMax = 5;
+                            const absoluteMax = 6;
                             
                             // If absolute max is reached, hide form completely
                             if (totalRemarks >= absoluteMax && !editingId) {
