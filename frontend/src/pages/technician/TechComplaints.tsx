@@ -320,18 +320,12 @@ export default function TechComplaints() {
                                             <div className="flex flex-col gap-1">
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-gray-400 font-medium text-xs">#{(currentPage - 1) * itemsPerPage + index + 1}</span>
-                                                        <Link
-                                                            to={`/admin/technician/complaint/${complaint.report_number}`}
-                                                            className="font-bold text-green-600 hover:text-green-700 text-sm hover:underline"
-                                                        >
-                                                            {complaint.report_number}
-                                                        </Link>
-                                                        <Link
-                                                            to={`/admin/technician/complaint/${complaint.report_number}`}
-                                                            className="text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit mt-0.5"
-                                                        >
-                                                            UPDATE REPAIR PROGRESS
-                                                        </Link>
+                                                    <Link
+                                                        to={`/admin/technician/complaint/${complaint.report_number}`}
+                                                        className="font-bold text-green-600 hover:text-green-700 text-sm hover:underline"
+                                                    >
+                                                        {complaint.report_number}
+                                                    </Link>
                                                 </div>
                                                 <div>
                                                     {getStatusBadge(complaint.status)}
@@ -382,6 +376,12 @@ export default function TechComplaints() {
                                                     <Printer className="w-4 h-4" />
                                                 </Link>
                                             </div>
+                                            <Link
+                                                to={`/admin/technician/complaint/${complaint.report_number}`}
+                                                className="text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded-lg transition-colors w-full text-center"
+                                            >
+                                                UPDATE REPAIR PROGRESS
+                                            </Link>
                                         </div>
                                     </div>
                                 ))}
