@@ -28,7 +28,7 @@ interface RepairTimelineProps {
  * This correctly handles repeat flows like:
  * Pending → In Process → Incomplete → In Process (again) → Closed
  */
-export default function RepairTimeline({ currentStatus, timelineEvents, isClosed }: RepairTimelineProps) {
+export default function RepairTimeline({ currentStatus, timelineEvents }: RepairTimelineProps) {
     const { t } = useTranslation();
 
     // Define the full lifecycle order for determining what comes "next"
