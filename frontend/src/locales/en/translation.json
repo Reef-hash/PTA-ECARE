@@ -141,7 +141,7 @@
         "in_process": "In Process",
         "closed": "Complete",
         "cancelled": "Cancelled",
-        "incomplete": "Brought Back",
+        "incomplete": "Incomplete / Bring to workshop",
         "technician_stats": "Technician Statistics",
         "no_technicians": "No technicians found"
     },

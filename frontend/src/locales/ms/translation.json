@@ -141,7 +141,7 @@
         "in_process": "Dalam Proses",
         "closed": "Selesai",
         "cancelled": "Dibatalkan",
-        "incomplete": "Bawa Pulang",
+        "incomplete": "Incomplete / Bring to workshop",
         "technician_stats": "Statistik Juruteknik",
         "no_technicians": "Tiada juruteknik"
     },
