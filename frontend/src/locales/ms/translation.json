@@ -141,7 +141,7 @@
         "in_process": "Dalam Proses",
         "closed": "Selesai",
         "cancelled": "Dibatalkan",
-        "incomplete": "Incomplete / Bring to workshop",
+        "incomplete": "Tidak Siap / Bawa Balik Bengkel",
         "technician_stats": "Statistik Juruteknik",
         "no_technicians": "Tiada juruteknik"
     },
@@ -152,15 +152,15 @@
         "pending": "Belum Diproses",
         "in_process": "Dalam Proses",
         "closed": "Selesai",
-        "incomplete": "Incomplete / Bring to workshop",
-        "bawa_pulang": "Incomplete / Bring to workshop",
+        "incomplete": "Tidak Siap / Bawa Balik Bengkel",
+        "bawa_pulang": "Tidak Siap / Bawa Balik Bengkel",
         "status": "Status",
         "action": "Tindakan",
         "date": "Tarikh",
         "assigned": "Diagihkan",
         "report_number": "No Laporan",
         "original_technician": "Juruteknik Asal",
-        "incomplete_reason": "Incomplete / Bring to workshop"
+        "incomplete_reason": "Tidak Siap / Bawa Balik Bengkel"
     },
     "complaint_form": {
         "defect_details": "Kerosakan",
@@ -226,7 +226,7 @@
         "title_not_forwarded": "Aduan Job Belum Diagih",
         "title_job_assigned": "Aduan Sudah Diagih",
         "title_cancelled": "Aduan Dibatalkan",
-        "title_incomplete": "Incomplete / Bring to workshop",
+        "title_incomplete": "Tidak Siap / Bawa Balik Bengkel",
         "search_placeholder": "Cari no laporan, no IC, nama, tarikh...",
         "no_complaints": "Tiada aduan dijumpai",
         "not_assigned": "Job Belum Diagih",
@@ -314,8 +314,8 @@
         "status_pending": "Menunggu",
         "status_in_process": "Dalam Proses",
         "status_closed": "Selesai",
-        "status_incomplete": "Incomplete / Bring to workshop",
-        "status_bawa_pulang": "Incomplete / Bring to workshop",
+        "status_incomplete": "Tidak Siap / Bawa Balik Bengkel",
+        "status_bawa_pulang": "Tidak Siap / Bawa Balik Bengkel",
         "status_closed_detailed": "Aduan telah selesai dibaiki oleh {{name}} pada {{date}}. Barang sedia untuk diambil.",
         "status_pending_detailed": "Terima kasih. Aduan akan diproses secepat mungkin.",
         "status_assigned_detailed": "Aduan telah diagihkan kepada {{name}} pada {{date}}",
@@ -394,7 +394,7 @@
         "error_remark_input": "Sila masukkan catatan atau status",
         "error_save_remark": "Gagal menambah catatan",
         "recent_assigned": "Aduan Diagihkan Terkini",
-        "status_incomplete": "Incomplete / Bring to workshop",
+        "status_incomplete": "Tidak Siap / Bawa Balik Bengkel",
         "click_to_view": "Papar"
     },
     "user_dashboard": {
@@ -567,7 +567,7 @@
             "list_title": "Senarai Menunggu Agihan",
             "empty": "Tiada tugas tertunggak",
             "cards": {
-                "incomplete": "Incomplete / Bring to workshop",
+                "incomplete": "Tidak Siap / Bawa Balik Bengkel",
                 "not_forwarded": "Belum Diagih",
                 "assigned": "Telah Diagih",
                 "closed": "Selesai"
@@ -575,7 +575,7 @@
         },
         "layout": {
             "sidebar": {
-                "dashboard": "Incomplete / Bring to workshop",
+                "dashboard": "Tidak Siap / Bawa Balik Bengkel",
                 "search": "Semak Aduan (IC)"
             },
             "title": "PANEL JURUTEKNIK UTAMA"
