@@ -57,7 +57,7 @@ export default function TechDashboard() {
             case 'in_process':
                 return <span className="badge badge-in-process">{t('admin_users.status_in_process')}</span>;
             case 'incomplete':
-                return <span className="badge badge-incomplete">{t('admin_users.status_incomplete')}</span>;
+                return <span className="badge badge-incomplete">{t('admin_users.status_incomplete') || 'Incomplete / Bawa Pulang'}</span>;
             case 'bawa_pulang':
                 return <span className="badge badge-incomplete">{t('admin_users.status_bawa_pulang')}</span>;
             case 'ready_pickup':
@@ -265,9 +265,20 @@ export default function TechDashboard() {
                                         <span className="text-gray-600 text-xs">{complaint.brand_name}</span>
                                     </div>
 
-                                    <div className="bg-gray-50 p-2.5 rounded-md text-xs border border-gray-100">
-                                        {getStatusMessage(complaint)}
+                                    <div className="mt-4">
+                                        <Link
+                                            to={`/admin/technician/complaint/${complaint.report_number}/track-repair`}
+                                            className="block w-full text-[11px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-2.5 rounded-lg transition-colors text-center shadow-sm uppercase tracking-wider"
+                                        >
+                                            Update Repair Progress
+                                        </Link>
                                     </div>
+
+                                    {getStatusMessage(complaint) && (
+                                        <div className="bg-gray-50 p-2.5 rounded-md text-xs border border-gray-100 mt-3">
+                                            {getStatusMessage(complaint)}
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>

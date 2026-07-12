@@ -80,7 +80,7 @@ export default function UserDashboard() {
             case 'in_process':
                 return <span className="badge badge-in-process">{t('admin_users.status_in_process')}</span>;
             case 'incomplete':
-                return <span className="badge badge-incomplete">{t('admin_users.status_incomplete')}</span>;
+                return <span className="badge badge-incomplete">{t('admin_users.status_incomplete') || 'Incomplete / Bawa Pulang'}</span>;
             case 'bawa_pulang':
                 return <span className="badge badge-incomplete">{t('admin_users.status_bawa_pulang')}</span>;
             case 'ready_pickup':
