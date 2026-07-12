@@ -112,33 +112,86 @@ export default function MainTechDashboard() {
                         </Link>
                     </div>
 
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{t('admin_users.report_no', 'No. Laporan')}</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{t('admin_complaint_detail.date_created', 'Tarikh Dicipta')}</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('table.original_technician', 'Juruteknik Asal')}</th>
-                                    <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common_actions.action', 'Tindakan')}</th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {isLoadingRecent ? (
-                                    <tr>
-                                        <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
-                                            <div className="flex justify-center items-center gap-3">
-                                                <div className="animate-spin rounded-full h-5 w-5 border-2 border-indigo-500 border-t-transparent"></div>
-                                                Loading...
+                    <div className="overflow-hidden sm:rounded-lg">
+                        {/* Mobile Layout (List-Item Compact) */}
+                        <div className="block md:hidden border-t border-gray-200">
+                            {isLoadingRecent ? (
+                                <div className="p-8 text-center text-gray-500">
+                                    <div className="flex justify-center items-center gap-3">
+                                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-indigo-500 border-t-transparent"></div>
+                                        Loading...
+                                    </div>
+                                </div>
+                            ) : recentComplaints.length === 0 ? (
+                                <div className="p-8 text-center text-gray-500">
+                                    Tiada aduan terkini
+                                </div>
+                            ) : (
+                                recentComplaints.map((complaint) => (
+                                    <div key={complaint.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="font-bold text-gray-900 text-sm">
+                                                {complaint.report_number || `ADU-${complaint.id}`}
                                             </div>
-                                        </td>
-                                    </tr>
-                                ) : recentComplaints.length === 0 ? (
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm items-start mb-3">
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider mt-0.5">{t('admin_complaint_detail.date_created', 'Tarikh Dicipta')}</span>
+                                            <span className="text-gray-600 text-xs">
+                                                {new Date(complaint.created_at).toLocaleDateString('ms-MY', {
+                                                    day: 'numeric', month: 'short', year: 'numeric'
+                                                })}
+                                            </span>
+
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider mt-0.5">{t('table.original_technician', 'Juruteknik Asal')}</span>
+                                            <div>
+                                                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700">
+                                                    {complaint.technicians?.name || complaint.assigned_to || 'Tidak Diketahui'}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-3 border-t border-gray-100 pt-3">
+                                            <Link
+                                                to={`/main-tech/complaint/${complaint.report_number}`}
+                                                className="w-full inline-flex justify-center items-center gap-1.5 px-3 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-medium rounded-lg transition-colors border border-indigo-100"
+                                            >
+                                                Papar
+                                            </Link>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        {/* Desktop Layout (Table) */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
                                     <tr>
-                                        <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
-                                            Tiada aduan terkini
-                                        </td>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{t('admin_users.report_no', 'No. Laporan')}</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{t('admin_complaint_detail.date_created', 'Tarikh Dicipta')}</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('table.original_technician', 'Juruteknik Asal')}</th>
+                                        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common_actions.action', 'Tindakan')}</th>
                                     </tr>
-                                ) : (
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {isLoadingRecent ? (
+                                        <tr>
+                                            <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                                                <div className="flex justify-center items-center gap-3">
+                                                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-indigo-500 border-t-transparent"></div>
+                                                    Loading...
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ) : recentComplaints.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                                                Tiada aduan terkini
+                                            </td>
+                                        </tr>
+                                    ) : (
                                     recentComplaints.map(complaint => (
                                         <tr key={complaint.id} className="hover:bg-gray-50 transition-colors">
                                             <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
@@ -167,6 +220,7 @@ export default function MainTechDashboard() {
                                 )}
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </div>
             </div>
