@@ -221,6 +221,7 @@ export default function AdminComplaintDetail() {
                             <div>
                                 <p className="text-sm text-gray-500">{t('admin_complaint_detail.report_no')}</p>
                                 <h2 className="text-2xl font-bold text-gray-800">{complaint.report_number}</h2>
+                                <p className="text-sm text-gray-500 mt-1">Date Created: {formatDate(complaint.created_at)}</p>
                             </div>
                             <div className="self-start sm:self-auto w-fit">
                                 {getStatusBadge(complaint.status)}
@@ -269,10 +270,6 @@ export default function AdminComplaintDetail() {
                                 <div>
                                     <p className="text-gray-500">{t('admin_complaint_detail.address')}</p>
                                     <p className="font-medium">{complaint.users?.address || '-'}</p>
-                                </div>
-                                <div className="md:col-span-2 pt-2 mt-2 border-t border-gray-200 border-dashed">
-                                    <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Date Complaint Create</p>
-                                    <p className="font-medium text-indigo-700">{formatDate(complaint.created_at)}</p>
                                 </div>
                             </div>
                         </div>

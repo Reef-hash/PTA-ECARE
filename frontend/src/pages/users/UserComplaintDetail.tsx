@@ -123,15 +123,16 @@ export default function UserComplaintDetail() {
                 </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="max-w-4xl mx-auto">
                 {/* Main Info */}
-                <div className="lg:col-span-2 space-y-6">
+                <div className="space-y-6">
                     {/* Complaint Details */}
                     <div className="card">
                         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
                             <div>
                                 <p className="text-sm text-gray-500">{t('admin_users.report_no')}</p>
                                 <h2 className="text-2xl font-bold text-gray-800">{complaint.report_number}</h2>
+                                <p className="text-sm text-gray-500 mt-1">{t('user_dashboard.label_date_created')}: {formatDate(complaint.created_at)}</p>
                             </div>
                             <div className="self-start sm:self-auto w-fit">
                                 {getStatusBadge(complaint.status)}
@@ -147,6 +148,7 @@ export default function UserComplaintDetail() {
                                 <div>
                                     <h3 className="font-semibold text-gray-800">{t('user_dashboard.track_repair')}</h3>
                                     <p className="text-sm text-gray-500">{t('user_dashboard.track_repair_desc')}</p>
+                                    <p className="text-xs text-teal-700 mt-1.5 font-medium">{t('user_dashboard.label_date_updated')}: {formatDate(complaint.updated_at)}</p>
                                 </div>
                             </div>
                             <Link
@@ -378,27 +380,6 @@ export default function UserComplaintDetail() {
                             </div>
                         )}
                     </div>
-
-
-                </div>
-
-                {/* Sidebar */}
-                <div className="space-y-6">
-                    {/* Dates */}
-                    <div className="card">
-                        <h3 className="font-semibold mb-4">{t('common_actions.date')}</h3>
-                        <div className="space-y-3">
-                            <div>
-                                <p className="text-sm text-gray-500">{t('user_dashboard.label_date_created')}</p>
-                                <p className="font-medium">{formatDate(complaint.created_at)}</p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500">{t('user_dashboard.label_date_updated')}</p>
-                                <p className="font-medium">{formatDate(complaint.updated_at)}</p>
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
             </div>
 
