@@ -13,10 +13,28 @@ import adminRoutes from './routes/admin.routes.js';
 import masterRoutes from './routes/master.routes.js';
 import notificationsRoutes from './routes/notifications.routes.js';
 
+import pool from './config/mysql.js';
+
 dotenv.config();
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
+
+// Run auto-migration for ENUMs safely
+(async () => {
+    try {
+        console.log('Running automatic database schema migrations...');
+        // Alter complaints table
+        await pool.query("ALTER TABLE complaints MODIFY COLUMN status ENUM('pending', 'in_process', 'incomplete', 'bawa_pulang', 'ready_pickup', 'closed', 'cancelled') DEFAULT 'pending'");
+        // Alter complaint_remarks table
+        await pool.query("ALTER TABLE complaint_remarks MODIFY COLUMN status ENUM('pending', 'in_process', 'incomplete', 'bawa_pulang', 'ready_pickup', 'closed', 'cancelled') NULL");
+        // Alter technician_remarks table
+        await pool.query("ALTER TABLE technician_remarks MODIFY COLUMN status ENUM('pending', 'in_process', 'incomplete', 'bawa_pulang', 'ready_pickup', 'closed', 'cancelled') NULL");
+        console.log('Database schema migrations completed successfully.');
+    } catch (err: any) {
+        console.error('Migration error (this may be safe to ignore if enum already exists):', err.message);
+    }
+})();
 
 // Middleware
 app.use(cors({
