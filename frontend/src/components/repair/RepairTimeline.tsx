@@ -16,14 +16,27 @@ interface RepairTimelineProps {
     isClosed: boolean;
 }
 
-export default function RepairTimeline({ currentStatus, timelineEvents }: RepairTimelineProps) {
+/**
+ * Dynamic Timeline Component
+ * 
+ * Instead of mapping events to 4 fixed static slots, this renders
+ * ALL events in chronological order (as passed via timelineEvents).
+ * 
+ * After the last real event, it appends "future" stages that haven't
+ * been reached yet as greyed-out "Waiting..." nodes.
+ * 
+ * This correctly handles repeat flows like:
+ * Pending → In Process → Incomplete → In Process (again) → Closed
+ */
+export default function RepairTimeline({ currentStatus, timelineEvents, isClosed }: RepairTimelineProps) {
     const { t } = useTranslation();
 
-    const staticStages: { status: RepairStatus; label: string }[] = [
+    // Define the full lifecycle order for determining what comes "next"
+    const lifecycleOrder: { status: RepairStatus; label: string }[] = [
         { status: 'PENDING', label: t('admin_users.status_pending') || 'Pending' },
         { status: 'IN_PROCESS', label: t('admin_users.status_in_process') || 'In Process' },
-        { status: 'IN_COMPLETE', label: t('admin_users.status_incomplete') || 'Incomplete' },
-        { status: 'COMPLETE', label: t('admin_users.status_closed') || 'Complete' },
+        { status: 'IN_COMPLETE', label: t('admin_users.status_incomplete') || 'Incomplete / Bawa Pulang' },
+        { status: 'COMPLETE', label: t('admin_users.status_closed') || 'Closed' },
     ];
 
     const stageOrder: Record<RepairStatus, number> = {
@@ -33,7 +46,28 @@ export default function RepairTimeline({ currentStatus, timelineEvents }: Repair
         COMPLETE: 3,
     };
 
+    // Determine the highest status reached from the actual events
     const currentIndex = stageOrder[currentStatus] ?? 0;
+
+    // Build the "future" stages that come AFTER the current status
+    // These are stages that haven't been reached yet → shown as "Waiting..."
+    const futureStages = lifecycleOrder
+        .filter(stage => stageOrder[stage.status] > currentIndex)
+        .map(stage => ({
+            status: stage.status,
+            label: stage.label,
+            date: null as string | null,
+            remark: undefined as StepRemark | undefined,
+            isFuture: true,
+        }));
+
+    // Combine: all real events (dynamic, chronological) + future waiting stages
+    const allNodes = [
+        ...timelineEvents.map(ev => ({ ...ev, isFuture: false })),
+        ...futureStages,
+    ];
+
+    const totalNodes = allNodes.length;
 
     return (
         <motion.div
@@ -44,27 +78,25 @@ export default function RepairTimeline({ currentStatus, timelineEvents }: Repair
         >
             <h3 className="text-lg font-semibold mb-6">{t('user_dashboard.track_repair')}</h3>
             <div>
-                {staticStages.map((stage, index) => {
-                    const isCompleted = index < currentIndex;
-                    const isCurrent = index === currentIndex;
-                    const isLast = index === staticStages.length - 1;
+                {allNodes.map((node, index) => {
+                    const isLast = index === totalNodes - 1;
+                    const isFuture = node.isFuture;
 
-                    // Cari events/remarks yang berkaitan dengan stage ini
-                    const eventsForStage = timelineEvents.filter(e => e.status === stage.status);
-                    
-                    // Ambil event terakhir untuk dipaparkan sebagai wakil, atau boleh paparkan semua jika mahu
-                    // Di sini kita paparkan event terakhir yang mempunyai date/remark
-                    const latestEvent = eventsForStage.length > 0 ? eventsForStage[eventsForStage.length - 1] : null;
+                    // For real events: the LAST real event is "current", everything before it is "completed"
+                    // For future stages: they are neither current nor completed
+                    const lastRealIndex = timelineEvents.length - 1; // index of last real event in allNodes
+                    const isCompleted = !isFuture && index < lastRealIndex;
+                    const isCurrent = !isFuture && index === lastRealIndex;
 
                     return (
                         <TimelineStep
-                            key={`${stage.status}-${index}`}
-                            label={stage.label}
-                            date={latestEvent?.date || null}
+                            key={`timeline-${index}`}
+                            label={node.label}
+                            date={node.date || null}
                             isCurrent={isCurrent}
                             isCompleted={isCompleted}
                             isLast={isLast}
-                            remark={latestEvent?.remark}
+                            remark={node.remark}
                         />
                     );
                 })}
