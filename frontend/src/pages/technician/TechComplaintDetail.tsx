@@ -199,7 +199,7 @@ export default function TechComplaintDetail() {
                                 className="btn-primary flex items-center justify-center gap-2 whitespace-nowrap text-sm px-4 py-2 w-full sm:w-auto"
                             >
                                 <Eye className="w-4 h-4" />
-                                {t('user_dashboard.view_track_repair_detail') || 'TRACK REPAIR PROGRESS'}
+                                TRACK REPAIR PROGRESS
                             </Link>
                         </div>
 
