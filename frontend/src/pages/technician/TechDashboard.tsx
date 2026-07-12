@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, CheckCircle, AlertTriangle, PackageOpen, Eye, Printer } from 'lucide-react';
+import { Clock, CheckCircle, AlertTriangle, PackageOpen, Package, Eye, Printer } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 import { Complaint } from '../../types';
