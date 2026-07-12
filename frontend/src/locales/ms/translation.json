@@ -38,6 +38,7 @@
         "note": "* Pilihan bahasa akan digunakan untuk paparan sistem."
     },
     "common": {
+        "date_created": "Tarikh Dicipta",
         "date": "Tarikh",
         "loading": "Memuatkan...",
         "success_save": "Tetapan berjaya disimpan",

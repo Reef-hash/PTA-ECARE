@@ -38,6 +38,7 @@
         "note": "* Language selection will be applied to the system display."
     },
     "common": {
+        "date_created": "Date Created",
         "date": "Date",
         "loading": "Loading...",
         "success_save": "Settings saved successfully",
