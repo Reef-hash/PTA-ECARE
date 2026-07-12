@@ -349,8 +349,8 @@ export default function TechComplaintDetail() {
                             if (totalRemarks >= absoluteMax && !editingId) {
                                 return (
                                     <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                                        <strong className="font-bold">Limit Reached: </strong>
-                                        <span className="block sm:inline">Maximum {absoluteMax} remarks allowed per complaint.</span>
+                                        <strong className="font-bold">{t('technician_dashboard.limit_reached', 'Limit Reached')}: </strong>
+                                        <span className="block sm:inline">{t('technician_dashboard.remark_limit', { limit: absoluteMax })}</span>
                                     </div>
                                 );
                             }
@@ -362,8 +362,8 @@ export default function TechComplaintDetail() {
                             <form onSubmit={handleAddRemark} className="space-y-4">
                                 {currentLimitReached && (
                                     <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                                        <strong className="font-bold">Limit Reached: </strong>
-                                        <span className="block sm:inline">Maximum {maxRemarks} remarks allowed per complaint. Please select 'Incomplete / Bawa Pulang' to escalate.</span>
+                                        <strong className="font-bold">{t('technician_dashboard.limit_reached', 'Limit Reached')}: </strong>
+                                        <span className="block sm:inline">{t('technician_dashboard.remark_limit', { limit: maxRemarks })}</span>
                                     </div>
                                 )}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
