@@ -181,9 +181,9 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className="p-2 rounded-lg bg-white shadow-soft-md text-gray-800">
-                                            <Activity className="w-4 h-4" />
+                                            <FileText className="w-4 h-4" />
                                         </div>
-                                        <span className="uppercase tracking-wider">REPAIR PROGRESS</span>
+                                        Repair Progress
                                     </div>
                                     <ChevronDown className={`w-4 h-4 transition-transform ${techProgressOpen ? 'rotate-180' : ''}`} />
                                 </button>
@@ -196,8 +196,8 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
                                                     key={item.path}
                                                     to={item.path}
                                                     onClick={() => setSidebarOpen(false)}
-                                                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm uppercase transition-all ${isActive
-                                                        ? 'text-gray-900 font-bold'
+                                                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${isActive
+                                                        ? 'text-gray-900 font-semibold'
                                                         : 'text-gray-500 hover:text-gray-800'
                                                         }`}
                                                 >
