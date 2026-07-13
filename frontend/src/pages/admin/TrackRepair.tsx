@@ -128,7 +128,7 @@ export default function TrackRepair() {
             let label = t('admin_users.status_pending') || 'Pending';
             if (repairStatus === 'IN_PROCESS') label = t('admin_users.status_in_process') || 'In Process';
             if (repairStatus === 'IN_COMPLETE') label = t('admin_users.status_incomplete') || 'In Complete / Bawa Pulang';
-            if (repairStatus === 'COMPLETE') label = t('admin_users.status_closed') || 'Complete (Ready to Pickup)';
+            if (repairStatus === 'COMPLETE') label = (t('admin_users.status_closed') || 'Closed') + ' - Ready to Pickup';
 
             return {
                 status: repairStatus,

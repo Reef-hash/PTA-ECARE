@@ -31,7 +31,7 @@ export default function RepairTimeline({ timelineEvents, isClosed }: RepairTimel
     const futureStages = !isClosed ? [
         {
             status: 'COMPLETE' as RepairStatus,
-            label: t('admin_users.status_closed') || 'Closed',
+            label: (t('admin_users.status_closed') || 'Closed') + ' - Ready to Pickup',
             date: null,
             remark: undefined,
             isFuture: true,
