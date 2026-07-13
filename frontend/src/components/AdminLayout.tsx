@@ -151,7 +151,8 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
                     {/* Navigation */}
                     <nav className="space-y-1">
                         {isTechnician ? (
-                            techMenuItems.map((item) => {
+                            <>
+                                {techMenuItems.map((item) => {
                                 const Icon = item.icon;
                                 const isActive = location.pathname === item.path;
                                 return (
