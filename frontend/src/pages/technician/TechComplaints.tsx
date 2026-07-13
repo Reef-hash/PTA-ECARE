@@ -255,8 +255,19 @@ export default function TechComplaints() {
         }
     };
 
+    const getBreadcrumbTitle = () => {
+        switch (statusFilter) {
+            case 'pending': return t('admin_users.status_pending');
+            case 'in_process': return t('admin_users.status_in_process');
+            case 'incomplete_in': return t('dashboard.incomplete_in', 'Incomplete (In)');
+            case 'incomplete_out': return t('dashboard.incomplete_out', 'Incomplete (Out)');
+            case 'closed': return t('admin_users.status_closed');
+            default: return t('technician_dashboard.title_complaints');
+        }
+    };
+
     return (
-        <AdminLayout title={t('technician_dashboard.title_complaints')} breadcrumb={t('technician_dashboard.title_complaints')}>
+        <AdminLayout title={t('technician_dashboard.title_complaints')} breadcrumb={getBreadcrumbTitle()}>
             <div className="max-w-7xl mx-auto space-y-4">
 
                 {/* Tabs */}
