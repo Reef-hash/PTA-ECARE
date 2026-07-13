@@ -326,6 +326,7 @@
     "status_in_process_detailed": "Aduan sedang diproses oleh {{name}} pada {{date}}",
     "status_cancelled_detailed": "Dibatalkan pada {{date}}",
     "status_cancelled": "Dibatalkan",
+    "status_assigned": "Diagihkan",
     "all_status": "Semua Status",
     "registered_on": "akaun dicipta pada",
     "detail_title": "Maklumat Pelanggan",

@@ -326,6 +326,7 @@
     "status_in_process_detailed": "Complaint is being processed by {{name}} on {{date}}",
     "status_cancelled_detailed": "Cancelled on {{date}}",
     "status_cancelled": "Cancelled",
+    "status_assigned": "Assigned",
     "all_status": "All Status",
     "detail_title": "Customer Details",
     "complaint_history": "Complaint History",
