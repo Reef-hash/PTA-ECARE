@@ -386,7 +386,7 @@ export default function TechComplaints() {
                                             <Link
                                                 to={`/admin/technician/complaint/${complaint.report_number}`}
                                                 className="text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded-lg transition-colors w-full text-center"
-                                            >{t('technician_dashboard.update_track_repair', 'UPDATE TRACK REPAIR PROGRESS')}</Link>
+                                            >{activeTab === 'history' ? t('user_dashboard.view_track_repair', 'TRACK REPAIR PROGRESS') : t('technician_dashboard.update_track_repair', 'UPDATE TRACK REPAIR PROGRESS')}</Link>
                                         </div>
                                     </div>
                                 ))}

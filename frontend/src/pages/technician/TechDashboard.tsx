@@ -317,7 +317,7 @@ export default function TechDashboard() {
                                         <Link
                                             to={`/admin/technician/complaint/${complaint.report_number}`}
                                             className="block w-full text-[11px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-2.5 rounded-lg transition-colors text-center shadow-sm uppercase tracking-wider"
-                                        >{t('technician_dashboard.update_track_repair', 'UPDATE TRACK REPAIR PROGRESS')}</Link>
+                                        >{activeTab === 'history' ? t('user_dashboard.view_track_repair', 'TRACK REPAIR PROGRESS') : t('technician_dashboard.update_track_repair', 'UPDATE TRACK REPAIR PROGRESS')}</Link>
                                     </div>
 
                                     {getStatusMessage(complaint) && (
@@ -377,7 +377,7 @@ export default function TechDashboard() {
                                                     <Link
                                                         to={`/admin/technician/complaint/${complaint.report_number}`}
                                                         className="inline-block text-[10px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-2.5 py-1 rounded transition-colors w-fit uppercase tracking-wider"
-                                                    >{t('technician_dashboard.update_track_repair', 'UPDATE TRACK REPAIR PROGRESS')}</Link>
+                                                    >{activeTab === 'history' ? t('user_dashboard.view_track_repair', 'TRACK REPAIR PROGRESS') : t('technician_dashboard.update_track_repair', 'UPDATE TRACK REPAIR PROGRESS')}</Link>
                                                 </div>
                                             </td>
                                         </tr>
