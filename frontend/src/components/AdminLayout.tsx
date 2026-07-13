@@ -363,15 +363,18 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
                     </nav>
 
                     {/* Sidebar Footer - Logout */}
-                    <div className="mt-auto pt-4 border-t border-gray-100">
+                    <div className="mt-auto pt-6 pb-2">
                         <button
                             onClick={handleLogout}
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-all text-sm font-medium"
+                            className="group relative w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:text-white bg-red-50 overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 font-medium border border-red-100 hover:border-transparent"
                         >
-                            <div className="p-2 rounded-lg bg-white shadow-soft-md text-red-600">
+                            <div className="p-2 rounded-lg bg-white/90 group-hover:bg-white/20 transition-colors shadow-soft-sm text-red-600 group-hover:text-white z-10">
                                 <LogOut className="w-4 h-4" />
                             </div>
-                            {t('sidebar.logout')}
+                            <span className="z-10">{t('sidebar.logout')}</span>
+                            
+                            {/* Decorative gradient background that appears on hover */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-rose-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         </button>
                     </div>
                 </div>
