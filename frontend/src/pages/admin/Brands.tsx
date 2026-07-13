@@ -82,10 +82,14 @@ export default function Brands() {
                 setCategories(catRes.data.categories);
                 
                 // Find exact page of the newly added item
-                const addedId = res.data.id;
-                const index = newBrands.findIndex((b: Brand) => b.id === addedId);
+                const addedId = Number(res.data.id);
+                let index = newBrands.findIndex((b: Brand) => Number(b.id) === addedId);
+                // Fallback: cari by nama jika ID tidak match
+                if (index === -1) {
+                    index = newBrands.findIndex((b: Brand) => b.name.toLowerCase() === formData.name.trim().toLowerCase());
+                }
                 if (index !== -1) {
-                    setCurrentPage(Math.floor(index / 10) + 1); // itemsPerPage is 10
+                    setCurrentPage(Math.floor(index / itemsPerPage) + 1);
                 }
             }
             setShowModal(false);
