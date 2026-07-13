@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import ScrollIndicator from './ScrollIndicator';
 import {
     LayoutDashboard,
+    Activity,
     FileText,
     Clock,
     AlertTriangle,
@@ -45,6 +46,7 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
     const [showDropdown, setShowDropdown] = useState(false);
     const [complaintsOpen, setComplaintsOpen] = useState(false);
     const [masterOpen, setMasterOpen] = useState(false);
+    const [techProgressOpen, setTechProgressOpen] = useState(false);
 
     const isTechnician = role === 'technician';
 
@@ -78,6 +80,14 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
     const techMenuItems = [
         { path: '/admin/technician/dashboard', label: t('sidebar.dashboard'), icon: LayoutDashboard },
         { path: '/admin/technician/complaints', label: t('sidebar.all_complaints'), icon: FileText },
+    ];
+
+    const techProgressItems = [
+        { path: '/admin/technician/complaints?status=pending', label: t('admin_users.status_pending') },
+        { path: '/admin/technician/complaints?status=in_process', label: t('admin_users.status_in_process') },
+        { path: '/admin/technician/complaints?status=incomplete_in', label: t('dashboard.incomplete_in', 'Incomplete (In)') },
+        { path: '/admin/technician/complaints?view=history&status=incomplete_out', label: t('dashboard.incomplete_out', 'Incomplete (Out)') },
+        { path: '/admin/technician/complaints?status=closed', label: t('admin_users.status_closed') },
     ];
 
     const handleLogout = () => {
@@ -160,7 +170,45 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
                                         {item.label}
                                     </Link>
                                 );
-                            })
+                            })}
+                            
+                            {/* Tech Repair Progress Submenu */}
+                            <div className="mt-2">
+                                <button
+                                    onClick={() => setTechProgressOpen(!techProgressOpen)}
+                                    className="w-full flex items-center justify-between px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-all text-sm font-medium"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 rounded-lg bg-white shadow-soft-md text-gray-800">
+                                            <Activity className="w-4 h-4" />
+                                        </div>
+                                        <span className="uppercase tracking-wider">REPAIR PROGRESS</span>
+                                    </div>
+                                    <ChevronDown className={`w-4 h-4 transition-transform ${techProgressOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                {techProgressOpen && (
+                                    <div className="ml-4 pl-4 border-l border-gray-200 space-y-1 mt-1">
+                                        {techProgressItems.map((item) => {
+                                            const isActive = location.pathname + location.search === item.path;
+                                            return (
+                                                <Link
+                                                    key={item.path}
+                                                    to={item.path}
+                                                    onClick={() => setSidebarOpen(false)}
+                                                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm uppercase transition-all ${isActive
+                                                        ? 'text-gray-900 font-bold'
+                                                        : 'text-gray-500 hover:text-gray-800'
+                                                        }`}
+                                                >
+                                                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isActive ? 'bg-primary-500' : 'bg-gray-400'}`}></span>
+                                                    {item.label}
+                                                </Link>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        </>
                         ) : (
                             <>
                                 {adminMenuItems.map((item) => {
