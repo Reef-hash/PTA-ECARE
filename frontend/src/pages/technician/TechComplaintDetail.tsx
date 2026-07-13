@@ -198,7 +198,7 @@ export default function TechComplaintDetail() {
                                 to={`/admin/technician/complaint/${id}/track-repair`}
                                 className="btn-primary flex items-center justify-center gap-2 whitespace-nowrap text-sm px-4 py-2 w-full sm:w-auto"
                             >
-                                <Eye className="w-4 h-4" />{t('technician_dashboard.update_track_repair', 'UPDATE TRACK REPAIR PROGRESS')}</Link>
+                                <Eye className="w-4 h-4" />{t('user_dashboard.view_track_repair', 'TRACK REPAIR PROGRESS')}</Link>
                         </div>
 
                         <div className="p-4 bg-gray-50 rounded-lg mb-6">
