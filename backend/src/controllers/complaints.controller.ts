@@ -504,10 +504,17 @@ export const updateComplaint = async (req: Request, res: Response): Promise<void
             return;
         }
 
-        await pool.query(
-            'UPDATE complaints SET status = ?, updated_at = NOW() WHERE id = ?',
-            [status, complaintId]
-        );
+        if (status === 'incomplete' || status === 'bawa_pulang') {
+            await pool.query(
+                'UPDATE complaints SET status = ?, assigned_to = NULL, updated_at = NOW() WHERE id = ?',
+                [status, complaintId]
+            );
+        } else {
+            await pool.query(
+                'UPDATE complaints SET status = ?, updated_at = NOW() WHERE id = ?',
+                [status, complaintId]
+            );
+        }
 
         const [complaintRows]: any = await pool.query('SELECT * FROM complaints WHERE id = ?', [complaintId]);
         const data = complaintRows[0];
@@ -603,7 +610,11 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
             try {
                 const [complaintRows]: any = await pool.query('SELECT status FROM complaints WHERE id = ?', [id]);
                 previousStatus = complaintRows[0]?.status || null;
-                await pool.query('UPDATE complaints SET status = ?, updated_at = NOW() WHERE id = ?', [status, id]);
+                if (status === 'incomplete' || status === 'bawa_pulang') {
+                    await pool.query('UPDATE complaints SET status = ?, assigned_to = NULL, updated_at = NOW() WHERE id = ?', [status, id]);
+                } else {
+                    await pool.query('UPDATE complaints SET status = ?, updated_at = NOW() WHERE id = ?', [status, id]);
+                }
             } catch (err) {
                 console.warn('[addRemark] Failed to update complaints table status (possible ENUM error), ignoring:', err);
             }
