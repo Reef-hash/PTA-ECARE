@@ -124,7 +124,7 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
             <aside
                 className={`fixed top-4 left-4 h-[calc(100vh-2rem)] w-64 bg-[#f8f9fa] rounded-2xl shadow-soft-xl z-50 overflow-y-auto [&::-webkit-scrollbar]:hidden transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:top-0 lg:left-0 lg:h-screen lg:rounded-none lg:shadow-none lg:bg-transparent ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
             >
-                <div className="p-4">
+                <div className="p-4 flex flex-col min-h-full">
                     {/* Close button (mobile) */}
                     <button
                         onClick={() => setSidebarOpen(false)}
@@ -363,7 +363,7 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
                     </nav>
 
                     {/* Sidebar Footer - Logout */}
-                    <div className="pt-4 mt-8 border-t border-gray-100">
+                    <div className="mt-auto pt-4 border-t border-gray-100">
                         <button
                             onClick={handleLogout}
                             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-all text-sm font-medium"
