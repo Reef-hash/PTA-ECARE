@@ -191,7 +191,7 @@ export default function RepairDetail() {
                     </div>
 
                     {/* Tracking Progress */}
-                    <RepairTimeline currentStatus={currentStatus} timelineEvents={timelineEvents} isClosed={isClosed} />
+                    <RepairTimeline timelineEvents={timelineEvents} isClosed={isClosed} />
 
                     {/* Defect Details */}
                     {complaint.details && (

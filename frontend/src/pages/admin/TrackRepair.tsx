@@ -205,7 +205,7 @@ export default function TrackRepair() {
 
 
                 {/* BLOCK 1: Track Repair Progress (TOP) */}
-                <RepairTimeline currentStatus={currentStatus} timelineEvents={fullTimelineEvents} isClosed={isClosed} />
+                <RepairTimeline timelineEvents={fullTimelineEvents} isClosed={isClosed} />
 
                 {/* BLOCK 2: Complaint Details (BELOW) */}
                 <div className="card mt-6">

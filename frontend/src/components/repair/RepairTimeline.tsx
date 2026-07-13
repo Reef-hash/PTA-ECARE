@@ -19,59 +19,26 @@ interface RepairTimelineProps {
 /**
  * Dynamic Timeline Component
  * 
- * Instead of mapping events to 4 fixed static slots, this renders
- * ALL events in chronological order (as passed via timelineEvents).
+ * Renders ALL events in chronological order (as passed via timelineEvents).
  * 
- * After the last real event, it appends "future" stages that haven't
- * been reached yet as greyed-out "Waiting..." nodes.
- * 
- * This correctly handles repeat flows like:
- * Pending → In Process → Incomplete → In Process (again) → Closed
+ * Only appends a single "Closed" future stage at the bottom if the complaint
+ * has not yet reached a final state.
  */
-export default function RepairTimeline({ currentStatus, timelineEvents }: RepairTimelineProps) {
+export default function RepairTimeline({ timelineEvents, isClosed }: RepairTimelineProps) {
     const { t } = useTranslation();
 
-    // Define the full lifecycle order for determining what comes "next"
-    const lifecycleOrder: { status: RepairStatus; label: string }[] = [
-        { status: 'PENDING', label: t('admin_users.status_pending') || 'Pending' },
-        { status: 'IN_PROCESS', label: t('admin_users.status_in_process') || 'In Process' },
-        { status: 'IN_COMPLETE', label: t('admin_users.status_incomplete') || 'Incomplete / Bawa Pulang' },
-        { status: 'COMPLETE', label: t('admin_users.status_closed') || 'Closed' },
-    ];
-
-    const stageOrder: Record<RepairStatus, number> = {
-        PENDING: 0,
-        IN_PROCESS: 1,
-        IN_COMPLETE: 2,
-        COMPLETE: 3,
-    };
-
-    // Determine the highest status reached from the actual events
-    const currentIndex = stageOrder[currentStatus] ?? 0;
-
-    // Determine if the timeline already has an IN_COMPLETE event (so we don't show it again as waiting)
-    const hasIncomplete = timelineEvents.some(ev => ev.status === 'IN_COMPLETE');
-
-    // Build the "future" stages that come AFTER the current status
-    // These are stages that haven't been reached yet → shown as "Waiting..."
-    const futureStages = lifecycleOrder
-        .filter(stage => {
-            if (stageOrder[stage.status] <= currentIndex) return false;
-            
-            // If the stage is IN_COMPLETE and we already encountered it, skip it in future stages
-            if (stage.status === 'IN_COMPLETE' && hasIncomplete) return false;
-            
-            return true;
-        })
-        .map(stage => ({
-            status: stage.status,
-            label: stage.label,
-            date: null as string | null,
-            remark: undefined as StepRemark | undefined,
+    // The single "future" stage we ever show is Closed.
+    const futureStages = !isClosed ? [
+        {
+            status: 'COMPLETE' as RepairStatus,
+            label: t('admin_users.status_closed') || 'Closed',
+            date: null,
+            remark: undefined,
             isFuture: true,
-        }));
+        }
+    ] : [];
 
-    // Combine: all real events (dynamic, chronological) + future waiting stages
+    // Combine: all real events (dynamic, chronological) + the single waiting stage
     const allNodes = [
         ...timelineEvents.map(ev => ({ ...ev, isFuture: false })),
         ...futureStages,
