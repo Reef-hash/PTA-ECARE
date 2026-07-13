@@ -16,6 +16,8 @@ export default function Brands() {
     const [editingId, setEditingId] = useState<number | null>(null);
     const [formData, setFormData] = useState({ name: '', category_id: '' });
     const [isSaving, setIsSaving] = useState(false);
+    const [deleteModalId, setDeleteModalId] = useState<number | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         loadData();
@@ -100,15 +102,22 @@ export default function Brands() {
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (!confirm(t('admin_master.delete_confirm'))) return;
+    const handleDelete = (id: number) => {
+        setDeleteModalId(id);
+    };
 
+    const confirmDelete = async () => {
+        if (!deleteModalId) return;
+        setIsDeleting(true);
         try {
-            await api.delete(`/brands/${id}`);
+            await api.delete(`/brands/${deleteModalId}`);
             toast.success(t('admin_master.success_delete'));
-            setBrands(brands.filter(b => b.id !== id));
+            setBrands(brands.filter(b => b.id !== deleteModalId));
+            setDeleteModalId(null);
         } catch (error: any) {
             toast.error(error.response?.data?.error || t('common.error_load'));
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -301,6 +310,40 @@ export default function Brands() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+            {/* Delete Confirmation Modal */}
+            {deleteModalId && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl max-w-sm w-full p-6 text-center shadow-xl transform transition-all">
+                        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Trash2 className="w-8 h-8 text-red-600" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">Adakah anda pasti?</h3>
+                        <p className="text-sm text-gray-500 mb-6">Tindakan ini tidak boleh dipulihkan. Brand ini akan dipadam secara kekal.</p>
+                        <div className="flex justify-center gap-3">
+                            <button 
+                                type="button" 
+                                onClick={() => setDeleteModalId(null)} 
+                                className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                                disabled={isDeleting}
+                            >
+                                {t('common_actions.cancel')}
+                            </button>
+                            <button 
+                                type="button" 
+                                onClick={confirmDelete} 
+                                disabled={isDeleting} 
+                                className="px-5 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors disabled:opacity-50 flex items-center justify-center min-w-[100px]"
+                            >
+                                {isDeleting ? (
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                ) : (
+                                    t('common_actions.delete')
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
