@@ -155,40 +155,15 @@ export const createTechnician = async (req: Request, res: Response): Promise<voi
         const newTechId = randomUUID();
 
         await pool.query(
-            'INSERT INTO technicians (id, name, department, email, contact_number, username, password_hash, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, 0)',
+            'INSERT INTO technicians (id, name, department, email, contact_number, username, password_hash, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, 1)',
             [newTechId, name, department, email, contact_number, username, password_hash]
         );
 
         const [techRows]: any = await pool.query('SELECT * FROM technicians WHERE id = ?', [newTechId]);
         const newTech = techRows[0];
 
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        // Calculate expires_at (24 hours from now) for MySQL
-        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
-
-        // Note: activation_otps table doesn't exist in the provided mysql schema! 
-        // We might need to ensure this works or bypass OTP if the schema doesn't have it.
-        // For now, let's create it if it doesn't exist or just use password_resets if similar.
-        // The original code used activation_otps. Let's assume it exists or create a simple fallback.
-        try {
-            await pool.query('DELETE FROM password_resets WHERE user_id = ?', [newTechId]); // Reuse password_resets structure
-            await pool.query(
-                'INSERT INTO password_resets (user_id, otp, expires_at) VALUES (?, ?, ?)',
-                [newTechId, otp, expiresAt]
-            );
-        } catch (otpErr) {
-            console.error('Failed to save activation OTP (table might be missing):', otpErr);
-        }
-
-        try {
-            const activationHtml = buildActivationEmail(name, otp, 'technician');
-            await sendEmail(email, 'Aktifkan Akaun Juruteknik e-Care Anda', activationHtml);
-        } catch (emailError) {
-            console.error('Failed to send technician activation email:', emailError);
-        }
-
         const { password_hash: _, ...techWithoutPassword } = newTech;
-        res.status(201).json({ message: 'Technician created successfully and activation OTP email sent.', technician: techWithoutPassword });
+        res.status(201).json({ message: 'Technician created successfully.', technician: techWithoutPassword });
     } catch (error) {
         console.error('Create technician error:', error);
         res.status(500).json({ error: 'Internal server error' });
