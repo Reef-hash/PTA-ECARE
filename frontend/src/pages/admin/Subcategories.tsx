@@ -63,15 +63,20 @@ export default function Subcategories() {
                     category_id: parseInt(formData.category_id),
                 });
                 toast.success(t('admin_master.success_update'));
+                loadData();
             } else {
                 await api.post('/subcategories', {
                     name: formData.name,
                     category_id: parseInt(formData.category_id),
                 });
                 toast.success(t('admin_master.success_add'));
+                setSearch('');
+                // Jump to the last page for the newly added item
+                const newTotalPages = Math.ceil((subcategories.length + 1) / 10); // itemsPerPage is 10
+                setCurrentPage(newTotalPages);
+                loadData();
             }
             setShowModal(false);
-            loadData();
         } catch (error: any) {
             toast.error(error.response?.data?.error || t('common.error_load'));
         } finally {
