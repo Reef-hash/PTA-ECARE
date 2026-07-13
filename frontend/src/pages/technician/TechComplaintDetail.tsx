@@ -6,9 +6,11 @@ import api, { getFileUrl } from '../../services/api';
 import { Complaint, ComplaintRemark, TechnicianRemark } from '../../types';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../context/AuthContext';
 
 export default function TechComplaintDetail() {
     const { t, i18n } = useTranslation();
+    const { user } = useAuth();
     const { id } = useParams();
     const [complaint, setComplaint] = useState<Complaint | null>(null);
     const [adminRemarks, setAdminRemarks] = useState<ComplaintRemark[]>([]);
@@ -408,8 +410,9 @@ export default function TechComplaintDetail() {
                             const maxRemarks = isEscalated ? 6 : 3;
                             const totalRemarks = adminRemarks.length + techRemarks.length;
                             const absoluteMax = 6;
-                            // If the complaint is already marked as incomplete/bawa_pulang, the technician cannot update it anymore
-                            if ((complaint.status === 'incomplete' || complaint.status === 'bawa_pulang') && !editingId) {
+                            // If the complaint is already marked as incomplete/bawa_pulang, the technician cannot update it anymore UNLESS it is currently assigned to them
+                            const isAssignedToMe = complaint.assigned_to === user?.id;
+                            if ((complaint.status === 'incomplete' || complaint.status === 'bawa_pulang') && !editingId && !isAssignedToMe) {
                                 return (
                                     <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded relative mb-4" role="alert">
                                         <strong className="font-bold">Perhatian: </strong>
