@@ -361,6 +361,19 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
                             </>
                         )}
                     </nav>
+
+                    {/* Sidebar Footer - Logout */}
+                    <div className="pt-4 mt-8 border-t border-gray-100">
+                        <button
+                            onClick={handleLogout}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-all text-sm font-medium"
+                        >
+                            <div className="p-2 rounded-lg bg-white shadow-soft-md text-red-600">
+                                <LogOut className="w-4 h-4" />
+                            </div>
+                            {t('sidebar.logout')}
+                        </button>
+                    </div>
                 </div>
             </aside>
 
