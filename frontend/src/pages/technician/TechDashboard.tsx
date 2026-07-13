@@ -174,8 +174,8 @@ export default function TechDashboard() {
     const statCards = [
         { label: t('dashboard.pending'), value: stats.pending, icon: Clock, color: 'yellow', path: '/admin/technician/complaints?status=pending' },
         { label: t('dashboard.in_process'), value: stats.in_process, icon: AlertTriangle, color: 'orange', path: '/admin/technician/complaints?status=in_process' },
-        { label: t('dashboard.incomplete_in'), value: stats.incomplete_in, icon: PackageOpen, color: 'red', path: '/admin/technician/complaints?status=incomplete' },
-        { label: t('dashboard.incomplete_out'), value: stats.incomplete_out, icon: Package, color: 'amber', path: '/admin/technician/complaints?view=history' },
+        { label: t('dashboard.incomplete_in'), value: stats.incomplete_in, icon: PackageOpen, color: 'red', path: '/admin/technician/complaints?status=incomplete_in' },
+        { label: t('dashboard.incomplete_out'), value: stats.incomplete_out, icon: Package, color: 'amber', path: '/admin/technician/complaints?view=history&status=incomplete_out' },
         { label: t('dashboard.completed'), value: stats.closed, icon: CheckCircle, color: 'green', path: '/admin/technician/complaints?status=closed' },
     ];
 

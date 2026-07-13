@@ -15,7 +15,7 @@ export default function TechComplaints() {
     const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'all');
-    const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
+    const [activeTab, setActiveTab] = useState<'active' | 'history'>(searchParams.get('view') === 'history' ? 'history' : 'active');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 15;
 
@@ -24,11 +24,15 @@ export default function TechComplaints() {
         if (urlStatus) {
             setStatusFilter(urlStatus);
         }
+        const urlView = searchParams.get('view');
+        if (urlView === 'history' || urlView === 'active') {
+            setActiveTab(urlView);
+        }
     }, [searchParams]);
 
     useEffect(() => {
         loadComplaints();
-    }, [activeTab]);
+    }, [activeTab, statusFilter]);
 
     const loadComplaints = async () => {
         setIsLoading(true);
@@ -39,6 +43,9 @@ export default function TechComplaints() {
             });
             if (activeTab === 'history') {
                 params.append('view', 'history');
+            }
+            if (statusFilter !== 'all') {
+                params.append('status', statusFilter);
             }
 
             const response = await api.get(`/complaints?${params.toString()}`);
@@ -62,10 +69,8 @@ export default function TechComplaints() {
     const filteredComplaints = useMemo(() => {
         let results = allComplaints;
 
-        // Filter by status
-        if (statusFilter !== 'all') {
-            results = results.filter(c => c.status === statusFilter);
-        }
+        // Since we pass statusFilter to the backend, the backend already filters by status!
+        // We only need to apply the text search filter here.
 
         // Filter by search term
         if (search.trim()) {
@@ -295,6 +300,8 @@ export default function TechComplaints() {
                             <option value="all">{t('admin_users.all_status') || 'All Status'}</option> {/* Fallback if key missing */}
                             <option value="pending">{t('admin_users.status_pending')}</option>
                             <option value="in_process">{t('admin_users.status_in_process')}</option>
+                            <option value="incomplete_in">{t('dashboard.incomplete_in', 'Incomplete (In)')}</option>
+                            <option value="incomplete_out">{t('dashboard.incomplete_out', 'Incomplete (Out)')}</option>
                             <option value="closed">{t('admin_users.status_closed')}</option>
                         </select>
                     </div>
