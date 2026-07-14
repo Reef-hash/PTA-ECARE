@@ -116,19 +116,48 @@ const verifyGoogleAuthRequest = async (credential?: string): Promise<VerifiedGoo
 };
 
 const notifyGoogleRegistration = async (user: UserRow): Promise<void> => {
+    const formattedDate = new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' });
+
+    // Case 4: User Notification
     await createNotification(
-        user.id, 'user', 'Google Account Registered', 'Your Google/Gmail customer account has been registered successfully.', 'system'
+        user.id, 'user', '✅ [REGISTRATION SUCCESS]', `Selamat! Akun Anda telah berhasil dibuat.\nMetode : Google OAuth\nEmail : ${user.email}\nWaktu : ${formattedDate}`, 'system'
     );
+
+    // Case 4: User Welcome Email
+    try {
+        const emailBody = `Assalamualaikum dan Salam Sejahtera ${user.full_name},
+
+Tahniah! Akaun anda di E-CARE telah berjaya didaftarkan menggunakan akaun Google anda.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ BUTIRAN AKAUN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Nama Penuh    : ${user.full_name}
+Emel          : ${user.email}
+Kaedah Daftar : Google OAuth
+Status Akaun  : ✅ Aktif
+Tarikh Daftar : ${formattedDate}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔑 Cara Log Masuk:
+Anda tidak perlu kata laluan. Hanya klik butang 
+"Log Masuk dengan Google" di laman web kami.
+
+🚀 Mulakan sekarang:
+Jika anda tidak membuat pendaftaran ini, sila hubungi kami segera.`;
+        const emailHtml = buildNotificationEmailHtml(user.full_name, 'Selamat Datang ke portal E-CARE!', emailBody, undefined, 'user');
+        await sendEmail(user.email, 'Selamat Datang ke portal E-CARE!', emailHtml);
+    } catch (emailErr) {
+        console.error('Failed to send welcome email for Google user:', emailErr);
+    }
+
+    // Case 1: Admin Notification
     const [admins]: any = await pool.query('SELECT id FROM admins');
     if (admins && admins.length > 0) {
         await Promise.all(admins.map((admin: any) => createNotification(
-            admin.id, 'admin', 'New Google User Registration', `A new Google/Gmail user has successfully registered.\nName: ${user.full_name} | IC Number: ${user.ic_number}\nClick here to view details.| uid:${user.id}`, 'system'
-        )));
-    }
-    const [technicians]: any = await pool.query('SELECT id FROM technicians WHERE is_active = 1');
-    if (technicians && technicians.length > 0) {
-        await Promise.all(technicians.map((technician: any) => createNotification(
-            technician.id, 'technician', 'New Google Customer Registered', `A new Google/Gmail customer has registered: ${user.full_name}.`, 'system'
+            admin.id, 'admin', 'New User Registration', `${user.full_name} has just registered using Google.`, 'system'
         )));
     }
 };
@@ -291,6 +320,17 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
         const [newUserRows]: any = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
         const user = newUserRows[0];
+        
+        const formattedDate = new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' });
+
+        // Case 2: Admin Notification (Form Registration)
+        const [admins]: any = await pool.query('SELECT id FROM admins');
+        if (admins && admins.length > 0) {
+            const adminMsg = `User: ${user.full_name}\nWaktu: ${formattedDate}\nMetode: Form Registrasi (Email/Password)\nStatus: ${normalizedEmail ? 'Menunggu Verifikasi' : 'Aktif'}`;
+            await Promise.all(admins.map((admin: any) => createNotification(
+                admin.id, 'admin', '🔔 [NEW USER REGISTRATION]', adminMsg, 'system'
+            )));
+        }
 
         if (normalizedEmail) {
             const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -320,6 +360,11 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         } else {
             const tokenPayload = { id: user.id, role: 'user', ic_number: user.ic_number };
             const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '24h' });
+
+            // Case 5: User Notification (Form Registration - No Email)
+            await createNotification(
+                user.id, 'user', '👋 Selamat Datang!', `~ Selamat datang, ${user.full_name}!\nAkaun anda telah berjaya didaftarkan dan aktif.`, 'system'
+            );
 
             res.status(200).json({
                 message: 'Pendaftaran berjaya! Akaun anda telah diaktifkan.',
@@ -356,6 +401,11 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
         const user = updatedUsers[0];
 
         try { await sendWelcomeEmail(user); } catch (e) { }
+
+        // Case 5: User Notification (Form Registration - Verified Email)
+        await createNotification(
+            user.id, 'user', '👋 Selamat Datang!', `~ Selamat datang, ${user.full_name}!\nAkaun anda telah berjaya didaftarkan dan aktif.`, 'system'
+        );
 
         const token = createUserToken(user);
 

@@ -465,19 +465,77 @@ export const createComplaint = async (req: Request, res: Response): Promise<void
         const [complaintRows]: any = await pool.query('SELECT * FROM complaints WHERE id = ?', [insertId]);
         const complaint = complaintRows[0];
 
-        const [userRows]: any = await pool.query('SELECT full_name FROM users WHERE id = ?', [userId]);
+        const [userRows]: any = await pool.query('SELECT full_name, email, contact_no FROM users WHERE id = ?', [userId]);
         const userName = userRows[0]?.full_name || 'Pengguna';
+        const userEmail = userRows[0]?.email || '-';
+        const userPhone = userRows[0]?.contact_no || '-';
 
-        const [admins]: any = await pool.query('SELECT id FROM admins');
+        const [catRows]: any = await pool.query('SELECT name FROM categories WHERE id = ?', [category_id]);
+        const categoryName = catRows[0]?.name || 'Fasilitas / Teknis';
+
+        const formattedDate = new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' });
+        const attachCount = (warranty_file && receipt_file) ? 2 : (warranty_file || receipt_file ? 1 : 0);
+        const attachText = attachCount > 0 ? `${attachCount} file(s)` : 'Tiada lampiran';
+
+        const adminEmailBody = `Yth. Admin,
+
+${userName} telah mengirimkan complaint baru melalui sistem.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ DETAIL COMPLAINT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Nomor Tiket   : ${report_number}
+Dari          : ${userName}
+Email         : ${userEmail}
+No. HP        : ${userPhone}
+
+Judul         : ${subcategory || brand_name || 'Aduan Kerosakan'}
+Kategori      : ${categoryName}
+Prioritas     : 🔴 HIGH
+Status        : Menunggu Respon
+
+Deskripsi     :
+${details}
+
+Lampiran      : ${attachText}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 TINDAKAN YANG DAPAT DILAKUKAN:
+1. Klik link berikut untuk melihat detail:
+   https://ptas.my/admin/complaint/${report_number}
+
+2. Respon / proses complaint:
+   https://ptas.my/admin/complaint/${report_number}
+
+3. Tugaskan ke teknisi:
+   https://ptas.my/admin/complaint/${report_number}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Terima kasih.
+
+*This is an automated notification. Please do not reply to this email.*`;
+
+        const [admins]: any = await pool.query('SELECT id, email FROM admins');
         if (admins) {
-            const adminPayload = JSON.stringify({ key: 'new_complaint_msg', params: { user_name: userName } });
+            const adminMsg = `Dari : ${userName} telah membuat aduan baharu sila\nJudul : ${subcategory || brand_name || 'Aduan Kerosakan'} (${details})\nWaktu : ${formattedDate}\nStatus : Menunggu Respon`;
             for (const admin of admins) {
-                await createNotification(admin.id, 'admin', `Aduan Baru: ${report_number}`, adminPayload, 'status_update', complaint.id);
+                // Case 3: Admin Bell
+                await createNotification(admin.id, 'admin', `🔔 [NEW COMPLAINT]`, adminMsg, 'system', complaint.id);
+                // Case 3: Admin Email
+                if (admin.email) {
+                    try {
+                        const emailHtml = buildNotificationEmailHtml(admin.full_name || 'Admin', 'Aduan Baru Diterima', adminEmailBody, report_number, 'admin');
+                        await sendEmail(admin.email, `Aduan Baru: ${report_number}`, emailHtml);
+                    } catch (e) {
+                        console.error('Failed to send admin email:', e);
+                    }
+                }
             }
         }
 
-        const userPayload = JSON.stringify({ key: 'user_complaint_created_msg', params: { report_number: report_number } });
-        await createNotification(userId!, 'user', `Aduan Berjaya Didaftarkan`, userPayload, 'status_update', complaint.id);
+        // Case 6: User Bell
+        await createNotification(userId!, 'user', `📋 ADUAN BERJAYA DIHANTAR`, `no. Aduan anda telah berjaya dihantar ke sistem E-CARE.\n> click to view details`, 'system', complaint.id);
 
         res.status(201).json({ message: 'Complaint submitted successfully', complaint, report_number });
     } catch (error) {
