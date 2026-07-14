@@ -196,9 +196,21 @@ export default function ComplaintHistory() {
 
 
 
+    const getPageTitle = () => {
+        switch (statusFilter) {
+            case 'pending': return t('dashboard.pending') || 'Pending';
+            case 'in_process': return t('dashboard.in_process') || 'In Process';
+            case 'closed': return t('dashboard.closed') || 'Closed';
+            case 'cancelled': return t('dashboard.cancelled') || 'Cancelled';
+            case 'incomplete': return t('dashboard.incomplete') || 'Incomplete';
+            default: return t('user_dashboard.title_history');
+        }
+    };
+
+    const pageTitle = getPageTitle();
 
     return (
-        <UserLayout title={t('user_dashboard.title_history')} breadcrumb={t('user_dashboard.title_history')}>
+        <UserLayout title={pageTitle} breadcrumb={pageTitle}>
             {/* Back Button */}
 
 
