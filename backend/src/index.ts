@@ -65,49 +65,6 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Debug endpoint for notifications
-app.get('/api/debug-notifs', async (req, res) => {
-    try {
-        const mysql = require('mysql2/promise');
-        const fs = require('fs');
-        let errorLog = 'No log found';
-        try {
-            if (fs.existsSync('error_log.txt')) {
-                errorLog = fs.readFileSync('error_log.txt', 'utf8');
-            }
-        } catch(e) {}
-
-        const pool = mysql.createPool({
-            host: process.env.DB_HOST || 'localhost',
-            user: process.env.DB_USER || 'root',
-            password: process.env.DB_PASSWORD || '',
-            database: process.env.DB_NAME || 'ecare_db',
-        });
-        let fixResult = null;
-        let insertResult = null;
-        let insertError = null;
-        try {
-            // Fix the AUTO_INCREMENT value forcefully
-            const [fix] = await pool.query('TRUNCATE TABLE notifications');
-            fixResult = fix;
-
-            const [result] = await pool.query(
-                'INSERT INTO notifications (recipient_id, recipient_role, title, message, type, is_read) VALUES (?, ?, ?, ?, ?, 0)',
-                ['test-uuid-1234', 'user', 'TEST', 'TEST MSG', 'status_update']
-            );
-            insertResult = result;
-        } catch(e: any) {
-            insertError = e.message;
-        }
-
-        const [rows] = await pool.query('SELECT * FROM notifications ORDER BY created_at DESC LIMIT 10');
-        const [schema] = await pool.query('DESCRIBE notifications');
-        res.json({ schema, rows, fixResult, insertResult, insertError, errorLog });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message, stack: e.stack });
-    }
-});
-
 // Download endpoint to bypass CORS/Nginx issues for static files
 app.get('/api/download', (req, res) => {
     try {
