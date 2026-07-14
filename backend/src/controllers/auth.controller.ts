@@ -120,7 +120,7 @@ const notifyGoogleRegistration = async (user: UserRow): Promise<void> => {
 
     // Case 4: User Notification
     await createNotification(
-        user.id, 'user', '✅ [REGISTRATION SUCCESS]', `Selamat! Akun Anda telah berhasil dibuat.\nMetode : Google OAuth\nEmail : ${user.email}\nWaktu : ${formattedDate}`, 'system'
+        user.id, 'user', '✅ [REGISTRATION SUCCESS]', `Selamat! Akun Anda telah berhasil dibuat.\nMetode : Google OAuth\nEmail : ${user.email}\nWaktu : ${formattedDate}`, 'status_update'
     );
 
     // Case 4: User Welcome Email
@@ -157,7 +157,7 @@ Jika anda tidak membuat pendaftaran ini, sila hubungi kami segera.`;
     const [admins]: any = await pool.query('SELECT id FROM admins');
     if (admins && admins.length > 0) {
         await Promise.all(admins.map((admin: any) => createNotification(
-            admin.id, 'admin', 'New User Registration', `${user.full_name} has just registered using Google.`, 'system'
+            admin.id, 'admin', 'New User Registration', `${user.full_name} has just registered using Google.`, 'status_update'
         )));
     }
 };
@@ -328,7 +328,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         if (admins && admins.length > 0) {
             const adminMsg = `User: ${user.full_name}\nWaktu: ${formattedDate}\nMetode: Form Registrasi (Email/Password)\nStatus: ${normalizedEmail ? 'Menunggu Verifikasi' : 'Aktif'}`;
             await Promise.all(admins.map((admin: any) => createNotification(
-                admin.id, 'admin', '🔔 [NEW USER REGISTRATION]', adminMsg, 'system'
+                admin.id, 'admin', '🔔 [NEW USER REGISTRATION]', adminMsg, 'status_update'
             )));
         }
 
@@ -363,7 +363,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
             // Case 5: User Notification (Form Registration - No Email)
             await createNotification(
-                user.id, 'user', '👋 Selamat Datang!', `~ Selamat datang, ${user.full_name}!\nAkaun anda telah berjaya didaftarkan dan aktif.`, 'system'
+                user.id, 'user', '👋 Selamat Datang!', `~ Selamat datang, ${user.full_name}!\nAkaun anda telah berjaya didaftarkan dan aktif.`, 'status_update'
             );
 
             res.status(200).json({
@@ -404,7 +404,7 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
 
         // Case 5: User Notification (Form Registration - Verified Email)
         await createNotification(
-            user.id, 'user', '👋 Selamat Datang!', `~ Selamat datang, ${user.full_name}!\nAkaun anda telah berjaya didaftarkan dan aktif.`, 'system'
+            user.id, 'user', '👋 Selamat Datang!', `~ Selamat datang, ${user.full_name}!\nAkaun anda telah berjaya didaftarkan dan aktif.`, 'status_update'
         );
 
         const token = createUserToken(user);

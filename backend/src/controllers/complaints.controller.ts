@@ -521,7 +521,7 @@ Terima kasih.
             const adminMsg = `Dari : ${userName} telah membuat aduan baharu sila\nJudul : ${subcategory || brand_name || 'Aduan Kerosakan'} (${details})\nWaktu : ${formattedDate}\nStatus : Menunggu Respon`;
             for (const admin of admins) {
                 // Case 3: Admin Bell
-                await createNotification(admin.id, 'admin', `🔔 [NEW COMPLAINT]`, adminMsg, 'system', complaint.id);
+                await createNotification(admin.id, 'admin', `🔔 [NEW COMPLAINT]`, adminMsg, 'status_update', complaint.id);
                 // Case 3: Admin Email
                 if (admin.email) {
                     try {
@@ -535,7 +535,7 @@ Terima kasih.
         }
 
         // Case 6: User Bell
-        await createNotification(userId!, 'user', `📋 ADUAN BERJAYA DIHANTAR`, `no. Aduan anda telah berjaya dihantar ke sistem E-CARE.\n> click to view details`, 'system', complaint.id);
+        await createNotification(userId!, 'user', `📋 ADUAN BERJAYA DIHANTAR`, `no. Aduan anda telah berjaya dihantar ke sistem E-CARE.\n> click to view details`, 'status_update', complaint.id);
 
         res.status(201).json({ message: 'Complaint submitted successfully', complaint, report_number });
     } catch (error) {
