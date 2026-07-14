@@ -125,16 +125,15 @@ export default function PrintReceipt() {
                         display: flex !important;
                         flex-direction: row !important;
                         flex-wrap: nowrap !important;
-                        gap: 4mm !important;
-                        width: 100% !important;
+                        gap: 5mm !important;
                     }
 
                     .receipt-copy {
-                        flex: 1 !important;
-                        min-width: 0 !important;
+                        width: 140mm !important;
                         height: 190mm !important;
                         display: flex !important;
                         flex-direction: column !important;
+                        flex-shrink: 0 !important;
                         overflow: hidden !important;
                     }
                 }
