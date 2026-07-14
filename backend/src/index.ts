@@ -69,6 +69,14 @@ app.get('/api/health', (req, res) => {
 app.get('/api/debug-notifs', async (req, res) => {
     try {
         const mysql = require('mysql2/promise');
+        const fs = require('fs');
+        let errorLog = 'No log found';
+        try {
+            if (fs.existsSync('error_log.txt')) {
+                errorLog = fs.readFileSync('error_log.txt', 'utf8');
+            }
+        } catch(e) {}
+
         const pool = mysql.createPool({
             host: process.env.DB_HOST || 'localhost',
             user: process.env.DB_USER || 'root',
@@ -77,7 +85,7 @@ app.get('/api/debug-notifs', async (req, res) => {
         });
         const [rows] = await pool.query('SELECT * FROM notifications ORDER BY created_at DESC LIMIT 10');
         const [schema] = await pool.query('DESCRIBE notifications');
-        res.json({ schema, rows });
+        res.json({ schema, rows, errorLog });
     } catch (e: any) {
         res.status(500).json({ error: e.message, stack: e.stack });
     }
