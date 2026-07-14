@@ -84,9 +84,14 @@ app.get('/api/debug-notifs', async (req, res) => {
             database: process.env.DB_NAME || 'ecare_db',
         });
         
+        let fixResult = null;
         let insertResult = null;
         let insertError = null;
         try {
+            // Fix the AUTO_INCREMENT value
+            const [fix] = await pool.query('ALTER TABLE notifications AUTO_INCREMENT = 1');
+            fixResult = fix;
+
             const [result] = await pool.query(
                 'INSERT INTO notifications (recipient_id, recipient_role, title, message, type, is_read) VALUES (?, ?, ?, ?, ?, 0)',
                 ['test-uuid-1234', 'user', 'TEST', 'TEST MSG', 'status_update']
@@ -98,7 +103,7 @@ app.get('/api/debug-notifs', async (req, res) => {
 
         const [rows] = await pool.query('SELECT * FROM notifications ORDER BY created_at DESC LIMIT 10');
         const [schema] = await pool.query('DESCRIBE notifications');
-        res.json({ schema, rows, insertResult, insertError, errorLog });
+        res.json({ schema, rows, fixResult, insertResult, insertError, errorLog });
     } catch (e: any) {
         res.status(500).json({ error: e.message, stack: e.stack });
     }
