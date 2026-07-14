@@ -83,13 +83,12 @@ app.get('/api/debug-notifs', async (req, res) => {
             password: process.env.DB_PASSWORD || '',
             database: process.env.DB_NAME || 'ecare_db',
         });
-        
         let fixResult = null;
         let insertResult = null;
         let insertError = null;
         try {
-            // Fix the AUTO_INCREMENT value
-            const [fix] = await pool.query('ALTER TABLE notifications AUTO_INCREMENT = 1');
+            // Fix the AUTO_INCREMENT value forcefully
+            const [fix] = await pool.query('TRUNCATE TABLE notifications');
             fixResult = fix;
 
             const [result] = await pool.query(
