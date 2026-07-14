@@ -148,7 +148,7 @@ Anda tidak perlu kata laluan. Hanya klik butang
 🚀 Mulakan sekarang:
 Jika anda tidak membuat pendaftaran ini, sila hubungi kami segera.`;
         const emailHtml = buildNotificationEmailHtml(user.full_name, 'Selamat Datang ke portal E-CARE!', emailBody, undefined, 'user');
-        await sendEmail(user.email, 'Selamat Datang ke portal E-CARE!', emailHtml);
+        await sendEmail(user.email!, 'Selamat Datang ke portal E-CARE!', emailHtml);
     } catch (emailErr) {
         console.error('Failed to send welcome email for Google user:', emailErr);
     }
