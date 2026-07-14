@@ -255,16 +255,16 @@ export const createNotification = async (
         console.log(`[CREATE NOTIFICATION] recipientId: ${userId}, recipientRole: ${role}, title: ${start_msg}, referenceId: ${complaint_id}`);
 
         // 1. Create DB notification for loceng bell
-        await pool.query(
-            'INSERT INTO notifications (recipient_id, recipient_role, title, message, type, reference_id, is_read) VALUES (?, ?, ?, ?, ?, ?, 0)',
-            [userId, role, start_msg, payload, type, complaint_id || null]
-        );
-
-        console.log('[CREATE NOTIFICATION] Bell DB notification created successfully');
-    } catch (dbError: any) {
-        console.error('[CREATE NOTIFICATION] DB INSERT ERROR:', dbError);
-        require('fs').appendFileSync('error_log.txt', new Date().toISOString() + ' - DB ERROR: ' + (dbError.message || dbError) + '\n');
-    }
+        try {
+            await pool.query(
+                'INSERT INTO notifications (recipient_id, recipient_role, title, message, type, reference_id, is_read) VALUES (?, ?, ?, ?, ?, ?, 0)',
+                [userId, role, start_msg, payload, type, complaint_id || null]
+            );
+            console.log('[CREATE NOTIFICATION] Bell DB notification created successfully');
+        } catch (dbError: any) {
+            console.error('[CREATE NOTIFICATION] DB INSERT ERROR:', dbError);
+            require('fs').appendFileSync('error_log.txt', new Date().toISOString() + ' - DB ERROR: ' + (dbError.message || dbError) + '\n');
+        }
 
         // 2. Fetch email and send custom HTML transaction email in a safe background task
         try {
