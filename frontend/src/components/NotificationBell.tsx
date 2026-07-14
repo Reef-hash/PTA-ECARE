@@ -116,6 +116,20 @@ export default function NotificationBell() {
             translatedStatus = t('notification.status_closed');
         }
 
+        // Handle custom notifications
+        if (
+            safeTitle.includes('REGISTRATION SUCCESS') ||
+            safeTitle.includes('NEW USER REGISTRATION') ||
+            safeTitle.includes('Selamat Datang') ||
+            safeTitle.includes('NEW COMPLAINT') ||
+            safeTitle.includes('ADUAN BERJAYA DIHANTAR')
+        ) {
+            return {
+                title: safeTitle,
+                message: safeMessage.replace(/\|\s*uid:[a-zA-Z0-9-]+/, '').trim()
+            };
+        }
+
         // User-specific notifications (profile, password, cancelled complaint)
         if (safeTitle.includes('Profil Dikemaskini') || safeTitle.includes('Profile Updated')) {
             return {
