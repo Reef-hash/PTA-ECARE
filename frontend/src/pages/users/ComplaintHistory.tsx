@@ -274,7 +274,7 @@ export default function ComplaintHistory() {
                                                     </Link>
                                                 </div>
                                             </div>
-                                            <div className="flex-shrink-0">
+                                            <div className="flex-shrink min-w-0 flex justify-end ml-2 max-w-[60%]">
                                                 {getStatusBadge(complaint)}
                                             </div>
                                         </div>
