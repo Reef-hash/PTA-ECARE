@@ -261,6 +261,10 @@ export const createNotification = async (
         );
 
         console.log('[CREATE NOTIFICATION] Bell DB notification created successfully');
+    } catch (dbError: any) {
+        console.error('[CREATE NOTIFICATION] DB INSERT ERROR:', dbError);
+        require('fs').appendFileSync('error_log.txt', new Date().toISOString() + ' - DB ERROR: ' + (dbError.message || dbError) + '\n');
+    }
 
         // 2. Fetch email and send custom HTML transaction email in a safe background task
         try {
@@ -334,7 +338,8 @@ export const createNotification = async (
         } catch (emailErr) {
             console.error('[CREATE NOTIFICATION] Failed to fetch profile or send email:', emailErr);
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error('Failed to create notification:', error);
+        require('fs').appendFileSync('error_log.txt', new Date().toISOString() + ' - GENERAL ERROR: ' + (error.message || error) + '\n');
     }
 };
