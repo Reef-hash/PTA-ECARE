@@ -12,6 +12,7 @@ import {
     X,
     ChevronDown,
     ArrowLeft,
+    FileText,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -34,6 +35,7 @@ export default function UserLayout({ children, breadcrumb }: UserLayoutProps) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
     const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+    const [repairProgressOpen, setRepairProgressOpen] = useState(false);
 
     const isProfileIncomplete = (user as any)?.ic_number?.startsWith('G-') || false;
 
@@ -42,6 +44,15 @@ export default function UserLayout({ children, breadcrumb }: UserLayoutProps) {
         { path: '/users/register-complaint', label: t('user_sidebar.new_complaint'), icon: FilePlus },
         { path: '/users/complaint-history', label: t('user_sidebar.history'), icon: History },
         { path: '/users/profile', label: t('user_sidebar.profile'), icon: User },
+    ];
+
+    const repairProgressItems = [
+        { path: '/users/complaint-history', label: t('dashboard.total_complaints') || 'Total Complaints' },
+        { path: '/users/complaint-history?status=pending', label: t('dashboard.pending') || 'Pending' },
+        { path: '/users/complaint-history?status=in_process', label: t('dashboard.in_process') || 'In Process' },
+        { path: '/users/complaint-history?status=incomplete', label: t('dashboard.incomplete') || 'Incomplete' },
+        { path: '/users/complaint-history?status=closed', label: t('dashboard.closed') || 'Complete' },
+        { path: '/users/complaint-history?status=cancelled', label: t('dashboard.cancelled') || 'Cancelled' },
     ];
 
     const handleLogout = () => {
@@ -131,6 +142,43 @@ export default function UserLayout({ children, breadcrumb }: UserLayoutProps) {
                                 </Link>
                             );
                         })}
+
+                        {/* Repair Progress Submenu */}
+                        <div className="mt-2">
+                            <button
+                                onClick={() => setRepairProgressOpen(!repairProgressOpen)}
+                                className="w-full flex items-center justify-between px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-all text-sm font-medium"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-lg bg-white shadow-soft-md text-gray-800">
+                                        <FileText className="w-4 h-4" />
+                                    </div>
+                                    Repair Progress
+                                </div>
+                                <ChevronDown className={`w-4 h-4 transition-transform ${repairProgressOpen ? 'rotate-180' : ''}`} />
+                            </button>
+                            {repairProgressOpen && (
+                                <div className="ml-4 pl-4 border-l border-gray-200 space-y-1 mt-1">
+                                    {repairProgressItems.map((item) => {
+                                        const isActive = location.pathname + location.search === item.path;
+                                        return (
+                                            <Link
+                                                key={item.path}
+                                                to={item.path}
+                                                onClick={() => setSidebarOpen(false)}
+                                                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${isActive
+                                                    ? 'text-gray-900 font-semibold'
+                                                    : 'text-gray-500 hover:text-gray-800'
+                                                    }`}
+                                            >
+                                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isActive ? 'bg-primary-500' : 'bg-gray-400'}`}></span>
+                                                {item.label}
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
                     </nav>
 
                     {/* Sidebar Footer - Logout */}
