@@ -9,13 +9,18 @@ import { useTranslation } from 'react-i18next';
 
 export default function ComplaintHistory() {
     const { t } = useTranslation();
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [allComplaints, setAllComplaints] = useState<Complaint[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'all');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+
+    useEffect(() => {
+        const urlStatus = searchParams.get('status');
+        setStatusFilter(urlStatus || 'all');
+    }, [searchParams]);
 
     useEffect(() => {
         loadComplaints();
@@ -234,7 +239,16 @@ export default function ComplaintHistory() {
                         <Filter className="w-5 h-5 text-gray-400" />
                         <select
                             value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
+                            onChange={(e) => {
+                                const newStatus = e.target.value;
+                                setStatusFilter(newStatus);
+                                if (newStatus === 'all') {
+                                    searchParams.delete('status');
+                                } else {
+                                    searchParams.set('status', newStatus);
+                                }
+                                setSearchParams(searchParams);
+                            }}
                             className="input-field w-auto"
                         >
                             <option value="all">{t('admin_users.all_status') || 'All Status'}</option>
