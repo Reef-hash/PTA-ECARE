@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, Fragment } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ScrollIndicator from './ScrollIndicator';
@@ -126,59 +126,62 @@ export default function UserLayout({ children, breadcrumb }: UserLayoutProps) {
                             const Icon = item.icon;
                             const isActive = location.pathname === item.path;
                             return (
-                                <Link
-                                    key={item.path}
-                                    to={item.path}
-                                    onClick={() => setSidebarOpen(false)}
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-sm font-medium ${isActive
-                                        ? 'bg-white shadow-soft-md text-gray-800'
-                                        : 'text-gray-600 hover:bg-gray-50'
-                                        }`}
-                                >
-                                    <div className={`p-2 rounded-lg ${isActive ? 'bg-gradient-primary shadow-md text-white' : 'bg-white shadow-soft-md text-gray-800'}`}>
-                                        <Icon className="w-4 h-4" />
-                                    </div>
-                                    {item.label}
-                                </Link>
+                                <Fragment key={item.path}>
+                                    <Link
+                                        to={item.path}
+                                        onClick={() => setSidebarOpen(false)}
+                                        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-sm font-medium ${isActive
+                                            ? 'bg-white shadow-soft-md text-gray-800'
+                                            : 'text-gray-600 hover:bg-gray-50'
+                                            }`}
+                                    >
+                                        <div className={`p-2 rounded-lg ${isActive ? 'bg-gradient-primary shadow-md text-white' : 'bg-white shadow-soft-md text-gray-800'}`}>
+                                            <Icon className="w-4 h-4" />
+                                        </div>
+                                        {item.label}
+                                    </Link>
+
+                                    {/* Repair Progress Submenu */}
+                                    {item.path === '/users/complaint-history' && (
+                                        <div className="mt-2">
+                                            <button
+                                                onClick={() => setRepairProgressOpen(!repairProgressOpen)}
+                                                className="w-full flex items-center justify-between px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-all text-sm font-medium"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 rounded-lg bg-white shadow-soft-md text-gray-800">
+                                                        <FileText className="w-4 h-4" />
+                                                    </div>
+                                                    Repair Progress
+                                                </div>
+                                                <ChevronDown className={`w-4 h-4 transition-transform ${repairProgressOpen ? 'rotate-180' : ''}`} />
+                                            </button>
+                                            {repairProgressOpen && (
+                                                <div className="ml-4 pl-4 border-l border-gray-200 space-y-1 mt-1">
+                                                    {repairProgressItems.map((subItem) => {
+                                                        const isSubActive = location.pathname + location.search === subItem.path;
+                                                        return (
+                                                            <Link
+                                                                key={subItem.path}
+                                                                to={subItem.path}
+                                                                onClick={() => setSidebarOpen(false)}
+                                                                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${isSubActive
+                                                                    ? 'text-gray-900 font-semibold'
+                                                                    : 'text-gray-500 hover:text-gray-800'
+                                                                    }`}
+                                                            >
+                                                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isSubActive ? 'bg-primary-500' : 'bg-gray-400'}`}></span>
+                                                                {subItem.label}
+                                                            </Link>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </Fragment>
                             );
                         })}
-
-                        {/* Repair Progress Submenu */}
-                        <div className="mt-2">
-                            <button
-                                onClick={() => setRepairProgressOpen(!repairProgressOpen)}
-                                className="w-full flex items-center justify-between px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-all text-sm font-medium"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-lg bg-white shadow-soft-md text-gray-800">
-                                        <FileText className="w-4 h-4" />
-                                    </div>
-                                    Repair Progress
-                                </div>
-                                <ChevronDown className={`w-4 h-4 transition-transform ${repairProgressOpen ? 'rotate-180' : ''}`} />
-                            </button>
-                            {repairProgressOpen && (
-                                <div className="ml-4 pl-4 border-l border-gray-200 space-y-1 mt-1">
-                                    {repairProgressItems.map((item) => {
-                                        const isActive = location.pathname + location.search === item.path;
-                                        return (
-                                            <Link
-                                                key={item.path}
-                                                to={item.path}
-                                                onClick={() => setSidebarOpen(false)}
-                                                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${isActive
-                                                    ? 'text-gray-900 font-semibold'
-                                                    : 'text-gray-500 hover:text-gray-800'
-                                                    }`}
-                                            >
-                                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isActive ? 'bg-primary-500' : 'bg-gray-400'}`}></span>
-                                                {item.label}
-                                            </Link>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
                     </nav>
 
                     {/* Sidebar Footer - Logout */}
