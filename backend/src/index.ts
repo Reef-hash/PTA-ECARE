@@ -83,9 +83,22 @@ app.get('/api/debug-notifs', async (req, res) => {
             password: process.env.DB_PASSWORD || '',
             database: process.env.DB_NAME || 'ecare_db',
         });
+        
+        let insertResult = null;
+        let insertError = null;
+        try {
+            const [result] = await pool.query(
+                'INSERT INTO notifications (recipient_id, recipient_role, title, message, type, is_read) VALUES (?, ?, ?, ?, ?, 0)',
+                ['test-uuid-1234', 'user', 'TEST', 'TEST MSG', 'status_update']
+            );
+            insertResult = result;
+        } catch(e: any) {
+            insertError = e.message;
+        }
+
         const [rows] = await pool.query('SELECT * FROM notifications ORDER BY created_at DESC LIMIT 10');
         const [schema] = await pool.query('DESCRIBE notifications');
-        res.json({ schema, rows, errorLog });
+        res.json({ schema, rows, insertResult, insertError, errorLog });
     } catch (e: any) {
         res.status(500).json({ error: e.message, stack: e.stack });
     }
