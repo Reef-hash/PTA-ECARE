@@ -538,9 +538,13 @@ Terima kasih.
         await createNotification(userId!, 'user', `📋 ADUAN BERJAYA DIHANTAR`, `no. Aduan anda telah berjaya dihantar ke sistem E-CARE.\n> click to view details`, 'status_update', complaint.id);
 
         res.status(201).json({ message: 'Complaint submitted successfully', complaint, report_number });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Create complaint error:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ 
+            error: 'Internal server error', 
+            details: error?.message || String(error),
+            stack: error?.stack 
+        });
     }
 };
 
