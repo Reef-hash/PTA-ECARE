@@ -559,6 +559,9 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
             const [newUserRows]: any = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
             const newUser = newUserRows[0];
 
+            try { await notifyGoogleRegistration(newUser); } catch (e) {}
+            try { await sendWelcomeEmail(newUser); } catch (e) {}
+
             res.status(201).json({ message: 'Google registration successful — please complete profile', user: stripPasswordHash(newUser), token: createUserToken(newUser), role: 'user', is_new_user: true, profile_complete: false, redirect_to_profile: true });
             return;
         }
