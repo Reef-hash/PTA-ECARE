@@ -462,6 +462,13 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
             } catch (notifyError) {
                 console.error('Failed to notify admins:', notifyError);
             }
+            
+            // For Manual Users (real IC), notify them in their bell too!
+            try {
+                await pool.query('INSERT INTO notifications (recipient_id, recipient_role, title, message, type, is_read) VALUES (?, ?, ?, ?, ?, ?)', [user.id, 'user', 'Pendaftaran Berjaya', 'Akaun anda telah berjaya diaktifkan. Selamat Datang ke E-CARE!', 'system', false]);
+            } catch (notifyError) {
+                console.error('Failed to notify user:', notifyError);
+            }
         }
 
         // 5. Create local session token

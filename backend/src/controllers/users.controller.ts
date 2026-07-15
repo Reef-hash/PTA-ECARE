@@ -129,6 +129,14 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
                         'system'
                     )));
                 }
+                // Notify user in their bell
+                await createNotification(
+                    userId,
+                    'user',
+                    'Profil Dikemaskini',
+                    'Profil anda telah berjaya dikemaskini. Selamat Datang ke E-CARE!',
+                    'system'
+                );
             } catch (notifyError) {
                 console.error('Failed to notify admins of completed profile:', notifyError);
             }
