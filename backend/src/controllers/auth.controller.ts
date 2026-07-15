@@ -337,8 +337,8 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
         // 3. Insert user into public users table
         await pool.query(
-            `INSERT INTO users (id, full_name, ic_number, email, contact_no, contact_no_2, address, state, password_hash, status, email_verified, auth_provider) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'password')`,
-            [userId, full_name, ic_number, normalizedEmail || null, contact_no, contact_no_2 || null, address, state || null, password_hash, normalizedEmail ? 'Inactive' : 'Active', normalizedEmail ? false : true]
+            `INSERT INTO users (id, full_name, ic_number, email, contact_no, contact_no_2, address, state, password_hash, is_active, email_verified, auth_provider) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'password')`,
+            [userId, full_name, ic_number, normalizedEmail || null, contact_no, contact_no_2 || null, address, state || null, password_hash, normalizedEmail ? 0 : 1, normalizedEmail ? false : true]
         );
         const [userRows]: any = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
         if (!userRows || userRows.length === 0) {
@@ -417,7 +417,7 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
         }
 
         // 2. Activate user in public users table
-        await pool.query('UPDATE users SET status = ?, email_verified = ?, updated_at = ? WHERE email = ?', ['Active', true, new Date().toISOString(), normalizedEmail]);
+        await pool.query('UPDATE users SET is_active = ?, email_verified = ?, updated_at = ? WHERE email = ?', [1, true, new Date().toISOString(), normalizedEmail]);
         const [updatedUsers]: any = await pool.query('SELECT * FROM users WHERE email = ?', [normalizedEmail]);
 
         if (!updatedUsers || updatedUsers.length === 0) {
@@ -795,7 +795,7 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
         // NO INTENT (legacy / fallback behaviour)
         // ============================================
         if (user) {
-            if (!isActiveUser(user.status)) {
+            if (user.is_active === 0 || user.is_active === false || user.is_active === '0') {
                 res.status(403).json({ error: 'Account is not active. Please contact administrator.' });
                 return;
             }
@@ -965,9 +965,9 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
         // Check activation / active state after successful password comparison
         if (role === 'user') {
-            if (user.status !== 'Active' && user.status !== 'active') {
+            if (user.is_active === 0 || user.is_active === false || user.is_active === '0') {
                 // Auto-activate any user who is Inactive (OTP is no longer required)
-                await pool.query('UPDATE users SET status = ?, email_verified = ? WHERE id = ?', ['Active', true, user.id]);
+                await pool.query('UPDATE users SET is_active = ?, email_verified = ? WHERE id = ?', [1, true, user.id]);
                 const [activatedRows]: any = await pool.query('SELECT * FROM users WHERE id = ?', [user.id]);
                 if (activatedRows && activatedRows.length > 0) {
                     user = activatedRows[0];

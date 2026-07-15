@@ -67,7 +67,7 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
                 }
                 updates.ic_number = ic_number;
                 
-                updates.status = 'Inactive';
+                updates.is_active = 0;
                 updates.email_verified = 0;
                 requiresOtp = true;
                 emailToUse = email || currentUser.email;
@@ -132,9 +132,9 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
 
         const { password_hash, ...userWithoutPassword } = updatedUser;
         res.json({ message: 'Profile updated', user: userWithoutPassword });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Update profile error:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: `Ralat Sistem: ${error.message}` });
     }
 };
 
