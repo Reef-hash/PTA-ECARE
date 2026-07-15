@@ -196,7 +196,7 @@ export const getComplaints = async (req: Request, res: Response): Promise<void> 
             queryParamsWithPagination
         );
 
-        // Fetch remarks and restructure to match Supabase response
+        // Fetch remarks and restructure response
         const mappedComplaints = await Promise.all(complaintsData.map(async (c: any) => {
             const [remarksData]: any = await pool.query(
                 'SELECT id, status, note_transport, checking, remark, remark_by, created_at FROM complaint_remarks WHERE complaint_id = ?',

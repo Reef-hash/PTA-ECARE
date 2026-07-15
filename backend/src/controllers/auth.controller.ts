@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { OAuth2Client, TokenPayload } from 'google-auth-library';
 import { randomUUID } from 'crypto';
-import { supabase, supabaseAdmin } from '../config/supabase.js';
+import pool from '../config/mysql.js';
 import { createNotification, buildNotificationEmailHtml } from './notifications.controller.js';
 import { sendEmail, isEmailAllowed } from '../utils/email.js';
 
@@ -92,65 +92,13 @@ const ensureAllowedGoogleEmail = (email: string): void => {
     }
 };
 
-const verifySupabaseGoogleSession = async (accessToken: string): Promise<VerifiedGoogleAccount> => {
-    console.log('[GOOGLE AUTH] Verifying Supabase access token, length:', accessToken.length);
-    const { data, error } = await supabaseAdmin.auth.getUser(accessToken);
-    if (error || !data.user) {
-        console.error('[GOOGLE AUTH] supabaseAdmin.auth.getUser FAILED:', error?.message || 'No user returned');
-        throw new Error('Invalid Supabase Google session');
-    }
-    console.log('[GOOGLE AUTH] Supabase user verified:', data.user.email);
-
-    const authUser: any = data.user;
-    const identities = Array.isArray(authUser.identities) ? authUser.identities : [];
-    const googleIdentity = identities.find((identity: any) => identity.provider === 'google') || identities[0];
-    const identityData = googleIdentity?.identity_data || {};
-    const provider = googleIdentity?.provider || authUser.app_metadata?.provider;
-    const providers = authUser.app_metadata?.providers || [];
-
-    if (provider !== 'google' && !providers.includes('google')) {
-        throw new Error('Supabase session is not a Google account');
-    }
-
-    const email = String(authUser.email || identityData.email || authUser.user_metadata?.email || '').toLowerCase();
-    if (!email) {
-        throw new Error('Google email is missing from Supabase session');
-    }
-
-    const emailVerified = Boolean(
-        identityData.email_verified
-        ?? authUser.user_metadata?.email_verified
-        ?? authUser.email_confirmed_at
-    );
-
-    if (!emailVerified) {
-        throw new Error('Google email is not verified');
-    }
-
-    ensureAllowedGoogleEmail(email);
-
-    return {
-        sub: String(identityData.sub || identityData.provider_id || googleIdentity?.id || authUser.id),
-        email,
-        email_verified: emailVerified,
-        name: String(identityData.name || identityData.full_name || authUser.user_metadata?.name || authUser.user_metadata?.full_name || email.split('@')[0]),
-        picture: identityData.picture || identityData.avatar_url || authUser.user_metadata?.picture || authUser.user_metadata?.avatar_url || null,
-    };
-};
-
-const verifyGoogleAuthRequest = async (credential?: string, supabaseAccessToken?: string): Promise<VerifiedGoogleAccount> => {
-    if (supabaseAccessToken) {
-        return verifySupabaseGoogleSession(supabaseAccessToken);
-    }
-
+const verifyGoogleAuthRequest = async (credential?: string): Promise<VerifiedGoogleAccount> => {
     if (!credential) {
-        throw new Error('Google credential or Supabase access token is required');
+        throw new Error('Google credential is required');
     }
-
     const payload = await verifyGoogleCredential(credential);
     const email = payload.email!.toLowerCase();
     ensureAllowedGoogleEmail(email);
-
     return {
         sub: payload.sub,
         email,
@@ -169,7 +117,7 @@ const notifyGoogleRegistration = async (user: UserRow): Promise<void> => {
         'system'
     );
 
-    const { data: admins } = await supabaseAdmin.from('admins').select('id');
+    const [admins]: any = await pool.query('SELECT id FROM admins');
     if (admins && admins.length > 0) {
         await Promise.all(admins.map((admin: any) => createNotification(
             admin.id,
@@ -180,10 +128,7 @@ const notifyGoogleRegistration = async (user: UserRow): Promise<void> => {
         )));
     }
 
-    const { data: technicians } = await supabaseAdmin
-        .from('technicians')
-        .select('id')
-        .eq('is_active', true);
+    const [technicians]: any = await pool.query('SELECT id FROM technicians WHERE is_active = ?', [true]);
 
     if (technicians && technicians.length > 0) {
         await Promise.all(technicians.map((technician: any) => createNotification(
@@ -317,12 +262,9 @@ export const verifyIC = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        const { data, error } = await supabaseAdmin
-            .from('users')
-            .select('id, full_name, ic_number, contact_no, address, state')
-            .eq('ic_number', ic_number);
+        const [data]: any = await pool.query('SELECT id, full_name, ic_number, contact_no, address, state FROM users WHERE ic_number = ?', [ic_number]);
 
-        if (error || !data || data.length === 0) {
+        if (!data || data.length === 0) {
             res.status(404).json({ registered: false, error: 'Maaf, maklumat anda belum didaftar. Sila daftar dahulu.' });
             return;
         }
@@ -351,7 +293,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         }
 
         // 1. Check if IC number is already registered
-        const { data: existing } = await supabaseAdmin.from('users').select('id').eq('ic_number', ic_number);
+        const [existing]: any = await pool.query('SELECT id FROM users WHERE ic_number = ?', [ic_number]);
         if (existing && existing.length > 0) {
             res.status(400).json({ error: 'IC number already registered' });
             return;
@@ -359,70 +301,28 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
         // Check if email is already registered (if provided)
         if (normalizedEmail) {
-            const { data: existingEmail } = await supabaseAdmin.from('users').select('id').eq('email', normalizedEmail);
+            const [existingEmail]: any = await pool.query('SELECT id FROM users WHERE email = ?', [normalizedEmail]);
             if (existingEmail && existingEmail.length > 0) {
                 res.status(400).json({ error: 'E-mel ini telah didaftarkan. Sila gunakan e-mel lain atau log masuk.' });
                 return;
             }
         }
 
-        let userId: string;
-
-        if (normalizedEmail) {
-            // 2. Create user via Supabase Admin API (bypasses email confirmation entirely — we handle OTP ourselves)
-            const { data: authResult, error: authError } = await supabaseAdmin.auth.admin.createUser({
-                email: normalizedEmail,
-                password,
-                email_confirm: true, // Auto-confirm in Supabase Auth since we verify via our own OTP
-                user_metadata: {
-                    full_name,
-                    ic_number,
-                    contact_no,
-                    address
-                }
-            });
-
-            if (authError || !authResult.user) {
-                const msg = authError?.message || '';
-                if (msg.includes('already been registered') || msg.includes('already exists')) {
-                    res.status(400).json({ error: 'E-mel ini telah didaftarkan. Sila gunakan e-mel lain atau log masuk.' });
-                    return;
-                }
-                res.status(400).json({ error: msg || 'Gagal mendaftar akaun melalui Supabase Auth' });
-                return;
-            }
-            userId = authResult.user.id;
-        } else {
-            // Without email: generate UUID
-            const { randomUUID } = await import('crypto');
-            userId = randomUUID();
-        }
+        const userId = randomUUID();
 
         const password_hash = await bcrypt.hash(password, 10);
 
         // 3. Insert user into public users table
-        const { data: result, error: insertError } = await supabaseAdmin.from('users').insert({
-            id: userId,
-            full_name,
-            ic_number,
-            email: normalizedEmail || null,
-            contact_no,
-            contact_no_2: contact_no_2 || null,
-            address,
-            state: state || null,
-            password_hash,
-            status: normalizedEmail ? 'Inactive' : 'Active', // Auto active if no email
-            email_verified: !!normalizedEmail,
-            auth_provider: 'password'
-        }).select();
-
-        if (insertError || !result) {
-            console.error('Insert public user record failed:', insertError);
+        await pool.query(
+            `INSERT INTO users (id, full_name, ic_number, email, contact_no, contact_no_2, address, state, password_hash, status, email_verified, auth_provider) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'password')`,
+            [userId, full_name, ic_number, normalizedEmail || null, contact_no, contact_no_2 || null, address, state || null, password_hash, normalizedEmail ? 'Inactive' : 'Active', normalizedEmail ? false : true]
+        );
+        const [userRows]: any = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
+        if (!userRows || userRows.length === 0) {
             res.status(500).json({ error: 'Gagal mencipta rekod profil pengguna' });
             return;
         }
-
-        const user = result[0];
+        const user = userRows[0];
 
         if (normalizedEmail) {
             // 4. Generate random 6-digit OTP
@@ -430,22 +330,13 @@ export const register = async (req: Request, res: Response): Promise<void> => {
             const expires_at = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 mins
 
             // Clean up any existing OTP for this email
-            await supabaseAdmin
-                .from('activation_otps')
-                .delete()
-                .eq('email', normalizedEmail)
-                .eq('role', 'user');
+            await pool.query('DELETE FROM activation_otps WHERE email = ? AND role = ?', [normalizedEmail, 'user']);
 
             // Insert into activation_otps
-            const { error: otpError } = await supabaseAdmin.from('activation_otps').insert({
-                email: normalizedEmail,
-                otp,
-                role: 'user',
-                expires_at
-            });
+            const [otpResult]: any = await pool.query('INSERT INTO activation_otps (email, otp, role, expires_at) VALUES (?, ?, ?, ?)', [normalizedEmail, otp, 'user', expires_at]);
 
-            if (otpError) {
-                console.error('Failed to create activation OTP record:', otpError);
+            if (!otpResult || otpResult.affectedRows === 0) {
+                console.error('Failed to create activation OTP record');
                 res.status(500).json({ error: 'Gagal menjana kod OTP pengesahan' });
                 return;
             }
@@ -495,33 +386,18 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
         const normalizedEmail = email.trim().toLowerCase();
 
         // 1. Verify OTP with custom activation_otps table
-        const { data: otpRecords, error: otpError } = await supabaseAdmin
-            .from('activation_otps')
-            .select('*')
-            .eq('email', normalizedEmail)
-            .eq('role', 'user')
-            .eq('otp', otp.trim())
-            .gte('expires_at', new Date().toISOString())
-            .order('created_at', { ascending: false })
-            .limit(1);
+        const [otpRecords]: any = await pool.query('SELECT * FROM activation_otps WHERE email = ? AND role = ? AND otp = ? AND expires_at >= ? ORDER BY created_at DESC LIMIT 1', [normalizedEmail, 'user', otp.trim(), new Date().toISOString()]);
 
-        if (otpError || !otpRecords || otpRecords.length === 0) {
+        if (!otpRecords || otpRecords.length === 0) {
             res.status(400).json({ error: 'Kod OTP tidak sah atau telah tamat tempoh' });
             return;
         }
 
         // 2. Activate user in public users table
-        const { data: updatedUsers, error: updateError } = await supabaseAdmin
-            .from('users')
-            .update({
-                status: 'Active',
-                email_verified: true,
-                updated_at: new Date().toISOString()
-            })
-            .eq('email', normalizedEmail)
-            .select();
+        await pool.query('UPDATE users SET status = ?, email_verified = ?, updated_at = ? WHERE email = ?', ['Active', true, new Date().toISOString(), normalizedEmail]);
+        const [updatedUsers]: any = await pool.query('SELECT * FROM users WHERE email = ?', [normalizedEmail]);
 
-        if (updateError || !updatedUsers || updatedUsers.length === 0) {
+        if (!updatedUsers || updatedUsers.length === 0) {
             res.status(500).json({ error: 'Gagal mengaktifkan akaun dalam pangkalan data' });
             return;
         }
@@ -529,10 +405,7 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
         const user = updatedUsers[0] as UserRow;
 
         // 3. Clean up verified OTP
-        await supabaseAdmin
-            .from('activation_otps')
-            .delete()
-            .eq('id', otpRecords[0].id);
+        await pool.query('DELETE FROM activation_otps WHERE id = ?', [otpRecords[0].id]);
 
         // 4. Send welcome email now that the email is verified
         try {
@@ -543,17 +416,11 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
 
         // Notify Admins via DB and Email directly to adminecare.ptasssb@gmail.com
         try {
-            const { data: admins } = await supabaseAdmin.from('admins').select('id');
+            const [admins]: any = await pool.query('SELECT id FROM admins');
             if (admins && admins.length > 0) {
-                const notifications = admins.map((admin: any) => ({
-                    recipient_id: admin.id,
-                    recipient_role: 'admin',
-                    title: 'Pendaftaran Pengguna Baru',
-                    message: `Pengguna baru telah mendaftar: ${user.full_name} | No. K/P: ${user.ic_number}\nuid:${user.id}`,
-                    type: 'system',
-                    is_read: false
-                }));
-                await supabaseAdmin.from('notifications').insert(notifications);
+                for (const admin of admins) {
+                    await pool.query('INSERT INTO notifications (recipient_id, recipient_role, title, message, type, is_read) VALUES (?, ?, ?, ?, ?, ?)', [admin.id, 'admin', 'Pendaftaran Pengguna Baru', `Pengguna baru telah mendaftar: ${user.full_name} | No. K/P: ${user.ic_number}\nuid:${user.id}`, 'system', false]);
+                }
             }
 
             const adminEmail = 'adminecare.ptasssb@gmail.com';
@@ -597,26 +464,17 @@ export const resendSignupOtp = async (req: Request, res: Response): Promise<void
         const normalizedEmail = email.trim().toLowerCase();
 
         // 1. Delete any existing OTP records for this email and role user
-        await supabaseAdmin
-            .from('activation_otps')
-            .delete()
-            .eq('email', normalizedEmail)
-            .eq('role', 'user');
+        await pool.query('DELETE FROM activation_otps WHERE email = ? AND role = ?', [normalizedEmail, 'user']);
 
         // 2. Generate new OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const expires_at = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
         // 3. Insert into activation_otps
-        const { error: otpError } = await supabaseAdmin.from('activation_otps').insert({
-            email: normalizedEmail,
-            otp,
-            role: 'user',
-            expires_at
-        });
+        const [otpInsertResult]: any = await pool.query('INSERT INTO activation_otps (email, otp, role, expires_at) VALUES (?, ?, ?, ?)', [normalizedEmail, otp, 'user', expires_at]);
 
-        if (otpError) {
-            console.error('Failed to create activation OTP record:', otpError);
+        if (!otpInsertResult || otpInsertResult.affectedRows === 0) {
+            console.error('Failed to create activation OTP record');
             res.status(500).json({ error: 'Gagal menjana kod OTP pengesahan' });
             return;
         }
@@ -645,13 +503,10 @@ export const verifyActivationOtp = async (req: Request, res: Response): Promise<
         const table = role === 'technician' ? 'technicians' : 'admins';
 
         // 1. Get user profile
-        const { data: profile, error: fetchError } = await supabaseAdmin
-            .from(table)
-            .select('*')
-            .eq('username', username)
-            .single();
+        const [profileRows]: any = await pool.query('SELECT * FROM ?? WHERE username = ? LIMIT 1', [table, username]);
+        const profile = profileRows[0];
 
-        if (fetchError || !profile) {
+        if (!profileRows || profileRows.length === 0) {
             res.status(404).json({ error: 'Akaun tidak ditemui' });
             return;
         }
@@ -659,40 +514,18 @@ export const verifyActivationOtp = async (req: Request, res: Response): Promise<
         const email = profile.email;
 
         // 2. Look up code in activation_otps
-        const { data: otpRecords, error: otpError } = await supabaseAdmin
-            .from('activation_otps')
-            .select('*')
-            .eq('email', email)
-            .eq('role', role)
-            .eq('otp', otp)
-            .gte('expires_at', new Date().toISOString())
-            .order('created_at', { ascending: false })
-            .limit(1);
+        const [otpRecords]: any = await pool.query('SELECT * FROM activation_otps WHERE email = ? AND role = ? AND otp = ? AND expires_at >= ? ORDER BY created_at DESC LIMIT 1', [email, role, otp, new Date().toISOString()]);
 
-        if (otpError || !otpRecords || otpRecords.length === 0) {
+        if (!otpRecords || otpRecords.length === 0) {
             res.status(400).json({ error: 'Kod OTP tidak sah atau telah tamat tempoh' });
             return;
         }
 
         // 3. Update account to active
-        const { error: updateError } = await supabaseAdmin
-            .from(table)
-            .update({
-                is_active: true,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', profile.id);
-
-        if (updateError) {
-            res.status(500).json({ error: 'Gagal mengaktifkan akaun' });
-            return;
-        }
+        await pool.query('UPDATE ?? SET is_active = ?, updated_at = ? WHERE id = ?', [table, true, new Date().toISOString(), profile.id]);
 
         // 4. Clean up verified OTP
-        await supabaseAdmin
-            .from('activation_otps')
-            .delete()
-            .eq('id', otpRecords[0].id);
+        await pool.query('DELETE FROM activation_otps WHERE id = ?', [otpRecords[0].id]);
 
         // 5. Generate session token
         const tokenPayload = role === 'admin' 
@@ -719,17 +552,14 @@ export const resendActivationOtp = async (req: Request, res: Response): Promise<
         const { username, role } = req.body;
         const table = role === 'technician' ? 'technicians' : 'admins';
 
-        const { data: profile, error: fetchError } = await supabaseAdmin
-            .from(table)
-            .select('*')
-            .eq('username', username)
-            .single();
+        const [profileRows]: any = await pool.query('SELECT * FROM ?? WHERE username = ? LIMIT 1', [table, username]);
 
-        if (fetchError || !profile) {
+        if (!profileRows || profileRows.length === 0) {
             res.status(404).json({ error: 'Akaun tidak ditemui' });
             return;
         }
 
+        const profile = profileRows[0];
         const email = profile.email;
         const name = role === 'technician' ? profile.name : profile.admin_name;
 
@@ -738,23 +568,12 @@ export const resendActivationOtp = async (req: Request, res: Response): Promise<
         const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours
 
         // Delete previous OTPs for this email and role
-        await supabaseAdmin
-            .from('activation_otps')
-            .delete()
-            .eq('email', email)
-            .eq('role', role);
+        await pool.query('DELETE FROM activation_otps WHERE email = ? AND role = ?', [email, role]);
 
         // Save new OTP
-        const { error: insertError } = await supabaseAdmin
-            .from('activation_otps')
-            .insert({
-                email,
-                role,
-                otp,
-                expires_at: expiresAt
-            });
+        const [insertResult]: any = await pool.query('INSERT INTO activation_otps (email, role, otp, expires_at) VALUES (?, ?, ?, ?)', [email, role, otp, expiresAt]);
 
-        if (insertError) {
+        if (!insertResult || insertResult.affectedRows === 0) {
             res.status(500).json({ error: 'Gagal menjana kod OTP baharu' });
             return;
         }
@@ -778,11 +597,11 @@ export const resendActivationOtp = async (req: Request, res: Response): Promise<
 
 export const googleAuth = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { credential, supabase_access_token, full_name, ic_number, contact_no, contact_no_2, address, state, intent } = req.body;
+        const { credential, full_name, ic_number, contact_no, contact_no_2, address, state, intent } = req.body;
         let googleAccount: VerifiedGoogleAccount;
 
         try {
-            googleAccount = await verifyGoogleAuthRequest(credential, supabase_access_token);
+            googleAccount = await verifyGoogleAuthRequest(credential);
         } catch (error: any) {
             const message = String(error?.message || 'Invalid Google credential');
             if (message.includes('GOOGLE_CLIENT_ID')) {
@@ -803,31 +622,21 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
         const googlePicture = googleAccount.picture || null;
 
         // --- Look up existing user by google_sub ---
-        const { data: googleUsers, error: googleLookupError } = await supabaseAdmin
-            .from('users')
-            .select('*')
-            .eq('google_sub', googleSub)
-            .limit(1);
-
-        if (googleLookupError) {
-            if (isMissingGoogleAuthColumn(googleLookupError)) {
-                res.status(500).json({ error: 'Google auth database fields are missing. Run supabase/add_google_auth_fields.sql first.' });
+        let user: UserRow | null = null;
+        try {
+            const [googleUsers]: any = await pool.query('SELECT * FROM users WHERE google_sub = ? LIMIT 1', [googleSub]);
+            if (googleUsers.length > 0) user = googleUsers[0];
+        } catch (err: any) {
+            if (isMissingGoogleAuthColumn(err)) {
+                res.status(500).json({ error: 'Google auth database fields are missing. Please add google_sub, auth_provider, email_verified, google_picture columns to users table.' });
                 return;
             }
-            throw googleLookupError;
+            throw err;
         }
-
-        let user = (googleUsers?.[0] as UserRow | undefined) || null;
 
         // --- Fallback: look up by email ---
         if (!user) {
-            const { data: emailUsers, error: emailLookupError } = await supabaseAdmin
-                .from('users')
-                .select('*')
-                .eq('email', googleEmail)
-                .limit(1);
-
-            if (emailLookupError) throw emailLookupError;
+            const [emailUsers]: any = await pool.query('SELECT * FROM users WHERE email = ? LIMIT 1', [googleEmail]);
             user = (emailUsers?.[0] as UserRow | undefined) || null;
         }
 
@@ -847,42 +656,22 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
             // --- New user: check if IC provided (from complete-profile form) ---
             if (ic_number && contact_no && address) {
                 // Full registration with profile data
-                const { data: existingIc } = await supabaseAdmin
-                    .from('users')
-                    .select('id')
-                    .eq('ic_number', ic_number)
-                    .limit(1);
+                const [existingIcRows]: any = await pool.query('SELECT id FROM users WHERE ic_number = ? LIMIT 1', [ic_number]);
 
-                if (existingIc && existingIc.length > 0) {
+                if (existingIcRows && existingIcRows.length > 0) {
                     res.status(400).json({ error: 'IC number already registered. Please use a different IC number.' });
                     return;
                 }
 
+                const newUserId = randomUUID();
                 const password_hash = await bcrypt.hash(`google:${googleSub}:${randomUUID()}`, 10);
-                const { data: result, error: insertError } = await supabaseAdmin.from('users').insert({
-                    full_name: googleName,
-                    ic_number,
-                    email: googleEmail,
-                    contact_no,
-                    contact_no_2: contact_no_2 || null,
-                    address,
-                    state: state || null,
-                    password_hash,
-                    google_sub: googleSub,
-                    auth_provider: 'google',
-                    email_verified: true,
-                    google_picture: googlePicture
-                }).select();
-
-                if (insertError || !result) {
-                    if (isMissingGoogleAuthColumn(insertError)) {
-                        res.status(500).json({ error: 'Google auth database fields are missing. Run supabase/add_google_auth_fields.sql first.' });
-                        return;
-                    }
-                    throw insertError;
-                }
-
-                const newUser = result[0] as UserRow;
+                await pool.query(
+                    'INSERT INTO users (id, full_name, ic_number, email, contact_no, contact_no_2, address, state, password_hash, google_sub, auth_provider, email_verified, google_picture) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    [newUserId, googleName, ic_number, googleEmail, contact_no, contact_no_2 || null, address, state || null, password_hash, googleSub, 'google', true, googlePicture]
+                );
+                const [newUserRows]: any = await pool.query('SELECT * FROM users WHERE id = ?', [newUserId]);
+                if (!newUserRows || newUserRows.length === 0) throw new Error('Failed to create user');
+                const newUser = newUserRows[0] as UserRow;
 
                 try { await notifyGoogleRegistration(newUser); } catch (e) { console.error('Notify error:', e); }
                 try { await sendWelcomeEmail(newUser); } catch (e) { console.error('Welcome email error:', e); }
@@ -901,29 +690,15 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
 
             // --- New user: create with placeholder data, needs profile completion ---
             const placeholderIc = `G-${randomUUID().replace(/-/g, '').substring(0, 10)}`;
+            const newUserId = randomUUID();
             const password_hash = await bcrypt.hash(`google:${googleSub}:${randomUUID()}`, 10);
-            const { data: result, error: insertError } = await supabaseAdmin.from('users').insert({
-                full_name: googleName,
-                ic_number: placeholderIc,
-                email: googleEmail,
-                contact_no: '0000000000',
-                address: 'Pending',
-                password_hash,
-                google_sub: googleSub,
-                auth_provider: 'google',
-                email_verified: true,
-                google_picture: googlePicture
-            }).select();
-
-            if (insertError || !result) {
-                if (isMissingGoogleAuthColumn(insertError)) {
-                    res.status(500).json({ error: 'Google auth database fields are missing. Run supabase/add_google_auth_fields.sql first.' });
-                    return;
-                }
-                throw insertError;
-            }
-
-            const newUser = result[0] as UserRow;
+            await pool.query(
+                'INSERT INTO users (id, full_name, ic_number, email, contact_no, address, password_hash, google_sub, auth_provider, email_verified, google_picture) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [newUserId, googleName, placeholderIc, googleEmail, '0000000000', 'Pending', password_hash, googleSub, 'google', true, googlePicture]
+            );
+            const [newUserRows]: any = await pool.query('SELECT * FROM users WHERE id = ?', [newUserId]);
+            if (!newUserRows || newUserRows.length === 0) throw new Error('Failed to create user');
+            const newUser = newUserRows[0] as UserRow;
 
             try { await notifyGoogleRegistration(newUser); } catch (e) { console.error('Notify error:', e); }
             try { await sendWelcomeEmail(newUser); } catch (e) { console.error('Welcome email error:', e); }
@@ -972,22 +747,12 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
                 updates.email = googleEmail;
             }
 
-            const { data: updatedUser, error: updateError } = await supabaseAdmin
-                .from('users')
-                .update(updates)
-                .eq('id', user.id)
-                .select()
-                .single();
+            await pool.query('UPDATE users SET google_sub = ?, auth_provider = ?, email_verified = ?, google_picture = ?, updated_at = ? WHERE id = ?',
+                [updates.google_sub, updates.auth_provider, updates.email_verified, updates.google_picture, updates.updated_at, user.id]);
+            if (updates.email) await pool.query('UPDATE users SET email = ? WHERE id = ?', [updates.email, user.id]);
+            const [updatedRows]: any = await pool.query('SELECT * FROM users WHERE id = ? LIMIT 1', [user.id]);
+            const activeUser = updatedRows[0] as UserRow;
 
-            if (updateError) {
-                if (isMissingGoogleAuthColumn(updateError)) {
-                    res.status(500).json({ error: 'Google auth database fields are missing. Run supabase/add_google_auth_fields.sql first.' });
-                    return;
-                }
-                throw updateError;
-            }
-
-            const activeUser = updatedUser as UserRow;
             const profileComplete = !activeUser.ic_number.startsWith('G-');
             const token = createUserToken(activeUser);
 
@@ -1024,22 +789,12 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
                 updates.email = googleEmail;
             }
 
-            const { data: updatedUser, error: updateError } = await supabaseAdmin
-                .from('users')
-                .update(updates)
-                .eq('id', user.id)
-                .select()
-                .single();
+            await pool.query('UPDATE users SET google_sub = ?, auth_provider = ?, email_verified = ?, google_picture = ?, updated_at = ? WHERE id = ?',
+                [updates.google_sub, updates.auth_provider, updates.email_verified, updates.google_picture, updates.updated_at, user.id]);
+            if (updates.email) await pool.query('UPDATE users SET email = ? WHERE id = ?', [updates.email, user.id]);
+            const [updatedRows]: any = await pool.query('SELECT * FROM users WHERE id = ? LIMIT 1', [user.id]);
+            const activeUser = updatedRows[0] as UserRow;
 
-            if (updateError) {
-                if (isMissingGoogleAuthColumn(updateError)) {
-                    res.status(500).json({ error: 'Google auth database fields are missing. Run supabase/add_google_auth_fields.sql first.' });
-                    return;
-                }
-                throw updateError;
-            }
-
-            const activeUser = updatedUser as UserRow;
             const token = createUserToken(activeUser);
             res.json({
                 message: 'Google login successful',
@@ -1065,42 +820,22 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
             return;
         }
 
-        const { data: existingIc } = await supabaseAdmin
-            .from('users')
-            .select('id')
-            .eq('ic_number', ic_number)
-            .limit(1);
+        const [existingIcRows]: any = await pool.query('SELECT id FROM users WHERE ic_number = ? LIMIT 1', [ic_number]);
 
-        if (existingIc && existingIc.length > 0) {
+        if (existingIcRows && existingIcRows.length > 0) {
             res.status(400).json({ error: 'IC number already registered. Please login with your existing account or contact administrator.' });
             return;
         }
 
         const password_hash = await bcrypt.hash(`google:${googleSub}:${randomUUID()}`, 10);
-        const { data: result, error: insertError } = await supabaseAdmin.from('users').insert({
-            full_name: googleName,
-            ic_number,
-            email: googleEmail,
-            contact_no,
-            contact_no_2: contact_no_2 || null,
-            address,
-            state: state || null,
-            password_hash,
-            google_sub: googleSub,
-            auth_provider: 'google',
-            email_verified: true,
-            google_picture: googlePicture
-        }).select();
-
-        if (insertError || !result) {
-            if (isMissingGoogleAuthColumn(insertError)) {
-                res.status(500).json({ error: 'Google auth database fields are missing. Run supabase/add_google_auth_fields.sql first.' });
-                return;
-            }
-            throw insertError;
-        }
-
-        const newUser = result[0] as UserRow;
+        const newUserId = randomUUID();
+        await pool.query(
+            'INSERT INTO users (id, full_name, ic_number, email, contact_no, contact_no_2, address, state, password_hash, google_sub, auth_provider, email_verified, google_picture) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [newUserId, googleName, ic_number, googleEmail, contact_no, contact_no_2 || null, address, state || null, password_hash, googleSub, 'google', true, googlePicture]
+        );
+        const [newUserRows]: any = await pool.query('SELECT * FROM users WHERE id = ?', [newUserId]);
+        if (!newUserRows || newUserRows.length === 0) throw new Error('Failed to create user');
+        const newUser = newUserRows[0] as UserRow;
 
         try { await notifyGoogleRegistration(newUser); } catch (e) { console.error('Notify error:', e); }
         try { await sendWelcomeEmail(newUser); } catch (e) { console.error('Welcome email error:', e); }
@@ -1131,30 +866,30 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
         if (role === 'user') {
             if (!ic_number) { res.status(400).json({ error: 'IC number is required' }); return; }
-            const { data, error: queryError } = await supabaseAdmin.from('users').select('*').eq('ic_number', ic_number);
-            console.log(`[LOGIN] User query result: found=${data?.length}, error=${queryError?.message}`);
+            const [data]: any = await pool.query('SELECT * FROM users WHERE ic_number = ?', [ic_number]);
+            console.log(`[LOGIN] User query result: found=${data?.length}, error=none`);
             if (!data || data.length === 0) {
-                try { await supabaseAdmin.from('user_logs').insert({ username: ic_number, user_ip: clientIp, success: false }); } catch (e) { console.log('[LOGIN] user_logs insert error (ignored):', e); }
+                try { await pool.query('INSERT INTO user_logs (username, user_ip, success) VALUES (?, ?, ?)', [ic_number, clientIp, false]); } catch (e) { console.log('[LOGIN] user_logs insert error (ignored):', e); }
                 res.status(401).json({ error: 'Invalid IC number or password' }); return;
             }
             user = data[0];
             tokenPayload = { id: user.id, role: 'user', ic_number: user.ic_number };
         } else if (role === 'admin') {
             if (!username) { res.status(400).json({ error: 'Username is required' }); return; }
-            const { data } = await supabaseAdmin.from('admins').select('*').ilike('username', username);
+            const [data]: any = await pool.query('SELECT * FROM admins WHERE LOWER(username) = LOWER(?)', [username]);
             if (!data || data.length === 0) { res.status(401).json({ error: 'Invalid username or password' }); return; }
             user = data[0];
             tokenPayload = { id: user.id, role: 'admin', username: user.username };
         } else if (role === 'technician') {
             if (!username) { res.status(400).json({ error: 'Username is required' }); return; }
-            const { data } = await supabaseAdmin.from('technicians').select('*').ilike('username', username);
+            const [data]: any = await pool.query('SELECT * FROM technicians WHERE LOWER(username) = LOWER(?)', [username]);
             if (!data || data.length === 0) { res.status(401).json({ error: 'Invalid username or password' }); return; }
             user = data[0];
             tokenPayload = { id: user.id, role: 'technician', username: user.username };
         } else if (role === 'main_technician') {
             if (!username) { res.status(400).json({ error: 'Username/Email is required' }); return; }
             // Try matching either username or email
-            const { data } = await supabaseAdmin.from('technicians').select('*').or(`username.ilike.${username},email.ilike.${username}`);
+            const [data]: any = await pool.query('SELECT * FROM technicians WHERE LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?)', [username, username]);
             if (!data || data.length === 0) { res.status(401).json({ error: 'Invalid credentials' }); return; }
             
             user = data[0];
@@ -1174,7 +909,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         console.log(`[LOGIN] Password valid: ${validPassword}`);
         if (!validPassword) {
             if (role === 'user') {
-                try { await supabaseAdmin.from('user_logs').insert({ user_id: user.id, username: ic_number || username, user_ip: clientIp, success: false }); } catch (e) { console.log('[LOGIN] user_logs insert error (ignored):', e); }
+                try { await pool.query('INSERT INTO user_logs (user_id, username, user_ip, success) VALUES (?, ?, ?, ?)', [user.id, ic_number || username, clientIp, false]); } catch (e) { console.log('[LOGIN] user_logs insert error (ignored):', e); }
             }
             res.status(401).json({ error: 'Invalid credentials' });
             return;
@@ -1184,33 +919,22 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         if (role === 'user') {
             if (user.status !== 'Active' && user.status !== 'active') {
                 // Auto-activate any user who is Inactive (OTP is no longer required)
-                const { data: activatedUser, error: activateError } = await supabaseAdmin
-                    .from('users')
-                    .update({ status: 'Active', email_verified: true })
-                    .eq('id', user.id)
-                    .select()
-                    .single();
-                if (!activateError && activatedUser) {
-                    user = activatedUser;
+                await pool.query('UPDATE users SET status = ?, email_verified = ? WHERE id = ?', ['Active', true, user.id]);
+                const [activatedRows]: any = await pool.query('SELECT * FROM users WHERE id = ?', [user.id]);
+                if (activatedRows && activatedRows.length > 0) {
+                    user = activatedRows[0];
                 } else {
                     res.status(403).json({ error: 'Account is not active. Please contact administrator.' });
                     return;
                 }
             }
-            try { await supabaseAdmin.from('user_logs').insert({ user_id: user.id, username: ic_number, user_ip: clientIp, success: true }); } catch (e) { console.log('[LOGIN] user_logs insert error (ignored):', e); }
+            try { await pool.query('INSERT INTO user_logs (user_id, username, user_ip, success) VALUES (?, ?, ?, ?)', [user.id, ic_number, clientIp, true]); } catch (e) { console.log('[LOGIN] user_logs insert error (ignored):', e); }
         } else if (role === 'admin' || role === 'technician') {
             if (user.is_active === false) {
                 // Check if there's a pending activation OTP for this admin/technician
-                const { data: otpRecords, error: otpError } = await supabaseAdmin
-                    .from('activation_otps')
-                    .select('*')
-                    .eq('email', user.email)
-                    .eq('role', role)
-                    .gte('expires_at', new Date().toISOString())
-                    .order('created_at', { ascending: false })
-                    .limit(1);
+                const [otpRecords]: any = await pool.query('SELECT * FROM activation_otps WHERE email = ? AND role = ? AND expires_at >= ? ORDER BY created_at DESC LIMIT 1', [user.email, role, new Date().toISOString()]);
 
-                if (!otpError && otpRecords && otpRecords.length > 0) {
+                if (otpRecords && otpRecords.length > 0) {
                     res.status(403).json({
                         error: 'Akaun anda belum diaktifkan. Sila masukkan kod OTP yang dihantar ke e-mel anda.',
                         requires_activation: true,
@@ -1239,11 +963,16 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
     try {
         const { ic_number, email } = req.body;
-        let query = supabaseAdmin.from('users').select('id, email, full_name');
-        if (ic_number) query = query.eq('ic_number', ic_number);
-        else if (email) query = query.eq('email', email);
-
-        const { data } = await query;
+        let data: any[];
+        if (ic_number) {
+            const [rows]: any = await pool.query('SELECT id, email, full_name FROM users WHERE ic_number = ?', [ic_number]);
+            data = rows;
+        } else if (email) {
+            const [rows]: any = await pool.query('SELECT id, email, full_name FROM users WHERE email = ?', [email]);
+            data = rows;
+        } else {
+            data = [];
+        }
         const user = data && data[0] ? data[0] : null;
 
         if (!user) { res.status(404).json({ error: 'User not found' }); return; }
@@ -1252,8 +981,8 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
-        await supabaseAdmin.from('password_resets').delete().eq('user_id', user.id);
-        await supabaseAdmin.from('password_resets').insert({ user_id: user.id, otp, expires_at: expiresAt });
+        await pool.query('DELETE FROM password_resets WHERE user_id = ?', [user.id]);
+        await pool.query('INSERT INTO password_resets (user_id, otp, expires_at) VALUES (?, ?, ?)', [user.id, otp, expiresAt]);
 
         try {
             await sendEmail(
@@ -1262,7 +991,7 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
                 buildOtpEmail(user.full_name, otp)
             );
         } catch (emailError) {
-            await supabaseAdmin.from('password_resets').delete().eq('user_id', user.id);
+            await pool.query('DELETE FROM password_resets WHERE user_id = ?', [user.id]);
             console.error('Failed to send password reset OTP email:', emailError);
             res.status(500).json({ error: 'Failed to send OTP email. Please check SMTP settings.' });
             return;
@@ -1279,16 +1008,21 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
 export const verifyOtp = async (req: Request, res: Response): Promise<void> => {
     try {
         const { ic_number, email, otp } = req.body;
-        let query = supabaseAdmin.from('users').select('id');
-        if (ic_number) query = query.eq('ic_number', ic_number);
-        else if (email) query = query.eq('email', email);
-
-        const { data: users } = await query;
-        const userId = users && users[0] ? users[0].id : null;
+        let data: any[];
+        if (ic_number) {
+            const [rows]: any = await pool.query('SELECT id FROM users WHERE ic_number = ?', [ic_number]);
+            data = rows;
+        } else if (email) {
+            const [rows]: any = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
+            data = rows;
+        } else {
+            data = [];
+        }
+        const userId = data && data[0] ? data[0].id : null;
 
         if (!userId) { res.status(404).json({ error: 'User not found' }); return; }
 
-        const { data: resetRows } = await supabaseAdmin.from('password_resets').select('*').eq('user_id', userId).eq('otp', otp);
+        const [resetRows]: any = await pool.query('SELECT * FROM password_resets WHERE user_id = ? AND otp = ?', [userId, otp]);
         if (!resetRows || resetRows.length === 0) { res.status(400).json({ error: 'Invalid OTP' }); return; }
 
         if (new Date(resetRows[0].expires_at) < new Date()) { res.status(400).json({ error: 'OTP has expired' }); return; }
@@ -1302,23 +1036,28 @@ export const verifyOtp = async (req: Request, res: Response): Promise<void> => {
 export const resetPassword = async (req: Request, res: Response): Promise<void> => {
     try {
         const { ic_number, email, otp, new_password } = req.body;
-        let query = supabaseAdmin.from('users').select('id');
-        if (ic_number) query = query.eq('ic_number', ic_number);
-        else if (email) query = query.eq('email', email);
-
-        const { data: users } = await query;
-        const userId = users && users[0] ? users[0].id : null;
+        let data: any[];
+        if (ic_number) {
+            const [rows]: any = await pool.query('SELECT id FROM users WHERE ic_number = ?', [ic_number]);
+            data = rows;
+        } else if (email) {
+            const [rows]: any = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
+            data = rows;
+        } else {
+            data = [];
+        }
+        const userId = data && data[0] ? data[0].id : null;
 
         if (!userId) { res.status(404).json({ error: 'User not found' }); return; }
 
-        const { data: resetRows } = await supabaseAdmin.from('password_resets').select('*').eq('user_id', userId).eq('otp', otp);
+        const [resetRows]: any = await pool.query('SELECT * FROM password_resets WHERE user_id = ? AND otp = ?', [userId, otp]);
         if (!resetRows || resetRows.length === 0 || new Date(resetRows[0].expires_at) < new Date()) {
             res.status(400).json({ error: 'Invalid or expired OTP' }); return;
         }
 
         const password_hash = await bcrypt.hash(new_password, 10);
-        await supabaseAdmin.from('users').update({ password_hash, updated_at: new Date().toISOString() }).eq('id', userId);
-        await supabaseAdmin.from('password_resets').delete().eq('user_id', userId);
+        await pool.query('UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?', [password_hash, new Date().toISOString(), userId]);
+        await pool.query('DELETE FROM password_resets WHERE user_id = ?', [userId]);
 
         res.json({ message: 'Password reset successful' });
     } catch (error) {
@@ -1338,7 +1077,7 @@ export const getProfile = async (req: Request, res: Response): Promise<void> => 
         if (role === 'admin') table = 'admins';
         if (role === 'technician') table = 'technicians';
 
-        const { data } = await supabaseAdmin.from(table).select('*').eq('id', userId);
+        const [data]: any = await pool.query('SELECT * FROM ?? WHERE id = ?', [table, userId]);
 
         if (!data || data.length === 0) { res.status(404).json({ error: 'User not found' }); return; }
 
