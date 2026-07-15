@@ -554,6 +554,8 @@ export default function NotificationBell() {
                                     navigate('/users/notifications');
                                 } else if (path.startsWith('/admin/technician')) {
                                     navigate('/admin/technician/notifications');
+                                } else if (path.startsWith('/main-tech')) {
+                                    navigate('/main-tech/notifications');
                                 } else {
                                     navigate('/admin/notifications');
                                 }
