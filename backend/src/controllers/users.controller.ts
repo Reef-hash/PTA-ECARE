@@ -67,7 +67,7 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
                 }
                 updates.ic_number = ic_number;
                 
-                updates.is_active = 0;
+                updates.status = 'Inactive';
                 updates.email_verified = 0;
                 requiresOtp = true;
                 emailToUse = email || currentUser.email;

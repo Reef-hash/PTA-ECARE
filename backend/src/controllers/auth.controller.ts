@@ -338,8 +338,8 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         // 3. Insert user into public users table
         const finalEmail = normalizedEmail || `no-email-${ic_number}@ptas.my`;
         await pool.query(
-            `INSERT INTO users (id, full_name, ic_number, email, contact_no, contact_no_2, address, state, password_hash, is_active, email_verified, auth_provider) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'password')`,
-            [userId, full_name, ic_number, finalEmail, contact_no, contact_no_2 || null, address, state || null, password_hash, normalizedEmail ? 0 : 1, normalizedEmail ? false : true]
+            `INSERT INTO users (id, full_name, ic_number, email, contact_no, contact_no_2, address, state, password_hash, status, email_verified, auth_provider) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'password')`,
+            [userId, full_name, ic_number, finalEmail, contact_no, contact_no_2 || null, address, state || null, password_hash, normalizedEmail ? 'Inactive' : 'Active', normalizedEmail ? false : true]
         );
         const [userRows]: any = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
         if (!userRows || userRows.length === 0) {
@@ -418,7 +418,7 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
         }
 
         // 2. Activate user in public users table
-        await pool.query('UPDATE users SET is_active = ?, email_verified = ?, updated_at = ? WHERE email = ?', [1, true, new Date().toISOString(), normalizedEmail]);
+        await pool.query('UPDATE users SET status = ?, email_verified = ?, updated_at = ? WHERE email = ?', ['Active', true, new Date().toISOString(), normalizedEmail]);
         const [updatedUsers]: any = await pool.query('SELECT * FROM users WHERE email = ?', [normalizedEmail]);
 
         if (!updatedUsers || updatedUsers.length === 0) {
@@ -546,7 +546,7 @@ export const verifyActivationOtp = async (req: Request, res: Response): Promise<
         }
 
         // 3. Update account to active
-        await pool.query('UPDATE ?? SET is_active = ?, updated_at = ? WHERE id = ?', [table, true, new Date().toISOString(), profile.id]);
+        await pool.query('UPDATE ?? SET status = ?, updated_at = ? WHERE id = ?', [table, 'Active', new Date().toISOString(), profile.id]);
 
         // 4. Clean up verified OTP
         await pool.query('DELETE FROM activation_otps WHERE id = ?', [otpRecords[0].id]);
@@ -717,8 +717,8 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
             const newUserId = randomUUID();
             const password_hash = await bcrypt.hash(`google:${googleSub}:${randomUUID()}`, 10);
             await pool.query(
-                'INSERT INTO users (id, full_name, ic_number, email, contact_no, address, password_hash, google_sub, auth_provider, email_verified, google_picture, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [newUserId, googleName, placeholderIc, googleEmail, '0000000000', 'Pending', password_hash, googleSub, 'google', false, googlePicture, 0]
+                'INSERT INTO users (id, full_name, ic_number, email, contact_no, address, password_hash, google_sub, auth_provider, email_verified, google_picture, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [newUserId, googleName, placeholderIc, googleEmail, '0000000000', 'Pending', password_hash, googleSub, 'google', false, googlePicture, 'Inactive']
             );
             const [newUserRows]: any = await pool.query('SELECT * FROM users WHERE id = ?', [newUserId]);
             if (!newUserRows || newUserRows.length === 0) throw new Error('Failed to create user');
@@ -809,7 +809,7 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
         // NO INTENT (legacy / fallback behaviour)
         // ============================================
         if (user) {
-            if (user.is_active === 0 || user.is_active === false || user.is_active === '0') {
+            if (user.status === 'Inactive' || user.status === 'Suspended') {
                 res.status(403).json({ error: 'Account is not active. Please contact administrator.' });
                 return;
             }
@@ -979,9 +979,9 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
         // Check activation / active state after successful password comparison
         if (role === 'user') {
-            if (user.is_active === 0 || user.is_active === false || user.is_active === '0') {
-                // Auto-activate any user who is Inactive (OTP is no longer required)
-                await pool.query('UPDATE users SET is_active = ?, email_verified = ? WHERE id = ?', [1, true, user.id]);
+            if (user.status === 'Inactive' || user.status === 'Suspended') {
+                console.log(`[LOGIN] User requires email verification (email: ${user.email})`);
+                await pool.query('UPDATE users SET status = ?, email_verified = ? WHERE id = ?', ['Active', true, user.id]);
                 const [activatedRows]: any = await pool.query('SELECT * FROM users WHERE id = ?', [user.id]);
                 if (activatedRows && activatedRows.length > 0) {
                     user = activatedRows[0];
@@ -993,7 +993,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             try { await pool.query('INSERT INTO user_logs (user_id, username, user_ip, success) VALUES (?, ?, ?, ?)', [user.id, ic_number, clientIp, true]); } catch (e) { console.log('[LOGIN] user_logs insert error (ignored):', e); }
         } else if (role === 'admin' || role === 'technician') {
             // MySQL uses 0 for false in TINYINT(1). Null shouldn't block.
-            if (user.is_active === 0 || user.is_active === false || user.is_active === '0') {
+            if (user.status === 'Inactive' || user.status === 'Suspended') {
                 // Check if there's a pending activation OTP for this admin/technician
                 const [otpRecords]: any = await pool.query('SELECT * FROM activation_otps WHERE email = ? AND role = ? AND expires_at >= ? ORDER BY created_at DESC LIMIT 1', [user.email, role, new Date().toISOString()]);
 
