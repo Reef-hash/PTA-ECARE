@@ -23,6 +23,14 @@ export default function AdminMainTechQueue() {
 
     useEffect(() => {
         loadComplaints();
+
+        // Auto-refresh data every 15 seconds in the background
+        const interval = setInterval(() => {
+            loadComplaints(true);
+            loadStats();
+        }, 15000);
+
+        return () => clearInterval(interval);
     }, [activeFilter]);
 
     const loadStats = async () => {
@@ -34,8 +42,8 @@ export default function AdminMainTechQueue() {
         }
     };
 
-    const loadComplaints = async () => {
-        setIsLoading(true);
+    const loadComplaints = async (background = false) => {
+        if (!background) setIsLoading(true);
         try {
             const response = await api.get(`/complaints?status=${activeFilter}`);
             setComplaints(response.data.complaints || []);

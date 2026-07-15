@@ -32,10 +32,17 @@ export default function TechComplaints() {
 
     useEffect(() => {
         loadComplaints();
+
+        // Auto-refresh data every 15 seconds in the background
+        const interval = setInterval(() => {
+            loadComplaints(true);
+        }, 15000);
+
+        return () => clearInterval(interval);
     }, [activeTab, statusFilter]);
 
-    const loadComplaints = async () => {
-        setIsLoading(true);
+    const loadComplaints = async (background = false) => {
+        if (!background) setIsLoading(true);
         try {
             const params = new URLSearchParams({
                 page: '1',

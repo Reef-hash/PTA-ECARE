@@ -24,6 +24,13 @@ export default function AdminDashboard() {
 
     useEffect(() => {
         loadDashboard();
+
+        // Auto-refresh data every 15 seconds
+        const interval = setInterval(() => {
+            loadDashboard();
+        }, 15000);
+
+        return () => clearInterval(interval);
     }, []);
 
     const loadDashboard = async () => {

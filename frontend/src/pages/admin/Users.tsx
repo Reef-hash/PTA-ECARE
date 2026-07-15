@@ -34,6 +34,13 @@ export default function Users() {
 
     useEffect(() => {
         loadUsers();
+
+        // Auto-refresh data every 15 seconds
+        const interval = setInterval(() => {
+            loadUsers();
+        }, 15000);
+
+        return () => clearInterval(interval);
     }, []);
 
     const loadUsers = async () => {

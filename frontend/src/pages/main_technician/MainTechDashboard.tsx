@@ -25,8 +25,8 @@ export default function MainTechDashboard() {
         }
     }, []);
 
-    const loadRecent = useCallback(async () => {
-        setIsLoadingRecent(true);
+    const loadRecent = useCallback(async (background = false) => {
+        if (!background) setIsLoadingRecent(true);
         try {
             const res = await api.get('/complaints?status=incomplete&limit=5');
             setRecentComplaints(res.data.complaints || res.data.data || []);
@@ -40,6 +40,14 @@ export default function MainTechDashboard() {
     useEffect(() => {
         loadStats();
         loadRecent();
+
+        // Auto-refresh data every 15 seconds in the background
+        const interval = setInterval(() => {
+            loadStats();
+            loadRecent(true);
+        }, 15000);
+
+        return () => clearInterval(interval);
     }, [loadStats, loadRecent]);
 
     // Incomplete lifecycle cards. Each maps to a backend status filter.
