@@ -16,6 +16,8 @@ export default function Brands() {
     const [editingId, setEditingId] = useState<number | null>(null);
     const [formData, setFormData] = useState({ name: '', category_id: '' });
     const [isSaving, setIsSaving] = useState(false);
+    const [deleteModalId, setDeleteModalId] = useState<number | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         loadData();
@@ -63,15 +65,36 @@ export default function Brands() {
                     category_id: formData.category_id ? parseInt(formData.category_id) : null,
                 });
                 toast.success(t('admin_master.success_update'));
+                loadData();
             } else {
-                await api.post('/brands', {
+                const res = await api.post('/brands', {
                     name: formData.name,
                     category_id: formData.category_id ? parseInt(formData.category_id) : null,
                 });
                 toast.success(t('admin_master.success_add'));
+                setSearch('');
+                
+                // Load fresh data to determine index
+                const [brandRes, catRes] = await Promise.all([
+                    api.get('/brands'),
+                    api.get('/categories'),
+                ]);
+                const newBrands = brandRes.data.brands;
+                setBrands(newBrands);
+                setCategories(catRes.data.categories);
+                
+                // Find exact page of the newly added item
+                const addedId = Number(res.data.id);
+                let index = newBrands.findIndex((b: Brand) => Number(b.id) === addedId);
+                // Fallback: cari by nama jika ID tidak match
+                if (index === -1) {
+                    index = newBrands.findIndex((b: Brand) => b.name.toLowerCase() === formData.name.trim().toLowerCase());
+                }
+                if (index !== -1) {
+                    setCurrentPage(Math.floor(index / itemsPerPage) + 1);
+                }
             }
             setShowModal(false);
-            loadData();
         } catch (error: any) {
             toast.error(error.response?.data?.error || t('common.error_load'));
         } finally {
@@ -79,15 +102,22 @@ export default function Brands() {
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (!confirm(t('admin_master.delete_confirm'))) return;
+    const handleDelete = (id: number) => {
+        setDeleteModalId(id);
+    };
 
+    const confirmDelete = async () => {
+        if (!deleteModalId) return;
+        setIsDeleting(true);
         try {
-            await api.delete(`/brands/${id}`);
+            await api.delete(`/brands/${deleteModalId}`);
             toast.success(t('admin_master.success_delete'));
-            setBrands(brands.filter(b => b.id !== id));
+            setBrands(brands.filter(b => b.id !== deleteModalId));
+            setDeleteModalId(null);
         } catch (error: any) {
             toast.error(error.response?.data?.error || t('common.error_load'));
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -133,26 +163,26 @@ export default function Brands() {
                     </div>
                 ) : (<>
                     <div className="overflow-hidden sm:rounded-lg">
-                        {/* Mobile Layout */}
+                        {/* Mobile Layout (List-Item Compact) */}
                         <div className="block md:hidden border-t border-gray-200">
                             {displayedBrands.map((brand, index) => (
                                 <div key={brand.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
                                     <div className="flex justify-between items-start mb-2">
                                         <div className="flex items-center gap-2">
                                             <span className="text-gray-400 font-medium text-xs">#{(currentPage - 1) * itemsPerPage + index + 1}</span>
-                                            <span className="text-gray-900 font-bold text-sm">{brand.name}</span>
+                                            <span className="font-bold text-gray-900 text-sm">{brand.name}</span>
                                         </div>
                                         <div className="flex items-center gap-1">
                                             <button
                                                 onClick={() => openEditModal(brand)}
-                                                className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                                                className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-indigo-100"
                                                 title={t('common_actions.edit')}
                                             >
                                                 <Edit className="w-4 h-4" />
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(brand.id)}
-                                                className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-red-100"
                                                 title={t('common_actions.delete')}
                                             >
                                                 <Trash2 className="w-4 h-4" />
@@ -160,17 +190,15 @@ export default function Brands() {
                                         </div>
                                     </div>
                                     
-                                    <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm items-center">
-                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_master.category')}</span>
-                                        <span className="text-gray-700 text-xs font-medium bg-gray-100 px-2 py-0.5 rounded w-fit">
-                                            {brand.category_name || t('admin_master.all_categories')}
-                                        </span>
+                                    <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm items-start">
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider mt-0.5">{t('admin_master.category')}</span>
+                                        <span className="text-gray-600 text-xs">{brand.category_name || t('admin_master.all_categories')}</span>
                                     </div>
                                 </div>
                             ))}
                         </div>
 
-                        {/* Desktop Layout */}
+                        {/* Desktop Layout (Table) */}
                         <div className="hidden md:block overflow-x-auto">
                             <table className="w-full">
                                 <thead>
@@ -282,6 +310,40 @@ export default function Brands() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+            {/* Delete Confirmation Modal */}
+            {deleteModalId && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl max-w-sm w-full p-6 text-center shadow-xl transform transition-all">
+                        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Trash2 className="w-8 h-8 text-red-600" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">Adakah anda pasti?</h3>
+                        <p className="text-sm text-gray-500 mb-6">Tindakan ini tidak boleh dipulihkan. Brand ini akan dipadam secara kekal.</p>
+                        <div className="flex justify-center gap-3">
+                            <button 
+                                type="button" 
+                                onClick={() => setDeleteModalId(null)} 
+                                className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                                disabled={isDeleting}
+                            >
+                                {t('common_actions.cancel')}
+                            </button>
+                            <button 
+                                type="button" 
+                                onClick={confirmDelete} 
+                                disabled={isDeleting} 
+                                className="px-5 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors disabled:opacity-50 flex items-center justify-center min-w-[100px]"
+                            >
+                                {isDeleting ? (
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                ) : (
+                                    t('common_actions.delete')
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

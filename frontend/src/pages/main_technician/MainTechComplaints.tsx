@@ -17,8 +17,8 @@ export default function MainTechComplaints() {
     const [isLoading, setIsLoading] = useState(true);
     const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
 
-    const loadComplaints = useCallback(async (background = false) => {
-        if (!background) setIsLoading(true);
+    const loadComplaints = useCallback(async () => {
+        setIsLoading(true);
         try {
             const response = await api.get(`/complaints?status=${activeFilter}&limit=1000`);
             setComplaints(response.data.complaints || response.data.data || []);
@@ -31,13 +31,6 @@ export default function MainTechComplaints() {
 
     useEffect(() => {
         loadComplaints();
-
-        // Auto-refresh data every 15 seconds in the background
-        const interval = setInterval(() => {
-            loadComplaints(true);
-        }, 15000);
-
-        return () => clearInterval(interval);
     }, [loadComplaints]);
 
     const formatDate = (dateString: string) => {

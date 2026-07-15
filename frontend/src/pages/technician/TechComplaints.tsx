@@ -15,6 +15,7 @@ export default function TechComplaints() {
     const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'all');
+    const [activeTab, setActiveTab] = useState<'active' | 'history'>(searchParams.get('view') === 'history' ? 'history' : 'active');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 15;
 
@@ -23,11 +24,15 @@ export default function TechComplaints() {
         if (urlStatus) {
             setStatusFilter(urlStatus);
         }
+        const urlView = searchParams.get('view');
+        if (urlView === 'history' || urlView === 'active') {
+            setActiveTab(urlView);
+        }
     }, [searchParams]);
 
     useEffect(() => {
         loadComplaints();
-    }, []);
+    }, [activeTab, statusFilter]);
 
     const loadComplaints = async () => {
         setIsLoading(true);
@@ -36,6 +41,12 @@ export default function TechComplaints() {
                 page: '1',
                 limit: '1000',
             });
+            if (activeTab === 'history') {
+                params.append('view', 'history');
+            }
+            if (statusFilter !== 'all') {
+                params.append('status', statusFilter);
+            }
 
             const response = await api.get(`/complaints?${params.toString()}`);
 
@@ -58,10 +69,8 @@ export default function TechComplaints() {
     const filteredComplaints = useMemo(() => {
         let results = allComplaints;
 
-        // Filter by status
-        if (statusFilter !== 'all') {
-            results = results.filter(c => c.status === statusFilter);
-        }
+        // Since we pass statusFilter to the backend, the backend already filters by status!
+        // We only need to apply the text search filter here.
 
         // Filter by search term
         if (search.trim()) {
@@ -99,10 +108,10 @@ export default function TechComplaints() {
         return results;
     }, [allComplaints, search, statusFilter]);
 
-    // Reset page when search or filter changes
+    // Reset page when search, filter or tab changes
     useEffect(() => {
         setCurrentPage(1);
-    }, [search, statusFilter]);
+    }, [search, statusFilter, activeTab]);
 
     // Pagination computed from filtered results
     const totalPages = Math.ceil(filteredComplaints.length / itemsPerPage);
@@ -118,7 +127,7 @@ export default function TechComplaints() {
             case 'in_process':
                 return <span className="badge badge-in-process">{t('admin_users.status_in_process')}</span>;
             case 'incomplete':
-                return <span className="badge badge-incomplete">{t('admin_users.status_incomplete')}</span>;
+                return <span className="badge badge-incomplete">{t('admin_users.status_incomplete') || 'Incomplete / Bawa Pulang'}</span>;
             case 'bawa_pulang':
                 return <span className="badge badge-incomplete">{t('admin_users.status_bawa_pulang')}</span>;
             case 'ready_pickup':
@@ -246,11 +255,39 @@ export default function TechComplaints() {
         }
     };
 
+    const getBreadcrumbTitle = () => {
+        switch (statusFilter) {
+            case 'pending': return t('admin_users.status_pending');
+            case 'in_process': return t('admin_users.status_in_process');
+            case 'incomplete_in': return t('dashboard.incomplete_in', 'Incomplete (In)');
+            case 'incomplete_out': return t('dashboard.incomplete_out', 'Incomplete (Out)');
+            case 'closed': return t('admin_users.status_closed');
+            default: return t('technician_dashboard.title_complaints');
+        }
+    };
+
     return (
-        <AdminLayout title={t('technician_dashboard.title_complaints')} breadcrumb={t('technician_dashboard.title_complaints')}>
-            <div className="card">
-                {/* Filters */}
-                <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <AdminLayout title={t('technician_dashboard.title_complaints')} breadcrumb={getBreadcrumbTitle()}>
+            <div className="max-w-7xl mx-auto space-y-4">
+
+                {/* Tabs */}
+                <div className="flex border-b border-gray-200 bg-white px-6 pt-4 rounded-t-xl shadow-sm">
+                    <button
+                        onClick={() => setActiveTab('active')}
+                        className={`py-3 px-6 text-sm font-medium transition-colors ${activeTab === 'active' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                        Tugasan Aktif
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('history')}
+                        className={`py-3 px-6 text-sm font-medium transition-colors ${activeTab === 'history' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                        Sejarah Tugasan
+                    </button>
+                </div>
+
+                <div className="card">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <div className="flex-1">
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -274,6 +311,8 @@ export default function TechComplaints() {
                             <option value="all">{t('admin_users.all_status') || 'All Status'}</option> {/* Fallback if key missing */}
                             <option value="pending">{t('admin_users.status_pending')}</option>
                             <option value="in_process">{t('admin_users.status_in_process')}</option>
+                            <option value="incomplete_in">{t('dashboard.incomplete_in', 'Incomplete (In)')}</option>
+                            <option value="incomplete_out">{t('dashboard.incomplete_out', 'Incomplete (Out)')}</option>
                             <option value="closed">{t('admin_users.status_closed')}</option>
                         </select>
                     </div>
@@ -291,7 +330,7 @@ export default function TechComplaints() {
                 ) : (
                     <>
                         <div className="overflow-hidden sm:rounded-lg">
-                            {/* Mobile Layout */}
+                            {/* Mobile Layout (List-Item Compact) */}
                             <div className="block md:hidden border-t border-gray-200">
                                 {paginatedComplaints.map((complaint, index) => (
                                     <div key={complaint.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
@@ -301,63 +340,70 @@ export default function TechComplaints() {
                                                     <span className="text-gray-400 font-medium text-xs">#{(currentPage - 1) * itemsPerPage + index + 1}</span>
                                                     <Link
                                                         to={`/admin/technician/complaint/${complaint.report_number}`}
-                                                        className="font-bold text-sm text-green-600 hover:text-green-700 hover:underline"
+                                                        className="font-bold text-green-600 hover:text-green-700 text-sm hover:underline"
                                                     >
                                                         {complaint.report_number}
                                                     </Link>
                                                 </div>
-                                                <Link
-                                                    to={`/admin/technician/complaint/${complaint.report_number}/track-repair`}
-                                                    className="text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
-                                                >
-                                                    TRACK REPAIR
-                                                </Link>
+                                                <div>
+                                                    {getStatusBadge(complaint.status)}
+                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-1">
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm items-start mb-3 mt-3">
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider mt-0.5">{t('admin_users.customer')}</span>
+                                            <div>
+                                                <p className="font-medium text-gray-800 text-xs">{complaint.users?.full_name || '-'}</p>
+                                                <p className="text-[10px] text-gray-500">IC: {complaint.users?.ic_number || (t('common.no_ic_info') || 'Tiada Maklumat IC')}</p>
+                                            </div>
+
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider mt-0.5">{t('admin_master.subcategory')}</span>
+                                            <span className="text-gray-600 text-xs">{complaint.subcategory}</span>
+
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider mt-0.5">{t('admin_master.brand')}</span>
+                                            <span className="text-gray-600 text-xs">{complaint.brand_name}</span>
+
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider mt-0.5">{t('common.date_created') || 'Tarikh Dicipta'}</span>
+                                            <span className="text-gray-600 text-xs">{new Date(complaint.created_at).toLocaleDateString(i18n.language === 'en' ? 'en-MY' : 'ms-MY')}</span>
+
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider mt-0.5">{t('complaint_form.defect_details') || 'Kerosakan'}</span>
+                                            <span className="text-gray-600 text-xs line-clamp-2" title={complaint.details}>{complaint.details || '-'}</span>
+                                        </div>
+
+                                        <div className="bg-gray-50 p-2.5 rounded-md text-xs border border-gray-100 mb-3">
+                                            {getStatusMessage(complaint)}
+                                        </div>
+
+                                        <div className="flex flex-col gap-2 mt-2 pt-3 border-t border-gray-100">
+                                            <div className="flex items-center justify-between">
                                                 <Link
                                                     to={`/admin/technician/complaint/${complaint.report_number}`}
-                                                    className="p-1.5 text-green-600 hover:bg-green-50 rounded transition-colors"
-                                                    title={t('technician_dashboard.click_to_view') || 'View'}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg transition-colors text-xs font-medium border border-green-100"
                                                 >
                                                     <Eye className="w-4 h-4" />
+                                                    {t('technician_dashboard.click_to_view') || 'View Details'}
                                                 </Link>
                                                 <Link
                                                     to={`/admin/print/${complaint.report_number}`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-blue-100"
                                                     title="Cetak Resit"
                                                 >
                                                     <Printer className="w-4 h-4" />
                                                 </Link>
                                             </div>
-                                        </div>
-                                        
-                                        <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm items-center mb-2">
-                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_users.customer') || 'Customer'}</span>
-                                            <div>
-                                                <span className="text-gray-700 text-xs font-medium block">{complaint.users?.full_name || '-'}</span>
-                                                <span className="text-gray-500 text-[10px]">ID/IC: {complaint.users?.ic_number || (t('common.no_ic_info') || 'Tiada Maklumat IC')}</span>
-                                            </div>
-
-                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_master.brand')}</span>
-                                            <div>
-                                                <span className="text-gray-700 text-xs font-medium block">{complaint.brand_name}</span>
-                                                <span className="text-gray-500 text-[10px]">{complaint.subcategory}</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="mt-2 border-t border-gray-100 pt-2">
-                                            {getStatusBadge(complaint.status)}
-                                            <div className="mt-1">
-                                                {getStatusMessage(complaint)}
-                                            </div>
+                                            <Link
+                                                to={`/admin/technician/complaint/${complaint.report_number}`}
+                                                className="text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded-lg transition-colors w-full text-center"
+                                            >{activeTab === 'history' ? t('user_dashboard.view_track_repair', 'TRACK REPAIR PROGRESS') : t('technician_dashboard.update_track_repair', 'UPDATE TRACK REPAIR PROGRESS')}</Link>
                                         </div>
                                     </div>
                                 ))}
                             </div>
 
-                            {/* Desktop Layout */}
+                            {/* Desktop Layout (Table) */}
                             <div className="hidden md:block overflow-x-auto">
                                 <table className="w-full">
                                     <thead>
@@ -386,11 +432,9 @@ export default function TechComplaints() {
                                                             {complaint.report_number}
                                                         </Link>
                                                         <Link
-                                                            to={`/admin/technician/complaint/${complaint.report_number}/track-repair`}
-                                                            className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
-                                                        >
-                                                            TRACK REPAIR
-                                                        </Link>
+                                                        to={`/admin/technician/complaint/${complaint.report_number}`}
+                                                        className="inline-block text-[10px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-2.5 py-1 rounded transition-colors w-fit uppercase tracking-wider"
+                                                    >{t('technician_dashboard.update_track_repair', 'UPDATE TRACK REPAIR PROGRESS')}</Link>
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3 whitespace-nowrap">
@@ -467,6 +511,7 @@ export default function TechComplaints() {
                         )}
                     </>
                 )}
+            </div>
             </div>
         </AdminLayout>
     );

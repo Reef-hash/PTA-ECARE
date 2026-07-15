@@ -127,55 +127,25 @@ export default function NotificationsPage() {
             }
         } catch (e) { /* fall through */ }
 
-        let reportMatch = notification.title.match(/[a-zA-Z]+\d+/) || notification.message.match(/[a-zA-Z]+\d+/);
+        let reportMatch = notification.title.match(/[A-Z]\d+/) || notification.message.match(/[A-Z]\d+/);
         const reportNumber = reportMatch ? reportMatch[0] : '';
         const complaintId = notification.reference_id;
+        const statusMatch = notification.message.match(/'([^']+)'/);
+        const rawStatus = statusMatch ? statusMatch[1] : '';
 
-        // Translate status based on message content keywords
-        let translatedStatus = '';
-        const msgLower = notification.message.toLowerCase();
-        if (msgLower.includes('pending') || msgLower.includes('menunggu')) {
+        let translatedStatus = rawStatus;
+        if (rawStatus === 'pending' || rawStatus.toLowerCase().includes('pending') || rawStatus.toLowerCase().includes('menunggu')) {
             translatedStatus = t('notification.status_pending');
-        } else if (msgLower.includes('process') || msgLower.includes('proses') || msgLower.includes('diproses')) {
+        } else if (rawStatus === 'in_process' || rawStatus.toLowerCase().includes('process') || rawStatus.toLowerCase().includes('diproses')) {
             translatedStatus = t('notification.status_in_process');
-        } else if (msgLower.includes('closed') || msgLower.includes('selesai') || msgLower.includes('completed') || msgLower.includes('siap')) {
+        } else if (rawStatus === 'closed' || rawStatus.toLowerCase().includes('closed') || rawStatus.toLowerCase().includes('selesai')) {
             translatedStatus = t('notification.status_closed');
-        } else {
-            // Fallback to legacy single quote matching
-            const statusMatch = notification.message.match(/'([^']+)'/);
-            const rawStatus = statusMatch ? statusMatch[1] : '';
-            if (rawStatus === 'pending' || rawStatus.toLowerCase().includes('pending') || rawStatus.toLowerCase().includes('menunggu')) {
-                translatedStatus = t('notification.status_pending');
-            } else if (rawStatus === 'in_process' || rawStatus.toLowerCase().includes('process') || rawStatus.toLowerCase().includes('diproses')) {
-                translatedStatus = t('notification.status_in_process');
-            } else if (rawStatus === 'closed' || rawStatus.toLowerCase().includes('closed') || rawStatus.toLowerCase().includes('selesai')) {
-                translatedStatus = t('notification.status_closed');
-            } else {
-                translatedStatus = rawStatus;
-            }
         }
 
-        const safeTitle = notification.title || '';
-        const safeMessage = notification.message || '';
-
-        // Handle custom notifications
-        if (
-            safeTitle.includes('REGISTRATION SUCCESS') ||
-            safeTitle.includes('NEW USER REGISTRATION') ||
-            safeTitle.includes('Selamat Datang') ||
-            safeTitle.includes('NEW COMPLAINT') ||
-            safeTitle.includes('ADUAN BERJAYA DIHANTAR')
-        ) {
-            return {
-                title: safeTitle,
-                message: safeMessage.replace(/\|\s*uid:[a-zA-Z0-9-]+/, '').trim()
-            };
-        }
-
-        if (safeTitle.includes('Profil Dikemaskini') || safeTitle.includes('Profile Updated') ||
-            safeTitle.includes('Kata Laluan Ditukar') || safeTitle.includes('Password Changed') ||
-            safeTitle.includes('Aduan Dibatalkan') || safeTitle.includes('Complaint Cancelled')) {
-            return { title: safeTitle, message: safeMessage };
+        if (notification.title.includes('Profil Dikemaskini') || notification.title.includes('Profile Updated') ||
+            notification.title.includes('Kata Laluan Ditukar') || notification.title.includes('Password Changed') ||
+            notification.title.includes('Aduan Dibatalkan') || notification.title.includes('Complaint Cancelled')) {
+            return { title: notification.title, message: notification.message };
         }
         if (notification.title.includes('Aduan Berjaya Didaftarkan') || notification.title.includes('Complaint Successfully Registered')) {
             return {

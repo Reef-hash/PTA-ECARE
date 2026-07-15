@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Mail, Phone, MapPin, Search, Eye, Clock, Key } from 'lucide-react';
+import { Mail, Phone, MapPin, Search, Eye, Clock, Key } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 import { User, Complaint } from '../../types';
@@ -150,12 +150,7 @@ export default function UserDetails() {
     return (
         <AdminLayout title={t('admin_users.detail_title') || 'User Details'} breadcrumb={t('admin_users.detail_title') || 'User Details'}>
             <div className="max-w-6xl mx-auto space-y-6">
-                {/* Header / Back */}
-                <div className="flex items-center gap-4">
-                    <Link to="/admin/users" className="p-2 bg-white rounded-lg hover:bg-gray-50 text-gray-600 transition-colors shadow-sm">
-                        <ArrowLeft className="w-5 h-5" />
-                    </Link>
-                </div>
+
 
                 {/* User Info Card */}
                 <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 md:items-center justify-between">
@@ -193,7 +188,7 @@ export default function UserDetails() {
                             <p className="font-medium text-gray-800 pl-6">{user.email || '-'}</p>
                         </div>
 
-                        {/* 2. Primary Phone (Top Right) */}
+                        {/* 2. Primary Phone */}
                         <div>
                             <div className="flex items-center gap-2 mb-1">
                                 <Phone className="w-4 h-4 text-gray-400" />
@@ -202,7 +197,18 @@ export default function UserDetails() {
                             <p className="font-medium text-gray-800 pl-6">{user.contact_no}</p>
                         </div>
 
-                        {/* 3. Address (Bottom Left) */}
+                        {/* 3. Secondary Phone */}
+                        {user.contact_no_2 && (
+                            <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Phone className="w-4 h-4 text-gray-400" />
+                                    <span className="text-gray-500">{t('admin_users.phone_secondary')}</span>
+                                </div>
+                                <p className="font-medium text-gray-800 pl-6">{user.contact_no_2}</p>
+                            </div>
+                        )}
+
+                        {/* 4. Address */}
                         <div>
                             <div className="flex items-center gap-2 mb-1">
                                 <MapPin className="w-4 h-4 text-gray-400" />
@@ -213,17 +219,6 @@ export default function UserDetails() {
                                 {user.state && <><br />{user.state}</>}
                             </p>
                         </div>
-
-                        {/* 4. Secondary Phone (Bottom Right) */}
-                        {user.contact_no_2 && (
-                            <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <Phone className="w-4 h-4 text-gray-400" />
-                                    <span className="text-gray-500">{t('admin_users.phone_secondary')}</span>
-                                </div>
-                                <p className="font-medium text-gray-800 pl-6">{user.contact_no_2}</p>
-                            </div>
-                        )}
 
                         {/* 5. Username (IC Number) */}
                         <div>
@@ -289,42 +284,8 @@ export default function UserDetails() {
                             <p className="text-gray-500">{t('admin_master.no_data')}</p>
                         </div>
                     ) : (
-                        <div className="overflow-hidden sm:rounded-lg">
-                            {/* Mobile Layout */}
-                            <div className="block md:hidden border-t border-gray-200">
-                                {filteredComplaints.map((complaint, index) => (
-                                    <div key={complaint.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-gray-400 font-medium text-xs">#{index + 1}</span>
-                                                <span className="font-bold text-sm text-indigo-600">{complaint.report_number}</span>
-                                            </div>
-                                            <div className="flex flex-col items-end gap-2">
-                                                {getStatusBadge(complaint.status)}
-                                                <Link
-                                                    to={`/admin/complaint/${complaint.report_number}`}
-                                                    className="inline-flex items-center justify-center p-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
-                                                >
-                                                    <Eye className="w-4 h-4" />
-                                                </Link>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm items-center">
-                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_master.brand')}</span>
-                                            <span className="text-gray-700 text-xs font-medium">{complaint.brand_name}</span>
-
-                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_master.subcategory')}</span>
-                                            <span className="text-gray-700 text-xs">{complaint.subcategory}</span>
-
-                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('common_actions.date')}</span>
-                                            <span className="text-gray-500 text-xs">{formatDate(complaint.created_at)}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Desktop Layout */}
+                        <>
+                            {/* Desktop View */}
                             <div className="hidden md:block overflow-x-auto">
                                 <table className="w-full">
                                     <thead>
@@ -340,7 +301,7 @@ export default function UserDetails() {
                                     </thead>
                                     <tbody className="text-sm">
                                         {filteredComplaints.map((complaint, index) => (
-                                            <tr key={complaint.id} className="table-row">
+                                            <tr key={complaint.id} className="table-row border-b last:border-b-0 border-gray-100 hover:bg-gray-50/50">
                                                 <td className="px-4 py-3 text-gray-400 whitespace-nowrap">{index + 1}</td>
                                                 <td className="px-4 py-3 font-medium text-indigo-600 whitespace-nowrap">{complaint.report_number}</td>
                                                 <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.brand_name}</td>
@@ -360,7 +321,60 @@ export default function UserDetails() {
                                     </tbody>
                                 </table>
                             </div>
-                        </div>
+
+                            {/* Mobile View (Card-based list) */}
+                            <div className="md:hidden flex flex-col">
+                                {filteredComplaints.map((complaint, index) => (
+                                    <div key={complaint.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div className="flex flex-col gap-1.5">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-gray-400 font-medium text-xs">#{index + 1}</span>
+                                                    <Link
+                                                        to={`/admin/complaint/${complaint.report_number}`}
+                                                        className="text-indigo-600 hover:text-indigo-800 font-bold text-sm"
+                                                    >
+                                                        {complaint.report_number}
+                                                    </Link>
+                                                </div>
+                                            </div>
+                                            <div className="flex-shrink-0">
+                                                {getStatusBadge(complaint.status)}
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm mt-3 items-center">
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('complaint_form.subcategory') || 'Subcategory'}</span>
+                                            <span className="text-gray-900 font-medium text-xs">{complaint.subcategory}</span>
+                                            
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('complaint_form.brand') || 'Brand'}</span>
+                                            <span className="text-gray-900 font-medium text-xs">{complaint.brand_name}</span>
+
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_complaint_detail.defect_details') || 'Defect'}</span>
+                                            <span className="text-gray-900 font-medium text-xs line-clamp-2" title={complaint.details || ''}>{complaint.details || '-'}</span>
+
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('common_actions.date') || 'Date'}</span>
+                                            <span className="text-gray-900 font-medium text-xs">{formatDate(complaint.created_at)}</span>
+                                        </div>
+                                        
+                                        <div className="mt-3 pt-3 border-t border-gray-100 flex flex-col gap-2">
+                                            <Link
+                                                to={`/admin/complaint/${complaint.report_number}`}
+                                                className="w-full flex justify-center items-center gap-2 px-3 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg transition-colors text-sm font-medium border border-indigo-100"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                                {t('complaint_list.view') || 'View Details'}
+                                            </Link>
+                                            <Link
+                                                to={`/admin/complaint/${complaint.report_number}/track-repair`}
+                                                className="w-full flex justify-center items-center gap-2 px-3 py-2 bg-white text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors text-sm font-medium border border-indigo-200"
+                                            >
+                                                <MapPin className="w-4 h-4" />{t('user_dashboard.view_track_repair', 'TRACK REPAIR')}</Link>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </>
                     )}
                 </div>
             </div>

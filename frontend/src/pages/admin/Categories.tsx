@@ -122,26 +122,26 @@ export default function Categories() {
                     </div>
                 ) : (<>
                     <div className="overflow-hidden sm:rounded-lg">
-                        {/* Mobile Layout */}
+                        {/* Mobile Layout (List-Item Compact) */}
                         <div className="block md:hidden border-t border-gray-200">
                             {displayedCategories.map((cat, index) => (
                                 <div key={cat.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
                                     <div className="flex justify-between items-start mb-2">
                                         <div className="flex items-center gap-2">
                                             <span className="text-gray-400 font-medium text-xs">#{(currentPage - 1) * itemsPerPage + index + 1}</span>
-                                            <span className="text-gray-900 font-bold text-sm">{cat.name}</span>
+                                            <span className="font-bold text-gray-900 text-sm">{cat.name}</span>
                                         </div>
                                         <div className="flex items-center gap-1">
                                             <button
                                                 onClick={() => openEditModal(cat)}
-                                                className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                                                className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-indigo-100"
                                                 title={t('common_actions.edit')}
                                             >
                                                 <Edit className="w-4 h-4" />
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(cat.id)}
-                                                className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-red-100"
                                                 title={t('common_actions.delete')}
                                             >
                                                 <Trash2 className="w-4 h-4" />
@@ -149,15 +149,15 @@ export default function Categories() {
                                         </div>
                                     </div>
                                     
-                                    <div className="text-sm mt-1">
-                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider block mb-0.5">{t('common_actions.description')}</span>
-                                        <span className="text-gray-700 text-xs">{cat.description || '-'}</span>
+                                    <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm items-start">
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider mt-0.5">{t('common_actions.description')}</span>
+                                        <span className="text-gray-600 text-xs line-clamp-2">{cat.description || '-'}</span>
                                     </div>
                                 </div>
                             ))}
                         </div>
 
-                        {/* Desktop Layout */}
+                        {/* Desktop Layout (Table) */}
                         <div className="hidden md:block overflow-x-auto">
                             <table className="w-full">
                                 <thead>

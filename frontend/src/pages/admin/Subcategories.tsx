@@ -63,15 +63,32 @@ export default function Subcategories() {
                     category_id: parseInt(formData.category_id),
                 });
                 toast.success(t('admin_master.success_update'));
+                loadData();
             } else {
-                await api.post('/subcategories', {
+                const res = await api.post('/subcategories', {
                     name: formData.name,
                     category_id: parseInt(formData.category_id),
                 });
                 toast.success(t('admin_master.success_add'));
+                setSearch('');
+                
+                // Load fresh data to determine index
+                const [subRes, catRes] = await Promise.all([
+                    api.get('/subcategories'),
+                    api.get('/categories'),
+                ]);
+                const newSubcategories = subRes.data.subcategories;
+                setSubcategories(newSubcategories);
+                setCategories(catRes.data.categories);
+                
+                // Find exact page of the newly added item
+                const addedId = res.data.id;
+                const index = newSubcategories.findIndex((s: Subcategory) => s.id === addedId);
+                if (index !== -1) {
+                    setCurrentPage(Math.floor(index / 10) + 1); // itemsPerPage is 10
+                }
             }
             setShowModal(false);
-            loadData();
         } catch (error: any) {
             toast.error(error.response?.data?.error || t('common.error_load'));
         } finally {
@@ -133,26 +150,26 @@ export default function Subcategories() {
                     </div>
                 ) : (<>
                     <div className="overflow-hidden sm:rounded-lg">
-                        {/* Mobile Layout */}
+                        {/* Mobile Layout (List-Item Compact) */}
                         <div className="block md:hidden border-t border-gray-200">
                             {displayedSubcategories.map((sub, index) => (
                                 <div key={sub.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
                                     <div className="flex justify-between items-start mb-2">
                                         <div className="flex items-center gap-2">
                                             <span className="text-gray-400 font-medium text-xs">#{(currentPage - 1) * itemsPerPage + index + 1}</span>
-                                            <span className="text-gray-900 font-bold text-sm">{sub.name}</span>
+                                            <span className="font-bold text-gray-900 text-sm">{sub.name}</span>
                                         </div>
                                         <div className="flex items-center gap-1">
                                             <button
                                                 onClick={() => openEditModal(sub)}
-                                                className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                                                className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-indigo-100"
                                                 title={t('common_actions.edit')}
                                             >
                                                 <Edit className="w-4 h-4" />
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(sub.id)}
-                                                className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-red-100"
                                                 title={t('common_actions.delete')}
                                             >
                                                 <Trash2 className="w-4 h-4" />
@@ -160,17 +177,15 @@ export default function Subcategories() {
                                         </div>
                                     </div>
                                     
-                                    <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm items-center">
-                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_master.category')}</span>
-                                        <span className="text-gray-700 text-xs font-medium bg-gray-100 px-2 py-0.5 rounded w-fit">
-                                            {sub.category_name || '-'}
-                                        </span>
+                                    <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm items-start">
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider mt-0.5">{t('admin_master.category')}</span>
+                                        <span className="text-gray-600 text-xs">{sub.category_name || '-'}</span>
                                     </div>
                                 </div>
                             ))}
                         </div>
 
-                        {/* Desktop Layout */}
+                        {/* Desktop Layout (Table) */}
                         <div className="hidden md:block overflow-x-auto">
                             <table className="w-full">
                                 <thead>

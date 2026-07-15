@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Search, UserCheck, UserX, UserPlus, X, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
-import Modal from '../../components/Modal';
 import api from '../../services/api';
 import { User } from '../../types';
 import toast from 'react-hot-toast';
@@ -13,8 +12,6 @@ export default function Users() {
     const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState('');
-    const [userToDelete, setUserToDelete] = useState<string | null>(null);
-    const [isDeleting, setIsDeleting] = useState(false);
 
     // Add Customer Modal
     const [showAddModal, setShowAddModal] = useState(false);
@@ -30,6 +27,10 @@ export default function Users() {
         state: '',
         password: '',
     });
+
+    // Delete Modal State
+    const [userToDelete, setUserToDelete] = useState<{ id: string, name: string } | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         loadUsers();
@@ -56,20 +57,17 @@ export default function Users() {
         }
     };
 
-    const handleDeleteUser = (userId: string) => {
-        setUserToDelete(userId);
-    };
-
     const confirmDeleteUser = async () => {
         if (!userToDelete) return;
         setIsDeleting(true);
+        
         try {
-            await api.delete(`/admin/users/${userToDelete}`);
-            setUsers(users.filter(u => u.id !== userToDelete));
-            toast.success('Pelanggan berjaya dipadam.');
+            await api.delete(`/admin/users/${userToDelete.id}`);
+            setUsers(users.filter(u => u.id !== userToDelete.id));
+            toast.success(t('admin_users.delete_success'));
             setUserToDelete(null);
         } catch (error: any) {
-            toast.error(error.response?.data?.error || 'Gagal memadam pelanggan.');
+            toast.error(error.response?.data?.error || t('admin_users.delete_error'));
         } finally {
             setIsDeleting(false);
         }
@@ -202,71 +200,74 @@ export default function Users() {
                     </div>
                 ) : (<>
                     <div className="overflow-hidden sm:rounded-lg">
-                        {/* Mobile Layout */}
+                        {/* Mobile Layout (List-Item Compact) */}
                         <div className="block md:hidden border-t border-gray-200">
                             {displayedUsers.map((user, index) => (
                                 <div key={user.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
-                                    <div className="flex justify-between items-start mb-2">
+                                    <div className="flex justify-between items-start mb-3">
                                         <div className="flex items-center gap-2">
                                             <span className="text-gray-400 font-medium text-xs">#{(currentPage - 1) * itemsPerPage + index + 1}</span>
-                                            <div>
-                                                <Link to={`/admin/users/${user.id}`} className="font-bold text-sm text-indigo-600 hover:text-indigo-800 transition-colors">
-                                                    {user.full_name}
-                                                </Link>
-                                                <p className="text-xs text-gray-500">{user.email || '-'}</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                            {user.status !== 'Active' && (
-                                                <button
-                                                    onClick={() => handleStatusChange(user.id, 'Active')}
-                                                    className="p-1.5 text-green-600 hover:bg-green-50 rounded transition-colors"
-                                                    title={t('admin_users.confirm_active')}
-                                                >
-                                                    <UserCheck className="w-4 h-4" />
-                                                </button>
-                                            )}
-                                            {user.status !== 'Suspended' && (
-                                                <button
-                                                    onClick={() => handleStatusChange(user.id, 'Suspended')}
-                                                    className="p-1.5 text-orange-600 hover:bg-orange-50 rounded transition-colors"
-                                                    title={t('admin_users.confirm_suspend')}
-                                                >
-                                                    <UserX className="w-4 h-4" />
-                                                </button>
-                                            )}
-                                            <button
-                                                onClick={() => handleDeleteUser(user.id)}
-                                                className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
-                                                title="Padam Pelanggan"
+                                            <Link
+                                                to={`/admin/users/${user.id}`}
+                                                className="text-indigo-600 hover:underline hover:text-indigo-800 font-bold text-sm"
                                             >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
+                                                {user.full_name}
+                                            </Link>
+                                        </div>
+                                        <div className="flex-shrink-0">
+                                            {getStatusBadge(user.status)}
                                         </div>
                                     </div>
                                     
-                                    <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm items-center mb-2">
+                                    <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm mt-2 items-center">
                                         <span className="text-gray-500 text-[11px] uppercase tracking-wider">No IC</span>
-                                        <span className="text-gray-700 text-xs font-medium">{user.ic_number}</span>
+                                        <span className="text-gray-900 font-medium text-xs">{user.ic_number}</span>
 
                                         <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_users.phone_number')}</span>
-                                        <span className="text-gray-700 text-xs">{user.contact_no}</span>
+                                        <span className="text-gray-900 font-medium text-xs">{user.contact_no}</span>
 
                                         <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_master.title_states').replace('Pengurusan ', '')}</span>
-                                        <span className="text-gray-700 text-xs">{user.state || '-'}</span>
+                                        <span className="text-gray-900 font-medium text-xs">{user.state || '-'}</span>
+
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider">E-mel</span>
+                                        <span className="text-gray-900 font-medium text-xs">{user.email || '-'}</span>
 
                                         <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('common_actions.date')}</span>
-                                        <span className="text-gray-500 text-xs">{formatDate(user.created_at)}</span>
+                                        <span className="text-gray-900 font-medium text-xs">{formatDate(user.created_at)}</span>
                                     </div>
-
-                                    <div className="mt-2 flex justify-start">
-                                        {getStatusBadge(user.status)}
+                                    
+                                    <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-end gap-2">
+                                        {user.status !== 'Active' && (
+                                            <button
+                                                onClick={() => handleStatusChange(user.id, 'Active')}
+                                                className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors border border-green-100"
+                                                title={t('admin_users.confirm_active')}
+                                            >
+                                                <UserCheck className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                        {user.status !== 'Suspended' && (
+                                            <button
+                                                onClick={() => handleStatusChange(user.id, 'Suspended')}
+                                                className="p-1.5 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors border border-orange-100"
+                                                title={t('admin_users.confirm_suspend')}
+                                            >
+                                                <UserX className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={() => setUserToDelete({ id: user.id, name: user.full_name })}
+                                            className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-red-100"
+                                            title={t('admin_users.delete_title')}
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
                                     </div>
                                 </div>
                             ))}
                         </div>
 
-                        {/* Desktop Layout */}
+                        {/* Desktop Layout (Table) */}
                         <div className="hidden md:block overflow-x-auto">
                             <table className="w-full">
                                 <thead>
@@ -319,9 +320,9 @@ export default function Users() {
                                                         </button>
                                                     )}
                                                     <button
-                                                        onClick={() => handleDeleteUser(user.id)}
+                                                        onClick={() => setUserToDelete({ id: user.id, name: user.full_name })}
                                                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                        title="Padam Pelanggan"
+                                                        title={t('admin_users.delete_title')}
                                                     >
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
@@ -554,17 +555,66 @@ export default function Users() {
             )}
 
             {/* Delete Confirmation Modal */}
-            <Modal
-                isOpen={!!userToDelete}
-                onClose={() => setUserToDelete(null)}
-                title="Padam Pelanggan"
-                description="Adakah anda pasti untuk memadam pelanggan ini? Tindakan ini tidak boleh diundur dan semua data berkaitan akan dipadam."
-                confirmLabel="Padam"
-                cancelLabel="Batal"
-                onConfirm={confirmDeleteUser}
-                isLoading={isDeleting}
-                variant="danger"
-            />
+            {userToDelete && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 transition-all duration-300" onClick={() => !isDeleting && setUserToDelete(null)}>
+                    <div
+                        className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all duration-300 scale-100"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Header Warning Strip */}
+                        <div className="h-2 w-full bg-gradient-to-r from-red-500 to-rose-600"></div>
+                        
+                        <div className="p-8 text-center relative">
+                            {/* Close Button */}
+                            <button 
+                                onClick={() => setUserToDelete(null)}
+                                disabled={isDeleting}
+                                className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+
+                            <div className="relative w-20 h-20 mx-auto mb-6">
+                                <div className="absolute inset-0 bg-red-100 rounded-full animate-ping opacity-70"></div>
+                                <div className="relative w-full h-full bg-red-100 text-red-600 rounded-full flex items-center justify-center border-4 border-white shadow-sm mx-auto">
+                                    <Trash2 className="w-8 h-8" />
+                                </div>
+                            </div>
+                            
+                            <h2 className="text-2xl font-bold text-gray-900 mb-3">{t('admin_users.delete_title') || 'Padam Pelanggan'}</h2>
+                            
+                            <div className="bg-red-50 rounded-xl p-4 mb-8 text-left border border-red-100">
+                                <p className="text-gray-700 text-sm leading-relaxed text-center">
+                                    Adakah anda pasti untuk memadam pelanggan <span className="font-bold text-gray-900">{userToDelete.name}</span>? 
+                                    <br/>
+                                    <span className="text-red-600 font-semibold mt-1 inline-block">Tindakan ini tidak boleh diundur.</span>
+                                </p>
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setUserToDelete(null)}
+                                    disabled={isDeleting}
+                                    className="flex-1 px-5 py-3 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:text-gray-900 transition-colors focus:ring-4 focus:ring-gray-100 focus:outline-none"
+                                >
+                                    {t('common_actions.cancel') || 'Batal'}
+                                </button>
+                                <button
+                                    onClick={confirmDeleteUser}
+                                    disabled={isDeleting}
+                                    className="flex-1 px-5 py-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-semibold rounded-xl shadow-lg shadow-red-500/30 transition-all focus:ring-4 focus:ring-red-500/50 focus:outline-none flex items-center justify-center gap-2 disabled:opacity-70"
+                                >
+                                    {isDeleting ? (
+                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                        t('admin_users.btn_delete') || 'Ya, Padam'
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AdminLayout >
     );
 }
