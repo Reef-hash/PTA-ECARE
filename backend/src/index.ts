@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import fs from 'fs';
 
 import authRoutes from './routes/auth.routes.js';
 // Forced restart check
@@ -11,10 +13,28 @@ import adminRoutes from './routes/admin.routes.js';
 import masterRoutes from './routes/master.routes.js';
 import notificationsRoutes from './routes/notifications.routes.js';
 
+import pool from './config/mysql.js';
+
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
+
+// Run auto-migration for ENUMs safely
+(async () => {
+    try {
+        console.log('Running automatic database schema migrations...');
+        // Alter complaints table
+        await pool.query("ALTER TABLE complaints MODIFY COLUMN status ENUM('pending', 'in_process', 'incomplete', 'bawa_pulang', 'ready_pickup', 'closed', 'cancelled') DEFAULT 'pending'");
+        // Alter complaint_remarks table
+        await pool.query("ALTER TABLE complaint_remarks MODIFY COLUMN status ENUM('pending', 'in_process', 'incomplete', 'bawa_pulang', 'ready_pickup', 'closed', 'cancelled') NULL");
+        // Alter technician_remarks table
+        await pool.query("ALTER TABLE technician_remarks MODIFY COLUMN status ENUM('pending', 'in_process', 'incomplete', 'bawa_pulang', 'ready_pickup', 'closed', 'cancelled') NULL");
+        console.log('Database schema migrations completed successfully.');
+    } catch (err: any) {
+        console.error('Migration error (this may be safe to ignore if enum already exists):', err.message);
+    }
+})();
 
 // Middleware
 app.use(cors({
@@ -22,16 +42,57 @@ app.use(cors({
         process.env.FRONTEND_URL || 'http://localhost:5173',
         'http://localhost:5174',
         'https://zszonetechnology.top',
-        'https://api.zszonetechnology.top'
+        'https://api.zszonetechnology.top',
+        'https://ptas.my',
+        'https://www.ptas.my'
     ],
     credentials: true,
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve uploaded files - guna UPLOAD_DIR env var supaya fail selamat dari deployment
+const uploadsDir = process.env.UPLOAD_DIR 
+    ? path.resolve(process.env.UPLOAD_DIR) 
+    : path.resolve(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+app.use('/uploads', express.static(uploadsDir));
+
 // Health check
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Download endpoint to bypass CORS/Nginx issues for static files
+app.get('/api/download', (req, res) => {
+    try {
+        const fileUrl = req.query.url as string;
+        const filename = req.query.filename as string;
+        if (!fileUrl) {
+            res.status(400).send('No URL provided');
+            return;
+        }
+        
+        const uploadIndex = fileUrl.indexOf('/uploads/');
+        if (uploadIndex === -1) {
+            res.status(400).send('Invalid file URL');
+            return;
+        }
+        
+        const relativePath = fileUrl.substring(uploadIndex + 9);
+        const normalizedPath = path.normalize(relativePath).replace(/^(\.\.(\/|\\|$))+/, '');
+        const absolutePath = path.join(uploadsDir, normalizedPath);
+        
+        if (fs.existsSync(absolutePath)) {
+            res.download(absolutePath, filename || path.basename(absolutePath));
+        } else {
+            res.status(404).send('File not found');
+        }
+    } catch (e) {
+        res.status(500).send('Server error');
+    }
 });
 
 // Routes
@@ -63,12 +124,9 @@ app.use((req, res) => {
     res.status(404).json({ error: 'Not found' });
 });
 
-// Only start server if not running in Vercel (Vercel exports the app)
-if (!process.env.VERCEL) {
-    app.listen(PORT, () => {
-        console.log(`🚀 E-CARE API Server running on http://localhost:${PORT}`);
-        console.log(`📋 Health check: http://localhost:${PORT}/api/health`);
-    });
-}
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 E-CARE API Server running on http://0.0.0.0:${PORT}`);
+    console.log(`📋 Health check: http://0.0.0.0:${PORT}/api/health`);
+});
 
 export default app;

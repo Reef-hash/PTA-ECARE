@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Clock, CheckCircle, AlertCircle, Plus, XCircle, X } from 'lucide-react';
+import { FileText, Clock, CheckCircle, AlertCircle, Plus, XCircle, X, PackageOpen } from 'lucide-react';
 import UserLayout from '../../components/UserLayout';
 import api from '../../services/api';
 import { Complaint } from '../../types';
@@ -17,6 +17,7 @@ export default function UserDashboard() {
         in_process: 0,
         closed: 0,
         cancelled: 0,
+        incomplete: 0,
     });
     const [recentComplaints, setRecentComplaints] = useState<Complaint[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -48,12 +49,13 @@ export default function UserDashboard() {
             setRecentComplaints(sortedComplaints);
 
             // Load stats for each status by requesting count only
-            const [totalRes, pendingRes, inProcessRes, closedRes, cancelledRes] = await Promise.all([
+            const [totalRes, pendingRes, inProcessRes, closedRes, cancelledRes, incompleteRes] = await Promise.all([
                 api.get('/complaints?limit=1'),
                 api.get('/complaints?status=pending&limit=1'),
                 api.get('/complaints?status=in_process&limit=1'),
                 api.get('/complaints?status=closed&limit=1'),
                 api.get('/complaints?status=cancelled&limit=1'),
+                api.get('/complaints?status=incomplete&limit=1'),
             ]);
 
             setStats({
@@ -62,6 +64,7 @@ export default function UserDashboard() {
                 in_process: inProcessRes.data.pagination?.total || 0,
                 closed: closedRes.data.pagination?.total || 0,
                 cancelled: cancelledRes.data.pagination?.total || 0,
+                incomplete: incompleteRes.data.pagination?.total || 0,
             });
         } catch (error) {
             toast.error(t('common.error_load'));
@@ -73,17 +76,17 @@ export default function UserDashboard() {
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'pending':
-                return <span className="badge badge-pending">{t('table.pending')}</span>;
+                return <span className="badge badge-pending">{t('admin_users.status_pending')}</span>;
             case 'in_process':
-                return <span className="badge badge-in-process">{t('table.in_process')}</span>;
+                return <span className="badge badge-in-process">{t('admin_users.status_in_process')}</span>;
             case 'incomplete':
-                return <span className="badge badge-incomplete">{t('table.incomplete')}</span>;
+                return <span className="badge badge-incomplete">{t('admin_users.status_incomplete') || 'Incomplete / Bawa Pulang'}</span>;
             case 'bawa_pulang':
-                return <span className="badge badge-incomplete">{t('table.bawa_pulang')}</span>;
+                return <span className="badge badge-incomplete">{t('admin_users.status_bawa_pulang')}</span>;
             case 'ready_pickup':
                 return <span className="badge bg-indigo-100 text-indigo-700 border-indigo-200">Ready Pickup</span>;
             case 'closed':
-                return <span className="badge badge-closed">{t('table.closed')}</span>;
+                return <span className="badge badge-closed">{t('admin_users.status_closed')}</span>;
             case 'cancelled':
                 return <span className="badge bg-red-100 text-red-700">{t('admin_users.status_cancelled') || 'Dibatalkan'}</span>;
             default:
@@ -206,6 +209,13 @@ export default function UserDashboard() {
                 </div>
             );
         }
+        if (status === 'incomplete' || status === 'bawa_pulang') {
+            return (
+                <div className="text-xs text-gray-500">
+                    <p>{t('admin_users.status_incomplete')}</p>
+                </div>
+            );
+        }
         return null;
     };
 
@@ -240,6 +250,28 @@ export default function UserDashboard() {
         );
     }
 
+    const statCards = [
+        { label: t('dashboard.total_complaints'), value: stats.total, icon: FileText, color: 'purple', path: '/users/complaint-history' },
+        { label: t('dashboard.pending'), value: stats.pending, icon: Clock, color: 'orange', path: '/users/complaint-history?status=pending' },
+        { label: t('dashboard.in_process'), value: stats.in_process, icon: AlertCircle, color: 'green', path: '/users/complaint-history?status=in_process' },
+        { label: t('dashboard.closed'), value: stats.closed, icon: CheckCircle, color: 'gray', path: '/users/complaint-history?status=closed' },
+        { label: t('dashboard.cancelled'), value: stats.cancelled || 0, icon: XCircle, color: 'red', path: '/users/complaint-history?status=cancelled' },
+        { label: t('dashboard.incomplete'), value: stats.incomplete || 0, icon: PackageOpen, color: 'yellow', path: '/users/complaint-history?status=incomplete' },
+    ];
+
+    const getColorClasses = (color: string) => {
+        const colors: Record<string, { bg: string; icon: string; border: string }> = {
+            blue: { bg: 'bg-blue-100', icon: 'text-blue-600', border: 'border-l-blue-500' },
+            yellow: { bg: 'bg-yellow-100', icon: 'text-yellow-600', border: 'border-l-yellow-500' },
+            orange: { bg: 'bg-orange-100', icon: 'text-orange-600', border: 'border-l-orange-500' },
+            red: { bg: 'bg-red-100', icon: 'text-red-600', border: 'border-l-red-500' },
+            green: { bg: 'bg-green-100', icon: 'text-green-600', border: 'border-l-green-500' },
+            purple: { bg: 'bg-purple-100', icon: 'text-purple-600', border: 'border-l-purple-500' },
+            gray: { bg: 'bg-gray-100', icon: 'text-gray-600', border: 'border-l-gray-500' },
+        };
+        return colors[color] || colors.blue;
+    };
+
     return (
         <UserLayout title={t('user_dashboard.title')} breadcrumb={t('user_dashboard.title')}>
             {/* Quick Action */}
@@ -254,66 +286,26 @@ export default function UserDashboard() {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-                <Link to="/users/complaint-history" className="stat-card border-l-blue-500 hover:shadow-lg transition-shadow cursor-pointer">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-500 text-sm">{t('dashboard.total_complaints')}</p>
-                            <p className="text-3xl font-bold text-gray-800">{stats.total}</p>
-                        </div>
-                        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <FileText className="w-6 h-6 text-blue-600" />
-                        </div>
-                    </div>
-                </Link>
-
-                <Link to="/users/complaint-history?status=pending" className="stat-card border-l-orange-500 hover:shadow-lg transition-shadow cursor-pointer">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-500 text-sm">{t('dashboard.pending')}</p>
-                            <p className="text-3xl font-bold text-gray-800">{stats.pending}</p>
-                        </div>
-                        <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                            <AlertCircle className="w-6 h-6 text-orange-600" />
-                        </div>
-                    </div>
-                </Link>
-
-                <Link to="/users/complaint-history?status=in_process" className="stat-card border-l-yellow-500 hover:shadow-lg transition-shadow cursor-pointer">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-500 text-sm">{t('dashboard.in_process')}</p>
-                            <p className="text-3xl font-bold text-gray-800">{stats.in_process}</p>
-                        </div>
-                        <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                            <Clock className="w-6 h-6 text-yellow-600" />
-                        </div>
-                    </div>
-                </Link>
-
-                <Link to="/users/complaint-history?status=closed" className="stat-card border-l-green-500 hover:shadow-lg transition-shadow cursor-pointer">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-500 text-sm">{t('dashboard.closed')}</p>
-                            <p className="text-3xl font-bold text-gray-800">{stats.closed}</p>
-                        </div>
-                        <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                            <CheckCircle className="w-6 h-6 text-green-600" />
-                        </div>
-                    </div>
-                </Link>
-
-                <Link to="/users/complaint-history?status=cancelled" className="stat-card border-l-red-500 hover:shadow-lg transition-shadow cursor-pointer">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-500 text-sm">{t('dashboard.cancelled') || 'Dibatalkan'}</p>
-                            <p className="text-3xl font-bold text-gray-800">{stats.cancelled}</p>
-                        </div>
-                        <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                            <XCircle className="w-6 h-6 text-red-600" />
-                        </div>
-                    </div>
-                </Link>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-8">
+                {statCards.map((card) => {
+                    const Icon = card.icon;
+                    const colors = getColorClasses(card.color);
+                    return (
+                        <Link
+                            key={card.label}
+                            to={card.path}
+                            className={`bg-white rounded-xl shadow-sm border-l-4 p-3 sm:p-5 ${colors.border} hover:shadow-lg transition-shadow flex flex-col justify-between`}
+                        >
+                            <div className="flex items-center justify-between mb-2">
+                                <p className="text-gray-500 text-[10px] sm:text-xs uppercase font-medium leading-tight line-clamp-2 pr-1">{card.label}</p>
+                                <div className={`w-8 h-8 sm:w-10 sm:h-10 ${colors.bg} rounded-md sm:rounded-lg flex items-center justify-center shrink-0`}>
+                                    <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${colors.icon}`} />
+                                </div>
+                            </div>
+                            <p className="text-xl sm:text-2xl font-bold text-gray-800">{card.value}</p>
+                        </Link>
+                    );
+                })}
             </div>
 
             {/* Recent Complaints */}
@@ -340,72 +332,144 @@ export default function UserDashboard() {
                         </Link>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="table-header">
-                                    <th className="text-center px-4 py-3 w-12 whitespace-nowrap">#</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">{t('complaint_list.report_no')}</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">{t('complaint_form.category')}</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">{t('complaint_form.brand')}</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">{t('table.status')}</th>
-                                    <th className="text-center px-4 py-3 whitespace-nowrap">{t('table.action')}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {recentComplaints.map((complaint, index) => (
-                                    <tr key={complaint.id} className="table-row">
-                                        <td className="px-4 py-3 text-center text-gray-500 font-medium whitespace-nowrap">
-                                            {index + 1}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex flex-col gap-1">
+                    <div className="overflow-hidden sm:rounded-lg">
+                        {/* Mobile Layout (List-Item Compact) */}
+                        <div className="block md:hidden border-t border-gray-200">
+                            {recentComplaints.map((complaint, index) => (
+                                <div key={complaint.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div className="flex flex-col gap-1.5">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-gray-400 font-medium text-xs">#{index + 1}</span>
                                                 <Link
                                                     to={`/users/complaint/${complaint.report_number}`}
-                                                    className="text-primary-600 hover:text-primary-700 font-medium"
+                                                    className="text-primary-600 hover:text-primary-700 font-bold text-sm"
                                                 >
                                                     {complaint.report_number}
                                                 </Link>
-                                                <Link
-                                                    to={`/users/complaint/${complaint.report_number}/track-repair`}
-                                                    className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
-                                                >
-                                                    TRACK REPAIR
-                                                </Link>
                                             </div>
-                                        </td>
-                                        <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.subcategory}</td>
-                                        <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.brand_name}</td>
-                                        <td className="px-4 py-3 whitespace-nowrap">
-                                            <div className="flex flex-col gap-1">
-                                                {getStatusBadge(complaint.status)}
-                                                <div className="mt-1">
-                                                    {renderStatusDescription(complaint)}
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3 text-center whitespace-nowrap">
-                                            {complaint.status === 'pending' ? (
+                                        </div>
+                                        <div className="flex-shrink min-w-0 flex justify-end ml-2 max-w-[60%]">
+                                            {getStatusBadge(complaint.status)}
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-[auto_1fr_1fr] gap-x-3 gap-y-1 text-sm mt-2 items-center">
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_complaint_detail.date_created')}</span>
+                                        <span className="text-gray-900 font-medium text-xs col-span-2">
+                                            {complaint.created_at
+                                                ? new Date(complaint.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                                                : '-'}
+                                        </span>
+
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('complaint_form.category')}</span>
+                                        <span className="text-gray-900 font-medium text-xs col-span-2">{complaint.categories?.name || '-'}</span>
+                                        
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_master.subcategory')}</span>
+                                        <span className="text-gray-900 font-medium text-xs col-span-2">{complaint.subcategory}</span>
+
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('complaint_form.defect_details') || 'Kerosakan'}</span>
+                                        <span className="text-gray-900 font-medium text-xs col-span-2">{complaint.details || '-'}</span>
+                                        
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_complaint_detail.assigned_to') || 'Technician'}</span>
+                                        <span className="text-gray-900 font-medium text-xs col-span-2">{complaint.technicians?.name || t('admin_complaint_detail.not_assigned')}</span>
+                                    </div>
+                                    
+                                    <div className="mt-3 pt-3 border-t border-gray-100 flex flex-col gap-3">
+                                        <div className="text-xs text-gray-500 leading-relaxed">
+                                            {renderStatusDescription(complaint)}
+                                        </div>
+                                        <div className="flex flex-col gap-2">
+                                            {complaint.status === 'pending' && (
                                                 <button
                                                     onClick={() => handleCancelClick(complaint.id, complaint.report_number)}
                                                     disabled={cancellingId === complaint.id}
-                                                    className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors disabled:opacity-50"
+                                                    className="inline-flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors disabled:opacity-50 w-full"
                                                 >
                                                     {cancellingId === complaint.id ? (
-                                                        <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                                                        <div className="w-3.5 h-3.5 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
                                                     ) : (
-                                                        <X className="w-4 h-4" />
+                                                        <X className="w-3.5 h-3.5" />
                                                     )}
                                                     {t('common_actions.cancel') || 'Cancel'}
                                                 </button>
-                                            ) : (
-                                                <span className="text-gray-400 text-sm">-</span>
                                             )}
-                                        </td>
+                                            <Link
+                                                to={`/users/complaint/${complaint.report_number}/track-repair`}
+                                                className="inline-flex items-center justify-center gap-1 px-3 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors w-full shadow-sm"
+                                            >{t('user_dashboard.view_track_repair', 'TRACK REPAIR')}</Link>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Desktop Layout (Table) */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="table-header">
+                                        <th className="text-center px-4 py-3 w-12 whitespace-nowrap">#</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('complaint_list.report_no')}</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('complaint_form.category')}</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('complaint_form.brand')}</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('common_actions.status')}</th>
+                                        <th className="text-center px-4 py-3 whitespace-nowrap">{t('common_actions.action')}</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {recentComplaints.map((complaint, index) => (
+                                        <tr key={complaint.id} className="table-row">
+                                            <td className="px-4 py-3 text-center text-gray-500 font-medium whitespace-nowrap">
+                                                {index + 1}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="flex flex-col gap-1">
+                                                    <Link
+                                                        to={`/users/complaint/${complaint.report_number}`}
+                                                        className="text-primary-600 hover:text-primary-700 font-medium"
+                                                    >
+                                                        {complaint.report_number}
+                                                    </Link>
+                                                    <Link
+                                                        to={`/users/complaint/${complaint.report_number}/track-repair`}
+                                                        className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
+                                                    >{t('user_dashboard.view_track_repair', 'TRACK REPAIR')}</Link>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.subcategory}</td>
+                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.brand_name}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap">
+                                                <div className="flex flex-col gap-1">
+                                                    {getStatusBadge(complaint.status)}
+                                                    <div className="mt-1">
+                                                        {renderStatusDescription(complaint)}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 text-center whitespace-nowrap">
+                                                {complaint.status === 'pending' ? (
+                                                    <button
+                                                        onClick={() => handleCancelClick(complaint.id, complaint.report_number)}
+                                                        disabled={cancellingId === complaint.id}
+                                                        className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors disabled:opacity-50"
+                                                    >
+                                                        {cancellingId === complaint.id ? (
+                                                            <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                                                        ) : (
+                                                            <X className="w-4 h-4" />
+                                                        )}
+                                                        {t('common_actions.cancel') || 'Cancel'}
+                                                    </button>
+                                                ) : (
+                                                    <span className="text-gray-400 text-sm">-</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 )}
             </div>

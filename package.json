@@ -12,7 +12,8 @@
     "scripts": {
         "install-all": "npm install",
         "dev": "echo 'Run backend and frontend separately in their folders for now'",
-        "build": "cd frontend && npm run build"
+        "build": "cd frontend && npm run build",
+        "build-api": "cd backend && npm install && npm run build && cp package.json package-lock.json dist/ && cd dist && npm install --omit=dev"
     },
     "devDependencies": {
         "typescript": "^5.3.3"

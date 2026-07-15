@@ -134,7 +134,7 @@ export default function LandingPage() {
                 className={`mt-10 text-sm opacity-80 animate-fade-in ${isLoaded ? '' : 'opacity-0'}`}
                 style={{ animationDelay: '1s' }}
             >
-                © 2026 DFKTVETMARABESUT. All rights reserved.
+                © 2026 DFK TVETMARA BESUT. All Right Reserved.
             </footer>
         </div>
     );

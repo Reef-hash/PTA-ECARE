@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { RepairStatus } from '../../types';
 import TimelineStep, { StepRemark } from './TimelineStep';
 
@@ -15,23 +16,35 @@ interface RepairTimelineProps {
     isClosed: boolean;
 }
 
-export default function RepairTimeline({ currentStatus: _currentStatus, timelineEvents, isClosed }: RepairTimelineProps) {
-    // If not closed, we append a waiting placeholder at the end
-    const nodes = [...timelineEvents];
-    
-    if (!isClosed) {
-        nodes.push({
-            status: 'COMPLETE',
-            label: 'Complete (Ready to Pickup)',
-            date: null, // "Waiting..."
-        });
-    }
+/**
+ * Dynamic Timeline Component
+ * 
+ * Renders ALL events in chronological order (as passed via timelineEvents).
+ * 
+ * Only appends a single "Closed" future stage at the bottom if the complaint
+ * has not yet reached a final state.
+ */
+export default function RepairTimeline({ timelineEvents, isClosed }: RepairTimelineProps) {
+    const { t } = useTranslation();
 
-    // Determine the active index.
-    // For chronological nodes, all nodes with a date are completed or current.
-    // The last node with a date is "current".
-    const lastEventIndex = nodes.map(n => !!n.date).lastIndexOf(true);
-    const currentIndex = lastEventIndex >= 0 ? lastEventIndex : 0;
+    // The single "future" stage we ever show is Closed.
+    const futureStages = !isClosed ? [
+        {
+            status: 'COMPLETE' as RepairStatus,
+            label: (t('admin_users.status_closed') || 'Closed') + ' - Ready to Pickup',
+            date: null,
+            remark: undefined,
+            isFuture: true,
+        }
+    ] : [];
+
+    // Combine: all real events (dynamic, chronological) + the single waiting stage
+    const allNodes = [
+        ...timelineEvents.map(ev => ({ ...ev, isFuture: false })),
+        ...futureStages,
+    ];
+
+    const totalNodes = allNodes.length;
 
     return (
         <motion.div
@@ -40,18 +53,23 @@ export default function RepairTimeline({ currentStatus: _currentStatus, timeline
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
         >
-            <h3 className="text-lg font-semibold mb-6">Track Repair Progress</h3>
+            <h3 className="text-lg font-semibold mb-6">{t('user_dashboard.track_repair')}</h3>
             <div>
-                {nodes.map((node, index) => {
-                    const isCompleted = index < currentIndex;
-                    const isCurrent = index === currentIndex;
-                    const isLast = index === nodes.length - 1;
+                {allNodes.map((node, index) => {
+                    const isLast = index === totalNodes - 1;
+                    const isFuture = node.isFuture;
+
+                    // For real events: the LAST real event is "current", everything before it is "completed"
+                    // For future stages: they are neither current nor completed
+                    const lastRealIndex = timelineEvents.length - 1; // index of last real event in allNodes
+                    const isCompleted = !isFuture && index < lastRealIndex;
+                    const isCurrent = !isFuture && index === lastRealIndex;
 
                     return (
                         <TimelineStep
-                            key={`${node.status}-${index}`}
+                            key={`timeline-${index}`}
                             label={node.label}
-                            date={node.date}
+                            date={node.date || null}
                             isCurrent={isCurrent}
                             isCompleted={isCompleted}
                             isLast={isLast}

@@ -28,6 +28,5 @@ local-*.log
 .env.test.local
 .env.production.local
 
-# Vercel
-.vercel
-supabase/supabase-schema-srshalxtikpylcfztlmz.svg
+# Uploads (local file storage)
+uploads/

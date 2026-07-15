@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link, useLocation } from 'react-router-dom';
-import { ArrowLeft, Clock, Wrench, CheckCircle, AlertTriangle, XCircle, PackageOpen } from 'lucide-react';
+import { useParams, useLocation } from 'react-router-dom';
+import { Clock, Wrench, CheckCircle, AlertTriangle, XCircle, PackageOpen } from 'lucide-react';
 import { motion } from 'framer-motion';
 import AdminLayout from '../../components/AdminLayout';
 import UserLayout from '../../components/UserLayout';
@@ -22,13 +22,6 @@ export default function TrackRepair() {
     const isUser = location.pathname.startsWith('/users');
     const isMainTech = location.pathname.startsWith('/main-tech');
     const Layout = isUser ? UserLayout : isMainTech ? MainTechLayout : AdminLayout;
-    const backLink = isUser 
-        ? `/users/complaint/${id}` 
-        : isMainTech 
-            ? `/main-tech/complaint/${id}` 
-            : location.pathname.includes('/admin/technician') 
-                ? `/admin/technician/complaint/${id}` 
-                : `/admin/complaint/${id}`;
 
     useEffect(() => {
         loadComplaint();
@@ -87,7 +80,8 @@ export default function TrackRepair() {
         switch (status) {
             case 'pending': return 'PENDING';
             case 'in_process': return 'IN_PROCESS';
-            case 'incomplete': return 'IN_COMPLETE';
+            case 'incomplete':
+            case 'bawa_pulang': return 'IN_COMPLETE';
             case 'ready_pickup':
             case 'closed': return 'COMPLETE';
             default: return 'PENDING';
@@ -99,12 +93,27 @@ export default function TrackRepair() {
             pending: 'PENDING',
             in_process: 'IN_PROCESS',
             incomplete: 'IN_COMPLETE',
+            bawa_pulang: 'IN_COMPLETE',
             ready_pickup: 'COMPLETE',
             closed: 'COMPLETE',
         };
 
-        return remarks.map(remark => {
-            const repairStatus = remark.status ? statusMap[remark.status] || 'PENDING' : 'PENDING';
+        let lastKnownStatus = 'pending';
+
+        return remarks.map((remark, index) => {
+            // Fix for missing ENUM in DB causing status to be empty:
+            let rStatus = remark.status;
+            
+            // If this is the last remark and its status is null, use the complaint's master status
+            if (!rStatus && index === remarks.length - 1 && complaint) {
+                rStatus = complaint.status;
+            }
+
+            if (rStatus) {
+                lastKnownStatus = rStatus;
+            }
+
+            const repairStatus = statusMap[lastKnownStatus] || 'PENDING';
             const locale = i18n.language === 'ms' ? 'ms-MY' : 'en-US';
             const d = new Date(remark.created_at);
             const dateStr = d.toLocaleDateString(locale, {
@@ -116,10 +125,10 @@ export default function TrackRepair() {
             });
 
             // Map standard labels
-            let label = 'Pending';
-            if (repairStatus === 'IN_PROCESS') label = 'In Process';
-            if (repairStatus === 'IN_COMPLETE') label = 'In Complete / Bawa Pulang';
-            if (repairStatus === 'COMPLETE') label = 'Complete (Ready to Pickup)';
+            let label = t('admin_users.status_pending') || 'Pending';
+            if (repairStatus === 'IN_PROCESS') label = t('admin_users.status_in_process') || 'In Process';
+            if (repairStatus === 'IN_COMPLETE') label = t('admin_users.status_incomplete') || 'In Complete / Bawa Pulang';
+            if (repairStatus === 'COMPLETE') label = (t('admin_users.status_closed') || 'Closed') + ' - Ready to Pickup';
 
             return {
                 status: repairStatus,
@@ -164,7 +173,27 @@ export default function TrackRepair() {
 
     const currentStatus = mapComplaintStatus(complaint.status);
     const timelineEvents = buildTimelineEvents(allRemarks);
-    const isClosed = complaint.status === 'closed';
+
+    // Ensure there's always a "Complaint Created" anchor at the start of the timeline.
+    // If the earliest remark happened after creation (or there are no remarks), prepend it.
+    const createdEvent = {
+        status: 'PENDING' as RepairStatus,
+        label: t('user_dashboard.complaint_created'),
+        date: (() => {
+            const locale = i18n.language === 'ms' ? 'ms-MY' : 'en-US';
+            return new Date(complaint.created_at).toLocaleDateString(locale, {
+                day: 'numeric', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit',
+            });
+        })(),
+        remark: undefined,
+    };
+    const earliestRemarkDate = allRemarks.length > 0 ? new Date(allRemarks[0].created_at).getTime() : null;
+    const fullTimelineEvents = (earliestRemarkDate === null || new Date(complaint.created_at).getTime() < earliestRemarkDate)
+        ? [createdEvent, ...timelineEvents]
+        : timelineEvents;
+
+    const isClosed = complaint.status === 'closed' || complaint.status === 'ready_pickup';
 
     return (
         <Layout title={t('user_dashboard.track_repair')} breadcrumb={t('user_dashboard.track_repair')}>
@@ -173,18 +202,10 @@ export default function TrackRepair() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
             >
-                <div className="flex items-center justify-between mb-6">
-                    <Link
-                        to={backLink}
-                        className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        {t('admin_complaint_detail.back')}
-                    </Link>
-                </div>
+
 
                 {/* BLOCK 1: Track Repair Progress (TOP) */}
-                <RepairTimeline currentStatus={currentStatus} timelineEvents={timelineEvents} isClosed={isClosed} />
+                <RepairTimeline timelineEvents={fullTimelineEvents} isClosed={isClosed} />
 
                 {/* BLOCK 2: Complaint Details (BELOW) */}
                 <div className="card mt-6">
@@ -231,6 +252,12 @@ export default function TrackRepair() {
                         <div>
                             <p className="text-xs text-gray-400">{t('admin_complaint_detail.date_created')}</p>
                             <p className="font-semibold text-gray-700">{formatDate(complaint.created_at)}</p>
+                        </div>
+                        
+                        {/* Defect Details */}
+                        <div className="col-span-2 md:col-span-4 pt-2 border-t border-gray-100">
+                            <p className="text-xs text-gray-400">{t('admin_complaint_detail.defect_details')}</p>
+                            <p className="font-semibold text-gray-700 whitespace-pre-wrap">{complaint.details || '-'}</p>
                         </div>
                     </div>
                 </div>

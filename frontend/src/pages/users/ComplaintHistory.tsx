@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Filter, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import UserLayout from '../../components/UserLayout';
 import api from '../../services/api';
 import { Complaint } from '../../types';
@@ -9,13 +9,18 @@ import { useTranslation } from 'react-i18next';
 
 export default function ComplaintHistory() {
     const { t } = useTranslation();
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [allComplaints, setAllComplaints] = useState<Complaint[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'all');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+
+    useEffect(() => {
+        const urlStatus = searchParams.get('status');
+        setStatusFilter(urlStatus || 'all');
+    }, [searchParams]);
 
     useEffect(() => {
         loadComplaints();
@@ -168,7 +173,7 @@ export default function ComplaintHistory() {
 
         if (status === 'pending') {
             if (technicians) {
-                return <span className="badge bg-blue-100 text-blue-700 border-blue-200">{t('table.assigned') || 'Diagihkan'}</span>;
+                return <span className="badge bg-blue-100 text-blue-700 border-blue-200">{t('admin_users.status_assigned') || 'Diagihkan'}</span>;
             }
             return <span className="badge badge-pending">{t('admin_users.status_pending')}</span>;
         }
@@ -177,7 +182,7 @@ export default function ComplaintHistory() {
             case 'in_process':
                 return <span className="badge badge-in-process">{t('admin_users.status_in_process')}</span>;
             case 'incomplete':
-                return <span className="badge badge-incomplete">{t('admin_users.status_incomplete')}</span>;
+                return <span className="badge badge-incomplete">{t('admin_users.status_incomplete') || 'Incomplete / Bawa Pulang'}</span>;
             case 'bawa_pulang':
                 return <span className="badge badge-incomplete">{t('admin_users.status_bawa_pulang')}</span>;
             case 'ready_pickup':
@@ -196,9 +201,21 @@ export default function ComplaintHistory() {
 
 
 
+    const getPageTitle = () => {
+        switch (statusFilter) {
+            case 'pending': return t('dashboard.pending') || 'Pending';
+            case 'in_process': return t('dashboard.in_process') || 'In Process';
+            case 'closed': return t('dashboard.closed') || 'Closed';
+            case 'cancelled': return t('dashboard.cancelled') || 'Cancelled';
+            case 'incomplete': return t('dashboard.incomplete') || 'Incomplete';
+            default: return t('user_dashboard.title_history');
+        }
+    };
+
+    const pageTitle = getPageTitle();
 
     return (
-        <UserLayout title={t('user_dashboard.title_history')} breadcrumb={t('user_dashboard.title_history')}>
+        <UserLayout title={pageTitle} breadcrumb={pageTitle}>
             {/* Back Button */}
 
 
@@ -222,7 +239,16 @@ export default function ComplaintHistory() {
                         <Filter className="w-5 h-5 text-gray-400" />
                         <select
                             value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
+                            onChange={(e) => {
+                                const newStatus = e.target.value;
+                                setStatusFilter(newStatus);
+                                if (newStatus === 'all') {
+                                    searchParams.delete('status');
+                                } else {
+                                    searchParams.set('status', newStatus);
+                                }
+                                setSearchParams(searchParams);
+                            }}
                             className="input-field w-auto"
                         >
                             <option value="all">{t('admin_users.all_status') || 'All Status'}</option>
@@ -261,32 +287,49 @@ export default function ComplaintHistory() {
                                                         {complaint.report_number}
                                                     </Link>
                                                 </div>
-                                                <Link
-                                                    to={`/users/complaint/${complaint.report_number}/track-repair`}
-                                                    className="text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit shadow-sm"
-                                                >
-                                                    TRACK REPAIR
-                                                </Link>
                                             </div>
-                                            <div className="flex-shrink-0">
+                                            <div className="flex-shrink min-w-0 flex justify-end ml-2 max-w-[60%]">
                                                 {getStatusBadge(complaint)}
                                             </div>
                                         </div>
                                         
                                         <div className="grid grid-cols-[auto_1fr_1fr] gap-x-3 gap-y-1 text-sm mt-2 items-center">
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_complaint_detail.date_created')}</span>
+                                            <span className="text-gray-900 font-medium text-xs col-span-2">
+                                                {complaint.created_at
+                                                    ? new Date(complaint.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                                                    : '-'}
+                                            </span>
+
                                             <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_master.category')}</span>
                                             <span className="text-gray-900 font-medium text-xs col-span-2">{complaint.categories?.name || '-'}</span>
                                             
                                             <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_master.subcategory')}</span>
                                             <span className="text-gray-900 font-medium text-xs col-span-2">{complaint.subcategory}</span>
+
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('complaint_form.defect_details') || 'Kerosakan'}</span>
+                                            <span className="text-gray-900 font-medium text-xs col-span-2">{complaint.details || '-'}</span>
                                             
-                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_master.brand')}</span>
-                                            <span className="text-gray-900 font-medium text-xs col-span-2">{complaint.brand_name}</span>
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_complaint_detail.assigned_to') || 'Technician'}</span>
+                                            <span className="text-gray-900 font-medium text-xs col-span-2">{complaint.technicians?.name || t('admin_complaint_detail.not_assigned')}</span>
                                         </div>
                                         
                                         <div className="mt-3 pt-3 border-t border-gray-100">
-                                            <div className="text-xs text-gray-500 leading-relaxed">
+                                            <div className="text-xs text-gray-500 leading-relaxed mb-3">
                                                 {renderStatusMessage(complaint) as React.ReactNode}
+                                            </div>
+                                            <div className="flex flex-col gap-2">
+                                                <Link
+                                                    to={`/users/complaint/${complaint.report_number}`}
+                                                    className="w-full inline-flex justify-center items-center gap-1.5 px-3 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-medium rounded-lg transition-colors border border-indigo-100"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                    {t('common.view', 'View Details')}
+                                                </Link>
+                                                <Link
+                                                    to={`/users/complaint/${complaint.report_number}/track-repair`}
+                                                    className="w-full text-center text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded-lg transition-colors shadow-sm"
+                                                >{t('user_dashboard.view_track_repair', 'TRACK REPAIR')}</Link>
                                             </div>
                                         </div>
                                     </div>
@@ -323,9 +366,7 @@ export default function ComplaintHistory() {
                                                         <Link
                                                             to={`/users/complaint/${complaint.report_number}/track-repair`}
                                                             className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
-                                                        >
-                                                            TRACK REPAIR
-                                                        </Link>
+                                                        >{t('user_dashboard.view_track_repair', 'TRACK REPAIR')}</Link>
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3 text-gray-600 whitespace-nowrap">

@@ -103,9 +103,12 @@ export default function PrintReceipt() {
                         print-color-adjust: exact !important;
                     }
 
-                    body {
+                    html, body {
                         margin: 0 !important;
                         padding: 0 !important;
+                        overflow: hidden !important;
+                        width: 100% !important;
+                        height: 100% !important;
                     }
 
                     .print-toolbar {
@@ -125,15 +128,16 @@ export default function PrintReceipt() {
                         display: flex !important;
                         flex-direction: row !important;
                         flex-wrap: nowrap !important;
-                        gap: 5mm !important;
+                        gap: 4mm !important;
+                        width: 100% !important;
                     }
 
                     .receipt-copy {
-                        width: 140mm !important;
+                        flex: 1 !important;
+                        min-width: 0 !important;
                         height: 190mm !important;
                         display: flex !important;
                         flex-direction: column !important;
-                        flex-shrink: 0 !important;
                         overflow: hidden !important;
                     }
                 }
@@ -233,7 +237,7 @@ function ReceiptCopy({ complaint, remarks, copyLabel }: { complaint: Complaint; 
                             <div key={index} className="flex-1 border-b border-black last:border-b-0 px-1 py-0.5 flex flex-col justify-start">
                                 <Line label="Pemeriksaan" value={remark ? (remark.checking || '-') : ''} />
                                 <Line label="Transport" value={remark ? (remark.note_transport || '-') : ''} />
-                                <Line label="Catatan" value={remark ? (remark.remark || '-') : ''} />
+                                <Line label="Catatan" value={remark ? (formatRemarkText(remark.remark) || '-') : ''} />
                                 <Line label="Remark by" value={remark ? (remark.source === 'Admin' ? 'Admin' : (technician ? `${technician.name} (${technician.department})` : '-')) : ''} />
                             </div>
                         );
@@ -260,7 +264,7 @@ function ReceiptCopy({ complaint, remarks, copyLabel }: { complaint: Complaint; 
                                     <Td className="text-center">{index + 1}</Td>
                                     <Td>{remark ? formatDate(remark.created_at) : ''}</Td>
                                     <Td>{remark?.source || ''}</Td>
-                                    <Td>{remark?.remark || remark?.checking || remark?.note_transport || ''}</Td>
+                                    <Td>{remark ? (formatRemarkText(remark.remark) || remark.checking || remark.note_transport || '') : ''}</Td>
                                     <Td>{remark ? getStatusLabel(remark.status) : ''}</Td>
                                 </tr>
                             );
@@ -380,4 +384,25 @@ function getStatusLabel(status?: Complaint['status'] | null) {
         default:
             return '-';
     }
+}
+
+function formatRemarkText(text?: string | null) {
+    if (!text) return text;
+    
+    let separator = '';
+    if (text.includes('__FORWARD__')) separator = '__FORWARD__';
+    else if (text.includes('__FORWARD_')) separator = '__FORWARD_';
+    
+    if (separator) {
+        const parts = text.split(separator);
+        const main = parts[0].trim();
+        const forward = parts[1].trim();
+        if (main && forward) {
+            return `${main} [${forward}]`;
+        } else if (forward) {
+            return `[${forward}]`;
+        }
+        return main;
+    }
+    return text;
 }

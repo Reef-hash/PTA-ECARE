@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import ScrollIndicator from './ScrollIndicator';
 import {
     LayoutDashboard,
+    Activity,
     FileText,
     Clock,
     AlertTriangle,
@@ -24,6 +25,7 @@ import {
     ChevronDown,
     ArrowLeft,
     UserCheck,
+    Home,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -44,6 +46,7 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
     const [showDropdown, setShowDropdown] = useState(false);
     const [complaintsOpen, setComplaintsOpen] = useState(false);
     const [masterOpen, setMasterOpen] = useState(false);
+    const [techProgressOpen, setTechProgressOpen] = useState(false);
 
     const isTechnician = role === 'technician';
 
@@ -77,6 +80,14 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
     const techMenuItems = [
         { path: '/admin/technician/dashboard', label: t('sidebar.dashboard'), icon: LayoutDashboard },
         { path: '/admin/technician/complaints', label: t('sidebar.all_complaints'), icon: FileText },
+    ];
+
+    const techProgressItems = [
+        { path: '/admin/technician/complaints?status=pending', label: t('admin_users.status_pending') },
+        { path: '/admin/technician/complaints?status=in_process', label: t('admin_users.status_in_process') },
+        { path: '/admin/technician/complaints?status=incomplete_in', label: t('dashboard.incomplete_in', 'Incomplete (In)') },
+        { path: '/admin/technician/complaints?view=history&status=incomplete_out', label: t('dashboard.incomplete_out', 'Incomplete (Out)') },
+        { path: '/admin/technician/complaints?status=closed', label: t('admin_users.status_closed') },
     ];
 
     const handleLogout = () => {
@@ -113,7 +124,7 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
             <aside
                 className={`fixed top-4 left-4 h-[calc(100vh-2rem)] w-64 bg-[#f8f9fa] rounded-2xl shadow-soft-xl z-50 overflow-y-auto [&::-webkit-scrollbar]:hidden transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:top-0 lg:left-0 lg:h-screen lg:rounded-none lg:shadow-none lg:bg-transparent ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
             >
-                <div className="p-4">
+                <div className="p-4 flex flex-col min-h-full">
                     {/* Close button (mobile) */}
                     <button
                         onClick={() => setSidebarOpen(false)}
@@ -140,7 +151,8 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
                     {/* Navigation */}
                     <nav className="space-y-1">
                         {isTechnician ? (
-                            techMenuItems.map((item) => {
+                            <>
+                                {techMenuItems.map((item) => {
                                 const Icon = item.icon;
                                 const isActive = location.pathname === item.path;
                                 return (
@@ -159,7 +171,45 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
                                         {item.label}
                                     </Link>
                                 );
-                            })
+                            })}
+                            
+                            {/* Tech Repair Progress Submenu */}
+                            <div className="mt-2">
+                                <button
+                                    onClick={() => setTechProgressOpen(!techProgressOpen)}
+                                    className="w-full flex items-center justify-between px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-all text-sm font-medium"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 rounded-lg bg-white shadow-soft-md text-gray-800">
+                                            <FileText className="w-4 h-4" />
+                                        </div>
+                                        Repair Progress
+                                    </div>
+                                    <ChevronDown className={`w-4 h-4 transition-transform ${techProgressOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                {techProgressOpen && (
+                                    <div className="ml-4 pl-4 border-l border-gray-200 space-y-1 mt-1">
+                                        {techProgressItems.map((item) => {
+                                            const isActive = location.pathname + location.search === item.path;
+                                            return (
+                                                <Link
+                                                    key={item.path}
+                                                    to={item.path}
+                                                    onClick={() => setSidebarOpen(false)}
+                                                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${isActive
+                                                        ? 'text-gray-900 font-semibold'
+                                                        : 'text-gray-500 hover:text-gray-800'
+                                                        }`}
+                                                >
+                                                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isActive ? 'bg-primary-500' : 'bg-gray-400'}`}></span>
+                                                    {item.label}
+                                                </Link>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        </>
                         ) : (
                             <>
                                 {adminMenuItems.map((item) => {
@@ -311,6 +361,22 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
                             </>
                         )}
                     </nav>
+
+                    {/* Sidebar Footer - Logout */}
+                    <div className="mt-auto pt-6 pb-2">
+                        <button
+                            onClick={handleLogout}
+                            className="group relative w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:text-white bg-red-50 overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 font-medium border border-red-100 hover:border-transparent"
+                        >
+                            <div className="p-2 rounded-lg bg-white/90 group-hover:bg-white/20 transition-colors shadow-soft-sm text-red-600 group-hover:text-white z-10">
+                                <LogOut className="w-4 h-4" />
+                            </div>
+                            <span className="z-10">{t('sidebar.logout')}</span>
+                            
+                            {/* Decorative gradient background that appears on hover */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-rose-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        </button>
+                    </div>
                 </div>
             </aside>
 
@@ -327,11 +393,17 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
                             <ArrowLeft className="w-5 h-5" />
                         </button>
                         {breadcrumb && (
-                            <p className="text-xs sm:text-sm text-gray-500 truncate">
-                                <span className="text-gray-400">Pages</span>
+                            <div className="flex items-center text-xs sm:text-sm text-gray-500 truncate">
+                                <Link 
+                                    to={isTechnician ? '/admin/technician/dashboard' : '/admin/dashboard'} 
+                                    className="text-gray-400 hover:text-indigo-600 transition-colors flex items-center"
+                                    title={t('sidebar.dashboard') || 'Dashboard'}
+                                >
+                                    <Home className="w-4 h-4" />
+                                </Link>
                                 <span className="mx-1 sm:mx-2 text-gray-400">/</span>
                                 <span className="font-medium text-gray-700">{breadcrumb}</span>
-                            </p>
+                            </div>
                         )}
                     </div>
 
@@ -386,7 +458,7 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
 
                 {/* Footer */}
                 <footer className="p-4 text-center text-sm text-gray-500">
-                    © 2026 DFKTVETMARABESUT. All rights reserved.
+                    © 2026 DFK TVETMARA BESUT. All Right Reserved.
                 </footer>
             </main>
         </div>

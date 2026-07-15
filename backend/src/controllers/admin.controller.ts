@@ -1,24 +1,17 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
-import { supabaseAdmin } from '../config/supabase.js';
+import pool from '../config/mysql.js';
 import { buildActivationEmail } from './auth.controller.js';
 import { sendEmail, isEmailAllowed } from '../utils/email.js';
 import { buildNotificationEmailHtml } from './notifications.controller.js';
+import { randomUUID } from 'crypto';
 
 // Get dashboard statistics
 export const getStats = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { data: allComplaints, error } = await supabaseAdmin
-            .from('complaints')
-            .select('id, status, assigned_to');
-
-        if (error) throw error;
-
-        // Resolve which complaint ids have a forward_history record, so we can
-        // count jobs that were forwarded by MainTech and are now closed.
-        const { data: forwardedRows } = await supabaseAdmin
-            .from('forward_history')
-            .select('complaint_id');
+        const [allComplaints]: any = await pool.query('SELECT id, status, assigned_to FROM complaints');
+        const [forwardedRows]: any = await pool.query('SELECT complaint_id FROM forward_history');
+        
         const forwardedIds = new Set((forwardedRows || []).map((r: any) => r.complaint_id));
 
         const stats = {
@@ -30,7 +23,6 @@ export const getStats = async (req: Request, res: Response): Promise<void> => {
             assigned: 0,
             cancelled: 0,
             incomplete: 0,
-            // MainTech incomplete-lifecycle sub-counts
             incomplete_total: 0,
             incomplete_not_assigned: 0,
             incomplete_assigned: 0,
@@ -67,12 +59,7 @@ export const getStats = async (req: Request, res: Response): Promise<void> => {
 // Get technician statistics
 export const getTechnicianStats = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { data: technicians, error } = await supabaseAdmin
-            .from('technicians')
-            .select('id, name, department')
-            .eq('is_active', true);
-
-        if (error) throw error;
+        const [technicians]: any = await pool.query('SELECT id, name, department FROM technicians WHERE is_active = 1');
 
         if (!technicians || technicians.length === 0) {
             res.json({ technicianStats: [] });
@@ -81,10 +68,7 @@ export const getTechnicianStats = async (req: Request, res: Response): Promise<v
 
         const technicianStats = await Promise.all(
             technicians.map(async (tech: any) => {
-                const { data: complaints } = await supabaseAdmin
-                    .from('complaints')
-                    .select('status')
-                    .eq('assigned_to', tech.id);
+                const [complaints]: any = await pool.query('SELECT status FROM complaints WHERE assigned_to = ?', [tech.id]);
 
                 const stats = {
                     technician_id: tech.id,
@@ -94,12 +78,14 @@ export const getTechnicianStats = async (req: Request, res: Response): Promise<v
                     pending: 0,
                     in_process: 0,
                     closed: 0,
+                    incomplete: 0,
                 };
 
                 (complaints || []).forEach((c: any) => {
                     if (c.status === 'pending') stats.pending++;
                     if (c.status === 'in_process') stats.in_process++;
                     if (c.status === 'closed') stats.closed++;
+                    if (c.status === 'incomplete') stats.incomplete++;
                 });
 
                 return stats;
@@ -117,18 +103,17 @@ export const getTechnicianStats = async (req: Request, res: Response): Promise<v
 export const getTechnician = async (req: Request, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
-        const { data, error } = await supabaseAdmin
-            .from('technicians')
-            .select('id, name, department, email, contact_number, username, is_active, created_at')
-            .eq('id', id)
-            .single();
+        const [rows]: any = await pool.query(
+            'SELECT id, name, department, email, contact_number, username, is_active, created_at FROM technicians WHERE id = ?',
+            [id]
+        );
 
-        if (error || !data) {
+        if (!rows || rows.length === 0) {
             res.status(404).json({ error: 'Technician not found' });
             return;
         }
 
-        res.json({ technician: data });
+        res.json({ technician: rows[0] });
     } catch (error) {
         console.error('Get technician error:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -138,13 +123,10 @@ export const getTechnician = async (req: Request, res: Response): Promise<void> 
 // Get all technicians
 export const getTechnicians = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { data, error } = await supabaseAdmin
-            .from('technicians')
-            .select('id, name, department, email, contact_number, username, is_active, created_at')
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        res.json({ technicians: data || [] });
+        const [rows]: any = await pool.query(
+            'SELECT id, name, department, email, contact_number, username, is_active, created_at FROM technicians WHERE username != "maintech" ORDER BY created_at DESC'
+        );
+        res.json({ technicians: rows || [] });
     } catch (error) {
         console.error('Get technicians error:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -161,68 +143,27 @@ export const createTechnician = async (req: Request, res: Response): Promise<voi
             return;
         }
 
-        // Check if username or email already exists
-        const { data: existingUser } = await supabaseAdmin
-            .from('technicians')
-            .select('id')
-            .eq('username', username);
+        const [existingUser]: any = await pool.query('SELECT id FROM technicians WHERE username = ?', [username]);
+        const [existingEmail]: any = await pool.query('SELECT id FROM technicians WHERE email = ?', [email]);
 
-        const { data: existingEmail } = await supabaseAdmin
-            .from('technicians')
-            .select('id')
-            .eq('email', email);
-
-        if ((existingUser && existingUser.length > 0) || (existingEmail && existingEmail.length > 0)) {
+        if (existingUser.length > 0 || existingEmail.length > 0) {
             res.status(400).json({ error: 'Username or email already exists' });
             return;
         }
 
         const password_hash = await bcrypt.hash(password, 10);
+        const newTechId = randomUUID();
 
-        // Insert technician as inactive (is_active: false)
-        const { data: newTech, error } = await supabaseAdmin
-            .from('technicians')
-            .insert({ name, department, email, contact_number, username, password_hash, is_active: false })
-            .select()
-            .single();
+        await pool.query(
+            'INSERT INTO technicians (id, name, department, email, contact_number, username, password_hash, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, 1)',
+            [newTechId, name, department, email, contact_number, username, password_hash]
+        );
 
-        if (error) throw error;
-
-        // Generate 6-digit OTP code
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours
-
-        // Delete any existing OTP for this email and role
-        await supabaseAdmin
-            .from('activation_otps')
-            .delete()
-            .eq('email', email)
-            .eq('role', 'technician');
-
-        // Insert new OTP record
-        const { error: otpError } = await supabaseAdmin
-            .from('activation_otps')
-            .insert({
-                email,
-                role: 'technician',
-                otp,
-                expires_at: expiresAt
-            });
-
-        if (otpError) {
-            console.error('Failed to save activation OTP:', otpError);
-        } else {
-            // Send activation email
-            try {
-                const activationHtml = buildActivationEmail(name, otp, 'technician');
-                await sendEmail(email, 'Aktifkan Akaun Juruteknik e-Care Anda', activationHtml);
-            } catch (emailError) {
-                console.error('Failed to send technician activation email:', emailError);
-            }
-        }
+        const [techRows]: any = await pool.query('SELECT * FROM technicians WHERE id = ?', [newTechId]);
+        const newTech = techRows[0];
 
         const { password_hash: _, ...techWithoutPassword } = newTech;
-        res.status(201).json({ message: 'Technician created successfully and activation OTP email sent.', technician: techWithoutPassword });
+        res.status(201).json({ message: 'Technician created successfully.', technician: techWithoutPassword });
     } catch (error) {
         console.error('Create technician error:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -240,23 +181,31 @@ export const updateTechnician = async (req: Request, res: Response): Promise<voi
             return;
         }
 
-        const updates: any = { updated_at: new Date().toISOString() };
-        if (name !== undefined) updates.name = name;
-        if (department !== undefined) updates.department = department;
-        if (email !== undefined) updates.email = email;
-        if (contact_number !== undefined) updates.contact_number = contact_number;
-        if (is_active !== undefined) updates.is_active = is_active;
+        let updateQuery = 'UPDATE technicians SET ';
+        const params: any[] = [];
+        
+        if (name !== undefined) { updateQuery += 'name = ?, '; params.push(name); }
+        if (department !== undefined) { updateQuery += 'department = ?, '; params.push(department); }
+        if (email !== undefined) { updateQuery += 'email = ?, '; params.push(email); }
+        if (contact_number !== undefined) { updateQuery += 'contact_number = ?, '; params.push(contact_number); }
+        if (is_active !== undefined) { updateQuery += 'is_active = ?, '; params.push(is_active ? 1 : 0); }
+        
+        // Remove trailing comma and space
+        updateQuery = updateQuery.slice(0, -2);
+        updateQuery += ' WHERE id = ?';
+        params.push(id);
 
-        const { data, error } = await supabaseAdmin
-            .from('technicians')
-            .update(updates)
-            .eq('id', id)
-            .select()
-            .single();
+        if (params.length > 1) { // Means we actually have fields to update
+            await pool.query(updateQuery, params);
+        }
 
-        if (error) throw error;
+        const [rows]: any = await pool.query('SELECT * FROM technicians WHERE id = ?', [id]);
+        if (!rows || rows.length === 0) {
+            res.status(404).json({ error: 'Technician not found after update' });
+            return;
+        }
 
-        const { password_hash, ...techWithoutPassword } = data;
+        const { password_hash, ...techWithoutPassword } = rows[0];
         res.json({ message: 'Technician updated', technician: techWithoutPassword });
     } catch (error) {
         console.error('Update technician error:', error);
@@ -272,26 +221,16 @@ export const resetTechnicianPassword = async (req: Request, res: Response): Prom
 
         const password_hash = await bcrypt.hash(new_password, 10);
 
-        // Fetch technician details to get email & name
-        const { data: techRow, error: fetchError } = await supabaseAdmin
-            .from('technicians')
-            .select('email, name, username')
-            .eq('id', id)
-            .single() as any;
+        const [techRows]: any = await pool.query('SELECT email, name, username FROM technicians WHERE id = ?', [id]);
+        const techRow = techRows[0];
 
-        if (fetchError || !techRow) {
+        if (!techRow) {
             res.status(404).json({ error: 'Technician not found' });
             return;
         }
 
-        const { error } = await supabaseAdmin
-            .from('technicians')
-            .update({ password_hash, updated_at: new Date().toISOString() })
-            .eq('id', id);
+        await pool.query('UPDATE technicians SET password_hash = ? WHERE id = ?', [password_hash, id]);
 
-        if (error) throw error;
-
-        // Send email notification to technician
         if (techRow.email) {
             try {
                 const subject = 'Kata Laluan Juruteknik e-Care Berjaya Ditukar';
@@ -304,26 +243,17 @@ export const resetTechnicianPassword = async (req: Request, res: Response): Prom
                     'no_link'
                 );
                 await sendEmail(techRow.email, subject, emailHtml);
-                console.log(`Password reset notification sent to technician: ${techRow.email}`);
             } catch (emailErr) {
                 console.error('Failed to send technician password reset notification email:', emailErr);
             }
         }
 
-        // Send email notification to admin at adminecare.ptasssb@gmail.com
         try {
             const adminEmail = 'adminecare.ptasssb@gmail.com';
             const subject = 'Notifikasi Penetapan Semula Kata Laluan Juruteknik';
             const message = `Anda telah berjaya menetapkan semula kata laluan baharu untuk Juruteknik <strong>${techRow.name || techRow.username}</strong>.\n\nKata Laluan Baharu: ${new_password}`;
-            const emailHtml = buildNotificationEmailHtml(
-                'Admin',
-                subject,
-                message,
-                undefined,
-                'no_link'
-            );
+            const emailHtml = buildNotificationEmailHtml('Admin', subject, message, undefined, 'no_link');
             await sendEmail(adminEmail, subject, emailHtml);
-            console.log(`Password reset notification sent to admin: ${adminEmail}`);
         } catch (adminEmailErr) {
             console.error('Failed to send admin password reset notification email:', adminEmailErr);
         }
@@ -339,13 +269,7 @@ export const resetTechnicianPassword = async (req: Request, res: Response): Prom
 export const deleteTechnician = async (req: Request, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
-
-        const { error } = await supabaseAdmin
-            .from('technicians')
-            .delete()
-            .eq('id', id);
-
-        if (error) throw error;
+        await pool.query('DELETE FROM technicians WHERE id = ?', [id]);
         res.json({ message: 'Technician deleted' });
     } catch (error) {
         console.error('Delete technician error:', error);
@@ -357,18 +281,15 @@ export const deleteTechnician = async (req: Request, res: Response): Promise<voi
 export const getUser = async (req: Request, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
-        const { data, error } = await supabaseAdmin
-            .from('users')
-            .select('*')
-            .eq('id', id)
-            .single();
+        const [rows]: any = await pool.query('SELECT * FROM users WHERE id = ?', [id]);
+        const user = rows[0];
 
-        if (error || !data) {
+        if (!user) {
             res.status(404).json({ error: 'User not found' });
             return;
         }
 
-        const { password_hash, password_plain, ...userRest } = data;
+        const { password_hash, password_plain, ...userRest } = user;
         res.json({ user: { ...userRest, password: password_plain || null } });
     } catch (error) {
         console.error('Get user error:', error);
@@ -380,26 +301,20 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
 export const deleteUser = async (req: Request, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
-
-        const { error } = await supabaseAdmin
-            .from('users')
-            .delete()
-            .eq('id', id);
-
-        // Best effort delete from Supabase Auth
-        await supabaseAdmin.auth.admin.deleteUser(id).catch(e => console.error('Auth delete user error (ignored):', e));
-
-        if (error) {
-            if (error.code === '23503') { // Foreign key constraint violation
-                res.status(400).json({ error: 'Tidak boleh padam pengguna ini kerana mereka mempunyai rekod aduan yang berkaitan.' });
-                return;
-            }
-            throw error;
-        }
-
+        
+        // Delete dependent records that are safe to delete first
+        await pool.query('DELETE FROM user_logs WHERE user_id = ?', [id]);
+        await pool.query('DELETE FROM password_resets WHERE user_id = ?', [id]);
+        
+        // Then delete the user (will still fail if they have complaints)
+        await pool.query('DELETE FROM users WHERE id = ?', [id]);
         res.json({ message: 'User deleted' });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Delete user error:', error);
+        if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+            res.status(400).json({ error: 'Tidak boleh padam pengguna ini kerana mereka mempunyai rekod aduan yang berkaitan.' });
+            return;
+        }
         res.status(500).json({ error: 'Internal server error' });
     }
 };
@@ -412,27 +327,42 @@ export const getUsers = async (req: Request, res: Response): Promise<void> => {
         const limitNum = parseInt(limit as string, 10);
         const offset = (pageNum - 1) * limitNum;
 
-        let query = supabaseAdmin
-            .from('users')
-            .select('id, full_name, ic_number, email, contact_no, address, state, status, created_at', { count: 'exact' });
+        let query = 'SELECT id, full_name, ic_number, email, contact_no, address, state, status, created_at FROM users';
+        let countQuery = 'SELECT COUNT(*) as total FROM users';
+        const params: any[] = [];
+        const countParams: any[] = [];
+
+        const conditions: string[] = [];
 
         if (status && status !== 'all') {
-            query = query.eq('status', status as string);
+            conditions.push('status = ?');
+            params.push(status);
+            countParams.push(status);
         }
 
         if (search) {
-            query = query.or(`full_name.ilike.%${search}%,ic_number.ilike.%${search}%,email.ilike.%${search}%`);
+            conditions.push('(full_name LIKE ? OR ic_number LIKE ? OR email LIKE ?)');
+            const searchStr = `%${search}%`;
+            params.push(searchStr, searchStr, searchStr);
+            countParams.push(searchStr, searchStr, searchStr);
         }
 
-        query = query.order('created_at', { ascending: false }).range(offset, offset + limitNum - 1);
+        if (conditions.length > 0) {
+            const whereClause = ' WHERE ' + conditions.join(' AND ');
+            query += whereClause;
+            countQuery += whereClause;
+        }
 
-        const { data, count, error } = await query;
+        query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
+        params.push(limitNum, offset);
 
-        if (error) throw error;
+        const [countResult]: any = await pool.query(countQuery, countParams);
+        const total = countResult[0].total;
 
-        const total = count || 0;
+        const [rows]: any = await pool.query(query, params);
+
         res.json({
-            users: data || [],
+            users: rows || [],
             pagination: {
                 page: pageNum,
                 limit: limitNum,
@@ -452,15 +382,10 @@ export const updateUserStatus = async (req: Request, res: Response): Promise<voi
         const { id } = req.params;
         const { status } = req.body;
 
-        const { data, error } = await supabaseAdmin
-            .from('users')
-            .update({ status, updated_at: new Date().toISOString() })
-            .eq('id', id)
-            .select()
-            .single();
+        await pool.query('UPDATE users SET status = ? WHERE id = ?', [status, id]);
+        const [rows]: any = await pool.query('SELECT * FROM users WHERE id = ?', [id]);
 
-        if (error) throw error;
-        res.json({ message: 'User status updated', user: data });
+        res.json({ message: 'User status updated', user: rows[0] });
     } catch (error) {
         console.error('Update user status error:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -476,18 +401,15 @@ export const getAdminProfile = async (req: Request, res: Response): Promise<void
         const table = role === 'technician' ? 'technicians' : 'admins';
         console.log(`Fetching ${role} profile for ${userId}`);
 
-        const { data, error } = await supabaseAdmin
-            .from(table)
-            .select('*')
-            .eq('id', userId)
-            .single();
+        const [rows]: any = await pool.query(`SELECT * FROM ${table} WHERE id = ?`, [userId]);
+        const user = rows[0];
 
-        if (error || !data) {
+        if (!user) {
             res.status(404).json({ error: 'Profile not found' });
             return;
         }
 
-        const { password_hash, ...profileData } = data;
+        const { password_hash, ...profileData } = user;
         res.json(profileData);
     } catch (error) {
         console.error('Get profile error:', error);
@@ -514,27 +436,24 @@ export const updateAdminProfile = async (req: Request, res: Response): Promise<v
 
         const table = role === 'technician' ? 'technicians' : 'admins';
 
-        // Check if username already exists for another user
-        const { data: existing } = await supabaseAdmin
-            .from(table)
-            .select('id')
-            .eq('username', username.trim())
-            .neq('id', userId);
+        const [existing]: any = await pool.query(
+            `SELECT id FROM ${table} WHERE username = ? AND id != ?`,
+            [username.trim(), userId]
+        );
 
-        if (existing && existing.length > 0) {
+        if (existing.length > 0) {
             res.status(400).json({ error: 'Username already taken' });
             return;
         }
 
-        const { data, error } = await supabaseAdmin
-            .from(table)
-            .update({ username: username.trim(), email: email?.trim() || null, updated_at: new Date().toISOString() })
-            .eq('id', userId)
-            .select()
-            .single();
+        await pool.query(
+            `UPDATE ${table} SET username = ?, email = ? WHERE id = ?`,
+            [username.trim(), email?.trim() || null, userId]
+        );
 
-        if (error) throw error;
-        const { password_hash, ...userData } = data;
+        const [rows]: any = await pool.query(`SELECT * FROM ${table} WHERE id = ?`, [userId]);
+        const { password_hash, ...userData } = rows[0];
+
         res.json({ message: 'Profile updated successfully', user: userData });
     } catch (error) {
         console.error('Update profile error:', error);
@@ -561,12 +480,13 @@ export const updateAdminPassword = async (req: Request, res: Response): Promise<
 
         const table = role === 'technician' ? 'technicians' : 'admins';
 
-        const { data: userRow, error: fetchError } = await (role === 'technician'
-            ? supabaseAdmin.from('technicians').select('password_hash, email, name, username').eq('id', userId).single()
-            : supabaseAdmin.from('admins').select('password_hash').eq('id', userId).single()
-        ) as any;
+        const [rows]: any = await pool.query(
+            `SELECT password_hash, email, ${role === 'technician' ? 'name' : 'admin_name as name'}, username FROM ${table} WHERE id = ?`,
+            [userId]
+        );
+        const userRow = rows[0];
 
-        if (fetchError || !userRow) {
+        if (!userRow) {
             res.status(404).json({ error: 'User not found' });
             return;
         }
@@ -578,15 +498,8 @@ export const updateAdminPassword = async (req: Request, res: Response): Promise<
         }
 
         const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await pool.query(`UPDATE ${table} SET password_hash = ? WHERE id = ?`, [hashedPassword, userId]);
 
-        const { error: updateError } = await supabaseAdmin
-            .from(table)
-            .update({ password_hash: hashedPassword, updated_at: new Date().toISOString() })
-            .eq('id', userId);
-
-        if (updateError) throw updateError;
-
-        // Send email notification ONLY for technicians
         if (role === 'technician' && userRow.email) {
             try {
                 const subject = 'Kata Laluan Juruteknik e-Care Berjaya Ditukar';
@@ -599,7 +512,6 @@ export const updateAdminPassword = async (req: Request, res: Response): Promise<
                     'no_link'
                 );
                 await sendEmail(userRow.email, subject, emailHtml);
-                console.log(`Password change notification sent to technician: ${userRow.email}`);
             } catch (emailErr) {
                 console.error('Failed to send technician password change notification email:', emailErr);
             }
@@ -619,97 +531,38 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
 
         const normalizedEmail = email ? email.trim().toLowerCase() : '';
 
-        // Validate email domain if provided
         if (normalizedEmail && !(await isEmailAllowed(normalizedEmail))) {
             res.status(400).json({ error: 'Sila gunakan alamat e-mel yang sah. Domain e-mel ini tidak dibenarkan.' });
             return;
         }
 
-        // Check IC number duplicate
-        const { data: existingIC } = await supabaseAdmin
-            .from('users')
-            .select('id')
-            .eq('ic_number', ic_number);
-
-        if (existingIC && existingIC.length > 0) {
+        const [existingIC]: any = await pool.query('SELECT id FROM users WHERE ic_number = ?', [ic_number]);
+        if (existingIC.length > 0) {
             res.status(400).json({ error: 'No IC ini telah didaftarkan.' });
             return;
         }
 
-        // Check email duplicate (if provided)
         if (normalizedEmail) {
-            const { data: existingEmail } = await supabaseAdmin
-                .from('users')
-                .select('id')
-                .eq('email', normalizedEmail);
-
-            if (existingEmail && existingEmail.length > 0) {
+            const [existingEmail]: any = await pool.query('SELECT id FROM users WHERE email = ?', [normalizedEmail]);
+            if (existingEmail.length > 0) {
                 res.status(400).json({ error: 'E-mel ini telah didaftarkan oleh pengguna lain.' });
                 return;
             }
         }
 
         const password_hash = await bcrypt.hash(password, 10);
-        let userId: string;
+        const userId = randomUUID();
 
-        if (normalizedEmail) {
-            // With email: create Supabase Auth user
-            const { data: authResult, error: authError } = await supabaseAdmin.auth.admin.createUser({
-                email: normalizedEmail,
-                password,
-                email_confirm: true,
-                user_metadata: {
-                    full_name,
-                    ic_number,
-                    contact_no,
-                    address
-                }
-            });
+        await pool.query(
+            `INSERT INTO users (
+                id, full_name, ic_number, email, contact_no, contact_no_2, address, state, password_hash, password_plain, status, email_verified, auth_provider
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Active', ?, 'password')`,
+            [userId, full_name, ic_number, normalizedEmail || null, contact_no, contact_no_2 || null, address, state || null, password_hash, password, normalizedEmail ? 1 : 0]
+        );
 
-            if (authError || !authResult.user) {
-                const msg = authError?.message || '';
-                if (msg.includes('already') || msg.includes('exists')) {
-                    res.status(400).json({ error: 'E-mel ini telah didaftarkan di sistem auth.' });
-                    return;
-                }
-                res.status(400).json({ error: msg || 'Gagal mencipta akaun auth.' });
-                return;
-            }
-            userId = authResult.user.id;
-        } else {
-            // Without email: generate UUID (no Supabase Auth entry)
-            const { randomUUID } = await import('crypto');
-            userId = randomUUID();
-        }
+        const [newUsers]: any = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
+        const newUser = newUsers[0];
 
-        // Insert into users table — status Active (admin-created, no OTP needed)
-        const { data: newUser, error: insertError } = await supabaseAdmin
-            .from('users')
-            .insert({
-                id: userId,
-                full_name,
-                ic_number,
-                email: normalizedEmail || null,
-                contact_no,
-                contact_no_2: contact_no_2 || null,
-                address,
-                state: state || null,
-                password_hash,
-                password_plain: password,
-                status: 'Active',
-                email_verified: !!normalizedEmail,
-                auth_provider: 'password'
-            })
-            .select()
-            .single();
-
-        if (insertError || !newUser) {
-            console.error('Insert user failed:', insertError);
-            res.status(500).json({ error: 'Gagal mencipta rekod pengguna.' });
-            return;
-        }
-
-        // Send welcome email if email provided
         if (normalizedEmail) {
             try {
                 const welcomeHtml = buildNotificationEmailHtml(
@@ -720,7 +573,6 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
                     'no_link'
                 );
                 await sendEmail(normalizedEmail, 'Selamat Datang ke E-CARE', welcomeHtml);
-                console.log(`[ADMIN-CREATE-USER] Welcome email sent to ${normalizedEmail}`);
             } catch (emailError) {
                 console.error('[ADMIN-CREATE-USER] Failed to send welcome email:', emailError);
             }
@@ -746,23 +598,15 @@ export const resetUserPassword = async (req: Request, res: Response): Promise<vo
         const newPassword = Math.random().toString(36).slice(-8) + Math.floor(Math.random() * 100).toString();
         const password_hash = await bcrypt.hash(newPassword, 10);
 
-        const { data: userRow, error: fetchError } = await supabaseAdmin
-            .from('users')
-            .select('full_name, email, ic_number')
-            .eq('id', id)
-            .single();
+        const [rows]: any = await pool.query('SELECT full_name, email, ic_number FROM users WHERE id = ?', [id]);
+        const userRow = rows[0];
 
-        if (fetchError || !userRow) {
+        if (!userRow) {
             res.status(404).json({ error: 'User not found' });
             return;
         }
 
-        const { error } = await supabaseAdmin
-            .from('users')
-            .update({ password_hash, password_plain: newPassword, updated_at: new Date().toISOString() })
-            .eq('id', id);
-
-        if (error) throw error;
+        await pool.query('UPDATE users SET password_hash = ?, password_plain = ? WHERE id = ?', [password_hash, newPassword, id]);
 
         if (userRow.email) {
             try {
@@ -787,3 +631,5 @@ export const resetUserPassword = async (req: Request, res: Response): Promise<vo
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+

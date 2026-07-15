@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import GoogleSignInButton from '../../components/GoogleSignInButton';
-import { isSupabaseAuthConfigured, supabaseAuth } from '../../config/supabase';
+
 
 export default function UserLogin() {
     const navigate = useNavigate();
@@ -52,29 +52,31 @@ export default function UserLogin() {
         }
     };
 
-    const handleGoogleOAuth = async () => {
-        if (!supabaseAuth) {
-            toast.error(t('user_auth.google_unavailable'));
-            return;
-        }
-
+    const handleGoogleSuccess = async (credential: string) => {
         setIsGoogleLoading(true);
         try {
-            const { error } = await supabaseAuth.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: `${window.location.origin}/auth/callback?intent=login`,
-                    queryParams: {
-                        prompt: 'select_account',
-                    },
-                },
+            const response = await authService.googleAuth({
+                credential, // direct JWT token from Google Console
+                intent: 'login',
             });
 
-            if (error) {
-                toast.error(error.message || t('login.failed'));
+            login(response.token, response.user, 'user');
+            
+            if (response.redirect_to_profile || response.profile_complete === false) {
+                toast.success('Log masuk berjaya! Sila lengkapkan profil anda.');
+                navigate('/lengkapkan-profil', { replace: true });
+            } else {
+                toast.success(t('login.success'));
+                navigate('/users/dashboard', { replace: true });
             }
         } catch (error: any) {
-            toast.error(error?.message || t('login.failed'));
+            const errorData = error.response?.data;
+            if (errorData?.redirect_to_register) {
+                toast.error(errorData.error || 'Akaun tidak ditemui. Sila Sign Up.');
+                navigate('/users/register', { replace: true });
+            } else {
+                toast.error(errorData?.error || t('login.failed'));
+            }
         } finally {
             setIsGoogleLoading(false);
         }
@@ -175,11 +177,11 @@ export default function UserLogin() {
 
                     <GoogleSignInButton
                         text="signin_with"
-                        onClick={handleGoogleOAuth}
+                        onSuccess={handleGoogleSuccess}
                         disabled={isLoading || isGoogleLoading}
                         disabledLabel={t('common.loading')}
                         unavailableLabel={t('user_auth.google_unavailable')}
-                        isConfigured={isSupabaseAuthConfigured}
+                        isConfigured={!!import.meta.env.VITE_GOOGLE_CLIENT_ID}
                     />
 
                     {/* Register link */}

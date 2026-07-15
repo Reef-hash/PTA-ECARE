@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 export interface StepRemark {
     remarkBy: string;
@@ -17,6 +18,7 @@ interface TimelineStepProps {
 }
 
 export default function TimelineStep({ label, date, isCurrent, isCompleted, isLast, remark }: TimelineStepProps) {
+    const { t } = useTranslation();
     const circleColor = isCompleted
         ? 'bg-green-500'
         : isCurrent
@@ -33,7 +35,6 @@ export default function TimelineStep({ label, date, isCurrent, isCompleted, isLa
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: 'easeOut' }}
         >
-            {/* Single continuous line runs through all steps */}
             {!isLast && (
                 <div className="absolute left-[10px] top-[10px] bottom-0 w-0.5 bg-gray-200" />
             )}
@@ -60,7 +61,7 @@ export default function TimelineStep({ label, date, isCurrent, isCompleted, isLa
                 {date ? (
                     <p className={`text-xs ${dateColor} mt-0.5 transition-colors duration-300`}>{date}</p>
                 ) : (
-                    <p className="text-xs text-gray-300 mt-0.5 italic">Waiting...</p>
+                    <p className="text-xs text-gray-300 mt-0.5 italic">{t('common.waiting') || 'Waiting...'}</p>
                 )}
                 {remark && (
                     <div className="mt-3">
@@ -71,19 +72,19 @@ export default function TimelineStep({ label, date, isCurrent, isCompleted, isLa
                             transition={{ duration: 0.3 }}
                         >
                             <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs font-medium text-gray-500">by {remark.remarkBy}</span>
+                                <span className="text-xs font-medium text-gray-500">{t('common.by')} {remark.remarkBy}</span>
                             </div>
                             {remark.noteTransport && (
-                                <p className="text-xs text-gray-500"><strong>Transport:</strong> {remark.noteTransport}</p>
+                                <p className="text-xs text-gray-500"><strong>{t('admin_complaint_detail.transport_note')}:</strong> {remark.noteTransport}</p>
                             )}
                             {remark.checking && (
-                                <p className="text-xs text-gray-500"><strong>Checking:</strong> {remark.checking}</p>
+                                <p className="text-xs text-gray-500"><strong>{t('admin_complaint_detail.checking')}:</strong> {remark.checking}</p>
                             )}
                             {remark.remark && (() => {
                                 const parts = remark.remark.split('__FORWARD__');
                                 return (
                                     <>
-                                        {parts[0] && <p className="text-sm text-gray-700 mt-1"><strong>Remark:</strong> {parts[0]}</p>}
+                                        {parts[0] && <p className="text-sm text-gray-700 mt-1"><strong>{t('admin_complaint_detail.remark')}:</strong> {parts[0]}</p>}
                                         {parts[1] && <div className="mt-2 pt-2 border-t border-gray-200 text-blue-600 text-xs font-medium">{parts[1]}</div>}
                                     </>
                                 );

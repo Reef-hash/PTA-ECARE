@@ -1,18 +1,15 @@
 import { Request, Response } from 'express';
-import { supabaseAdmin } from '../config/supabase.js';
+import pool from '../config/mysql.js';
+import { saveFile } from '../utils/storage.js';
 import { generateReportNumber, formatNotificationDate } from '../utils/helpers.js';
 import { createNotification, buildNotificationEmailHtml } from './notifications.controller.js';
 import { sendEmail } from '../utils/email.js';
 
 /** Resolve complaint by report_number (e.g. PTAS00001) */
 async function resolveComplaint(reportNumber: string) {
-    const { data, error } = await supabaseAdmin
-        .from('complaints')
-        .select('id')
-        .eq('report_number', reportNumber)
-        .maybeSingle();
-    if (error || !data) return null;
-    return data.id as number;
+    const [rows]: any = await pool.query('SELECT id FROM complaints WHERE report_number = ?', [reportNumber]);
+    if (!rows || rows.length === 0) return null;
+    return rows[0].id as number;
 }
 
 // Get technician dashboard stats (for logged-in technician)
@@ -21,23 +18,33 @@ export const getTechnicianDashboardStats = async (req: Request, res: Response): 
         const technicianId = req.user?.id;
 
         // Get all complaints assigned to this technician
-        const { data: complaints } = await supabaseAdmin
-            .from('complaints')
-            .select('id, status')
-            .eq('assigned_to', technicianId);
+        const [complaints]: any = await pool.query(
+            'SELECT id, status FROM complaints WHERE assigned_to = ?', 
+            [technicianId]
+        );
 
         const stats = {
             total: complaints?.length || 0,
             pending: 0,
             in_process: 0,
             closed: 0,
+            incomplete_in: 0,
+            incomplete_out: 0,
         };
 
-        complaints?.forEach((c) => {
+        complaints?.forEach((c: any) => {
             if (c.status === 'pending') stats.pending++;
             if (c.status === 'in_process') stats.in_process++;
             if (c.status === 'closed') stats.closed++;
+            if (c.status === 'incomplete' || c.status === 'bawa_pulang') stats.incomplete_in++;
         });
+
+        // Get count of incomplete cases that Ali surrendered in the past
+        const [historyIncomplete]: any = await pool.query(
+            'SELECT COUNT(DISTINCT complaint_id) as count FROM technician_remarks WHERE remark_by = ? AND status IN ("incomplete", "bawa_pulang")',
+            [technicianId]
+        );
+        stats.incomplete_out = historyIncomplete[0]?.count || 0;
 
         res.json({ stats });
     } catch (error) {
@@ -51,152 +58,196 @@ export const getComplaints = async (req: Request, res: Response): Promise<void> 
     try {
         const userId = req.user?.id;
         const role = req.user?.role;
-        const { status, page = 1, limit = 10, search, from_date, to_date } = req.query;
+        const { status, page = 1, limit = 10, search, from_date, to_date, assigned_to, user_id } = req.query;
 
-        let query = supabaseAdmin
-            .from('complaints')
-            .select(`
-        *,
-        users:user_id (id, full_name, ic_number, contact_no, address),
-        categories:category_id (id, name),
-        technicians:assigned_to (id, name, department, username),
-        remarks:complaint_remarks (id, status, note_transport, checking, remark, remark_by, created_at)
-      `, { count: 'exact' });
+        let queryParams: any[] = [];
+        let whereClauses: string[] = ['1=1'];
 
         // Role-based filtering
-        if (role === 'user') {
-            query = query.eq('user_id', userId);
-        } else if (role === 'technician') {
-            query = query.eq('assigned_to', userId);
-        }
+        const view = req.query.view as string;
 
-        // Admin filtering by technician or user
-        if (role === 'admin') {
-            if (req.query.assigned_to) {
-                query = query.eq('assigned_to', req.query.assigned_to);
+        if (role === 'user') {
+            whereClauses.push('c.user_id = ?');
+            queryParams.push(userId);
+        } else if (role === 'technician') {
+            if (view === 'history') {
+                whereClauses.push('(c.assigned_to = ? OR c.id IN (SELECT complaint_id FROM technician_remarks WHERE remark_by = ? AND status IN ("incomplete", "bawa_pulang")))');
+                queryParams.push(userId, userId);
+            } else {
+                whereClauses.push('c.assigned_to = ?');
+                queryParams.push(userId);
             }
-            if (req.query.user_id) {
-                query = query.eq('user_id', req.query.user_id);
+        } else if (role === 'admin') {
+            if (assigned_to) {
+                whereClauses.push('c.assigned_to = ?');
+                queryParams.push(assigned_to);
+            }
+            if (user_id) {
+                whereClauses.push('c.user_id = ?');
+                queryParams.push(user_id);
             }
         }
 
         // Status filter
         if (status && status !== 'all') {
             if (status === 'not_forwarded') {
-                query = query.eq('status', 'pending').is('assigned_to', null);
+                whereClauses.push('c.status = "pending" AND c.assigned_to IS NULL');
             } else if (status === 'job_assigned') {
-                query = query.eq('status', 'pending').not('assigned_to', 'is', null);
+                whereClauses.push('c.status = "pending" AND c.assigned_to IS NOT NULL');
             } else if (status === 'incomplete') {
-                // Master list: all complaints in the incomplete lifecycle
-                query = query.eq('status', 'incomplete');
+                whereClauses.push('c.status = "incomplete"');
             } else if (status === 'incomplete_not_assigned') {
-                // Incomplete jobs not yet forwarded to a shop technician
-                query = query.eq('status', 'incomplete').is('assigned_to', null);
+                whereClauses.push('c.status = "incomplete" AND c.assigned_to IS NULL');
             } else if (status === 'incomplete_assigned') {
-                // Incomplete jobs that have been forwarded (assigned_to set)
-                query = query.eq('status', 'incomplete').not('assigned_to', 'is', null);
+                whereClauses.push('c.status = "incomplete" AND c.assigned_to IS NOT NULL');
             } else if (status === 'incomplete_completed') {
-                // Jobs that were forwarded by MainTech and are now closed.
-                // Resolve which complaint ids appear in forward_history, then filter.
-                const { data: forwardedRows } = await supabaseAdmin
-                    .from('forward_history')
-                    .select('complaint_id');
-                const forwardedIds = (forwardedRows || []).map((r: any) => r.complaint_id);
-                if (forwardedIds.length === 0) {
-                    // No forward history at all — return nothing
-                    query = query.eq('status', 'closed').eq('id', -1);
-                } else {
-                    query = query.eq('status', 'closed').in('id', forwardedIds);
-                }
+                whereClauses.push('c.status = "closed" AND c.id IN (SELECT complaint_id FROM forward_history)');
+            } else if (status === 'incomplete_in') {
+                whereClauses.push('(c.status = "incomplete" OR c.status = "bawa_pulang")');
+            } else if (status === 'incomplete_out') {
+                whereClauses.push('c.id IN (SELECT complaint_id FROM technician_remarks WHERE remark_by = ? AND status IN ("incomplete", "bawa_pulang"))');
+                queryParams.push(userId);
             } else {
-                query = query.eq('status', status);
+                whereClauses.push('c.status = ?');
+                queryParams.push(status);
             }
         }
 
         // Date range filter
         if (from_date) {
-            query = query.gte('created_at', from_date);
+            whereClauses.push('c.created_at >= ?');
+            queryParams.push(from_date);
         }
         if (to_date) {
-            query = query.lte('created_at', to_date);
+            whereClauses.push('c.created_at <= ?');
+            queryParams.push(to_date);
         }
 
         // Search by report number, IC number, customer name, or date
         if (search) {
-            const searchTerm = (search as string).trim();
-
-            // First, search for users with matching IC number or full name
-            const { data: matchedUsers } = await supabaseAdmin
-                .from('users')
-                .select('id')
-                .or(`ic_number.ilike.%${searchTerm}%,full_name.ilike.%${searchTerm}%`);
-
-            const matchedUserIds = matchedUsers?.map(u => u.id) || [];
-
-            // Build search conditions array
+            const searchTerm = String(search).trim();
             const searchConditions: string[] = [];
-
-            // Always search by report number
-            searchConditions.push(`report_number.ilike.%${searchTerm}%`);
-
-            // If we have matching users, include them in search
-            if (matchedUserIds.length > 0) {
-                searchConditions.push(`user_id.in.(${matchedUserIds.join(',')})`);
+            
+            searchConditions.push(`c.report_number LIKE ?`);
+            const likeTerm = `%${searchTerm}%`;
+            
+            // Search users table
+            const [matchedUsers]: any = await pool.query(
+                'SELECT id FROM users WHERE ic_number LIKE ? OR full_name LIKE ?',
+                [likeTerm, likeTerm]
+            );
+            
+            if (matchedUsers.length > 0) {
+                const matchedUserIds = matchedUsers.map((u: any) => `'${u.id}'`).join(',');
+                searchConditions.push(`c.user_id IN (${matchedUserIds})`);
             }
 
-            // Check if search looks like a date pattern and search created_at
-            // Supports: 2026-02-03, 03-02-2026, 03/02/2026, 2026/02/03
             const datePatterns = [
-                /^\d{4}-\d{2}-\d{2}$/,  // YYYY-MM-DD
-                /^\d{2}-\d{2}-\d{4}$/,  // DD-MM-YYYY
-                /^\d{2}\/\d{2}\/\d{4}$/, // DD/MM/YYYY
-                /^\d{4}\/\d{2}\/\d{2}$/  // YYYY/MM/DD
+                /^\d{4}-\d{2}-\d{2}$/,  
+                /^\d{2}-\d{2}-\d{4}$/,  
+                /^\d{2}\/\d{2}\/\d{4}$/, 
+                /^\d{4}\/\d{2}\/\d{2}$/  
             ];
 
             const isDateLike = datePatterns.some(pattern => pattern.test(searchTerm));
             if (isDateLike) {
-                // Convert date formats to ISO format for searching
                 let isoDate = searchTerm;
-
-                // If DD-MM-YYYY or DD/MM/YYYY, convert to YYYY-MM-DD
                 if (/^\d{2}[-/]\d{2}[-/]\d{4}$/.test(searchTerm)) {
                     const parts = searchTerm.split(/[-/]/);
                     isoDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
                 } else if (/^\d{4}\/\d{2}\/\d{2}$/.test(searchTerm)) {
                     isoDate = searchTerm.replace(/\//g, '-');
                 }
-
-                searchConditions.push(`created_at.gte.${isoDate}T00:00:00`);
+                searchConditions.push(`c.created_at >= '${isoDate} 00:00:00'`);
             }
 
-            // Apply all search conditions with OR
-            query = query.or(searchConditions.join(','));
+            whereClauses.push(`(${searchConditions.join(' OR ')})`);
+            queryParams.push(likeTerm); // For c.report_number LIKE ?
         }
+
+        const whereString = whereClauses.join(' AND ');
 
         // Pagination
         const pageNum = parseInt(page as string, 10);
         const limitNum = parseInt(limit as string, 10);
         const offset = (pageNum - 1) * limitNum;
 
-        query = query
-            .order('updated_at', { ascending: false })
-            .range(offset, offset + limitNum - 1);
+        // Fetch counts
+        const [countResult]: any = await pool.query(
+            `SELECT COUNT(*) as total FROM complaints c WHERE ${whereString}`,
+            queryParams
+        );
+        const total = countResult[0].total;
 
-        const { data, error, count } = await query;
+        // Fetch paginated data
+        const queryParamsWithPagination = [...queryParams, limitNum, offset];
+        const [complaintsData]: any = await pool.query(
+            `SELECT c.*, 
+                u.id as user_id_join, u.full_name as user_full_name, u.ic_number as user_ic_number, u.contact_no as user_contact_no, u.address as user_address,
+                cat.id as cat_id, cat.name as cat_name,
+                t.id as tech_id, t.name as tech_name, t.department as tech_department, t.username as tech_username
+             FROM complaints c
+             LEFT JOIN users u ON c.user_id = u.id
+             LEFT JOIN categories cat ON c.category_id = cat.id
+             LEFT JOIN technicians t ON c.assigned_to = t.id
+             WHERE ${whereString}
+             ORDER BY c.updated_at DESC
+             LIMIT ? OFFSET ?`,
+            queryParamsWithPagination
+        );
 
-        if (error) {
-            console.error('Get complaints error:', error);
-            res.status(500).json({ error: 'Failed to fetch complaints' });
-            return;
-        }
+        // Fetch remarks and restructure to match Supabase response
+        const mappedComplaints = await Promise.all(complaintsData.map(async (c: any) => {
+            const [remarksData]: any = await pool.query(
+                'SELECT id, status, note_transport, checking, remark, remark_by, created_at FROM complaint_remarks WHERE complaint_id = ?',
+                [c.id]
+            );
+
+            return {
+                id: c.id,
+                user_id: c.user_id,
+                category_id: c.category_id,
+                subcategory: c.subcategory,
+                complaint_type: c.complaint_type,
+                state: c.state,
+                brand_name: c.brand_name,
+                model_no: c.model_no,
+                details: c.details,
+                warranty_file: c.warranty_file,
+                receipt_file: c.receipt_file,
+                status: c.status,
+                assigned_to: c.assigned_to,
+                report_number: c.report_number,
+                created_at: c.created_at,
+                updated_at: c.updated_at,
+                users: c.user_id_join ? {
+                    id: c.user_id_join,
+                    full_name: c.user_full_name,
+                    ic_number: c.user_ic_number,
+                    contact_no: c.user_contact_no,
+                    address: c.user_address
+                } : null,
+                categories: c.cat_id ? {
+                    id: c.cat_id,
+                    name: c.cat_name
+                } : null,
+                technicians: c.tech_id ? {
+                    id: c.tech_id,
+                    name: c.tech_name,
+                    department: c.tech_department,
+                    username: c.tech_username
+                } : null,
+                remarks: remarksData || []
+            };
+        }));
 
         res.json({
-            complaints: data,
+            complaints: mappedComplaints,
             pagination: {
                 page: pageNum,
                 limit: limitNum,
-                total: count || 0,
-                totalPages: Math.ceil((count || 0) / limitNum),
+                total,
+                totalPages: Math.ceil(total / limitNum),
             },
         });
     } catch (error) {
@@ -218,21 +269,55 @@ export const getComplaint = async (req: Request, res: Response): Promise<void> =
             return;
         }
 
-        const { data: complaint, error } = await supabaseAdmin
-            .from('complaints')
-            .select(`
-        *,
-        users:user_id (id, full_name, ic_number, contact_no, contact_no_2, email, address, state),
-        categories:category_id (id, name),
-        technicians:assigned_to (id, name, department)
-      `)
-            .eq('id', complaintId)
-            .single();
+        const [complaintRows]: any = await pool.query(
+            `SELECT c.*, 
+                u.id as user_id_join, u.full_name as user_full_name, u.ic_number as user_ic_number, u.contact_no as user_contact_no, u.contact_no_2 as user_contact_no_2, u.email as user_email, u.address as user_address, u.state as user_state,
+                cat.id as cat_id, cat.name as cat_name,
+                t.id as tech_id, t.name as tech_name, t.department as tech_department
+             FROM complaints c
+             LEFT JOIN users u ON c.user_id = u.id
+             LEFT JOIN categories cat ON c.category_id = cat.id
+             LEFT JOIN technicians t ON c.assigned_to = t.id
+             WHERE c.id = ?`,
+            [complaintId]
+        );
 
-        if (error || !complaint) {
+        const c = complaintRows[0];
+        if (!c) {
             res.status(404).json({ error: 'Complaint not found' });
             return;
         }
+
+        const complaint = {
+            id: c.id,
+            user_id: c.user_id,
+            category_id: c.category_id,
+            subcategory: c.subcategory,
+            complaint_type: c.complaint_type,
+            state: c.state,
+            brand_name: c.brand_name,
+            model_no: c.model_no,
+            details: c.details,
+            warranty_file: c.warranty_file,
+            receipt_file: c.receipt_file,
+            status: c.status,
+            assigned_to: c.assigned_to,
+            report_number: c.report_number,
+            created_at: c.created_at,
+            updated_at: c.updated_at,
+            users: c.user_id_join ? {
+                id: c.user_id_join,
+                full_name: c.user_full_name,
+                ic_number: c.user_ic_number,
+                contact_no: c.user_contact_no,
+                contact_no_2: c.user_contact_no_2,
+                email: c.user_email,
+                address: c.user_address,
+                state: c.user_state
+            } : null,
+            categories: c.cat_id ? { id: c.cat_id, name: c.cat_name } : null,
+            technicians: c.tech_id ? { id: c.tech_id, name: c.tech_name, department: c.tech_department } : null
+        };
 
         // Check permission
         if (role === 'user' && complaint.user_id !== userId) {
@@ -240,62 +325,76 @@ export const getComplaint = async (req: Request, res: Response): Promise<void> =
             return;
         }
         if (role === 'technician' && complaint.assigned_to !== userId) {
-            res.status(403).json({ error: 'Access denied' });
-            return;
+            // Check if they are in the history
+            const [historyCheck]: any = await pool.query(
+                'SELECT 1 FROM technician_remarks WHERE complaint_id = ? AND remark_by = ? LIMIT 1',
+                [complaintId, userId]
+            );
+            if (historyCheck.length === 0) {
+                res.status(403).json({ error: 'Access denied' });
+                return;
+            }
         }
 
         // Get remarks
-        const { data: adminRemarksData } = await supabaseAdmin
-            .from('complaint_remarks')
-            .select('*')
-            .eq('complaint_id', complaintId)
-            .order('created_at', { ascending: true });
+        const [adminRemarksData]: any = await pool.query(
+            'SELECT * FROM complaint_remarks WHERE complaint_id = ? ORDER BY created_at ASC',
+            [complaintId]
+        );
 
         let adminRemarks = adminRemarksData || [];
 
         if (adminRemarks.length > 0) {
-            const remarkByUuids = [...new Set(adminRemarks.map(r => r.remark_by).filter(Boolean))];
+            const remarkByUuids = [...new Set(adminRemarks.map((r: any) => r.remark_by).filter(Boolean))];
             
             if (remarkByUuids.length > 0) {
-                const { data: admins } = await supabaseAdmin
-                    .from('admins')
-                    .select('id, admin_name')
-                    .in('id', remarkByUuids);
-                    
-                const { data: techs } = await supabaseAdmin
-                    .from('technicians')
-                    .select('id, name')
-                    .in('id', remarkByUuids);
+                const uuidsStr = remarkByUuids.map(id => `'${id}'`).join(',');
+                const [admins]: any = await pool.query(`SELECT id, admin_name FROM admins WHERE id IN (${uuidsStr})`);
+                const [techs]: any = await pool.query(`SELECT id, name FROM technicians WHERE id IN (${uuidsStr})`);
                     
                 const userMap = new Map();
-                admins?.forEach(a => userMap.set(a.id, { name: a.admin_name, role: 'admin' }));
-                techs?.forEach(t => userMap.set(t.id, { name: t.name, role: 'main_technician' }));
+                admins?.forEach((a: any) => userMap.set(a.id, { name: a.admin_name, role: 'admin' }));
+                techs?.forEach((t: any) => userMap.set(t.id, { name: t.name, role: 'main_technician' }));
                 
-                adminRemarks = adminRemarks.map(remark => ({
+                adminRemarks = adminRemarks.map((remark: any) => ({
                     ...remark,
                     resolved_user: remark.remark_by ? userMap.get(remark.remark_by) || { name: 'Admin', role: 'admin' } : { name: 'Admin', role: 'admin' }
                 }));
             }
         }
 
-        const { data: techRemarks } = await supabaseAdmin
-            .from('technician_remarks')
-            .select(`
-        *,
-        technicians:remark_by (id, name)
-      `)
-            .eq('complaint_id', complaintId)
-            .order('created_at', { ascending: true });
+        const [techRemarksData]: any = await pool.query(
+            `SELECT tr.*, t.id as tech_id, t.name as tech_name 
+             FROM technician_remarks tr
+             LEFT JOIN technicians t ON tr.remark_by = t.id
+             WHERE tr.complaint_id = ? ORDER BY tr.created_at ASC`,
+            [complaintId]
+        );
+        
+        const techRemarks = techRemarksData.map((tr: any) => {
+            const { tech_id, tech_name, ...rest } = tr;
+            return {
+                ...rest,
+                technicians: tech_id ? { id: tech_id, name: tech_name } : null
+            };
+        });
 
         // Get forward history
-        const { data: forwardHistory } = await supabaseAdmin
-            .from('forward_history')
-            .select(`
-        *,
-        technicians:forward_to (id, name, department)
-      `)
-            .eq('complaint_id', complaintId)
-            .order('created_at', { ascending: true });
+        const [forwardHistoryData]: any = await pool.query(
+            `SELECT fh.*, t.id as tech_id, t.name as tech_name, t.department as tech_department
+             FROM forward_history fh
+             LEFT JOIN technicians t ON fh.forward_to = t.id
+             WHERE fh.complaint_id = ? ORDER BY fh.created_at ASC`,
+            [complaintId]
+        );
+
+        const forwardHistory = forwardHistoryData.map((fh: any) => {
+            const { tech_id, tech_name, tech_department, ...rest } = fh;
+            return {
+                ...rest,
+                technicians: tech_id ? { id: tech_id, name: tech_name, department: tech_department } : null
+            };
+        });
 
         res.json({
             complaint,
@@ -315,144 +414,130 @@ export const createComplaint = async (req: Request, res: Response): Promise<void
         const userId = req.user?.id;
         const { category_id, subcategory, complaint_type, state, brand_name, model_no, details } = req.body;
 
-        // Get uploaded files
         const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
-        console.log('📦 Create Complaint Request:');
-        console.log('   Body:', req.body);
-        console.log('   Files keys:', files ? Object.keys(files) : 'No files');
+
+        console.log('[DEBUG UPLOAD] req.body:', req.body);
+        console.log('[DEBUG UPLOAD] req.files:', files ? Object.keys(files) : 'No files parsed');
+        if (files) {
+            if (files.warranty_file) console.log('warranty_file:', files.warranty_file[0].originalname, files.warranty_file[0].size);
+            if (files.receipt_file) console.log('receipt_file:', files.receipt_file[0].originalname, files.receipt_file[0].size);
+        }
 
         let warranty_file: string | null = null;
         let receipt_file: string | null = null;
 
-        // Upload warranty file if provided
         if (files?.warranty_file?.[0]) {
-            console.log('   Processing warranty file...');
             const file = files.warranty_file[0];
             const fileName = `${Date.now()}_${file.originalname}`;
-            const { data, error } = await supabaseAdmin.storage
-                .from('warranty-docs')
-                .upload(fileName, file.buffer, {
-                    contentType: file.mimetype,
-                });
-            if (!error) {
-                // Get public URL for the file
-                const { data: urlData } = supabaseAdmin.storage
-                    .from('warranty-docs')
-                    .getPublicUrl(data.path);
-                warranty_file = urlData.publicUrl;
-                console.log('   Warranty file URL:', warranty_file);
-            } else {
-                console.error('Warranty file upload error:', error);
+            try {
+                const { publicUrl } = saveFile('warranty-docs', fileName, file.buffer);
+                warranty_file = publicUrl;
+            } catch (e) {
+                console.error('Warranty file upload error:', e);
             }
         }
 
-        // Upload receipt file if provided
         if (files?.receipt_file?.[0]) {
-            console.log('   Processing receipt file...');
             const file = files.receipt_file[0];
             const fileName = `${Date.now()}_${file.originalname}`;
-            const { data, error } = await supabaseAdmin.storage
-                .from('receipt-docs')
-                .upload(fileName, file.buffer, {
-                    contentType: file.mimetype,
-                });
-            if (!error) {
-                // Get public URL for the file
-                const { data: urlData } = supabaseAdmin.storage
-                    .from('receipt-docs')
-                    .getPublicUrl(data.path);
-                receipt_file = urlData.publicUrl;
-            } else {
-                console.error('Receipt file upload error:', error);
+            try {
+                const { publicUrl } = saveFile('receipt-docs', fileName, file.buffer);
+                receipt_file = publicUrl;
+            } catch (e) {
+                console.error('Receipt file upload error:', e);
             }
         }
 
-        // Validate: Under Warranty requires warranty and receipt files
         if (complaint_type === 'Under Warranty' && (!warranty_file || !receipt_file) && !files?.warranty_file && !files?.receipt_file) {
             res.status(400).json({ error: 'Under Warranty complaints require warranty and receipt files' });
             return;
         }
 
-        // Generate report number
         const report_number = await generateReportNumber();
 
-        const { data: complaint, error } = await supabaseAdmin
-            .from('complaints')
-            .insert({
-                user_id: userId,
-                category_id,
-                subcategory,
-                complaint_type,
-                state,
-                brand_name,
-                model_no: model_no || null,
-                details,
-                warranty_file,
-                receipt_file,
-                report_number,
-            })
-            .select()
-            .single();
-
-        if (error) {
-            console.error('Create complaint error:', error);
-            res.status(500).json({ error: 'Failed to create complaint' });
-            return;
-        }
-
-        // Fetch user details for notification
-        const { data: userData } = await supabaseAdmin
-            .from('users')
-            .select('full_name')
-            .eq('id', userId)
-            .single();
-
-        const userName = userData?.full_name || 'Pengguna';
-
-        // Notify all admins about the new complaint
-        const { data: admins } = await supabaseAdmin.from('admins').select('id');
-        if (admins) {
-            const adminPayload = JSON.stringify({
-                key: 'new_complaint_msg',
-                params: {
-                    user_name: userName
-                }
-            });
-
-            for (const admin of admins) {
-                await createNotification(
-                    admin.id,
-                    'admin',
-                    `Aduan Baru: ${report_number}`,
-                    adminPayload,
-                    'status_update',
-                    complaint.id
-                );
-            }
-        }
-
-        // Notify the user about their complaint creation
-        const userPayload = JSON.stringify({
-            key: 'user_complaint_created_msg',
-            params: {
-                report_number: report_number
-            }
-        });
-
-        await createNotification(
-            userId!,
-            'user',
-            `Aduan Berjaya Didaftarkan`,
-            userPayload,
-            'status_update',
-            complaint.id
+        const [result]: any = await pool.query(
+            `INSERT INTO complaints (user_id, category_id, subcategory, complaint_type, state, brand_name, model_no, details, warranty_file, receipt_file, report_number) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [userId, category_id, subcategory, complaint_type, state, brand_name, model_no || null, details, warranty_file, receipt_file, report_number]
         );
+        const insertId = result.insertId;
 
-        res.status(201).json({
-            message: 'Complaint submitted successfully',
-            complaint,
-            report_number,
-        });
+        const [complaintRows]: any = await pool.query('SELECT * FROM complaints WHERE id = ?', [insertId]);
+        const complaint = complaintRows[0];
+
+        const [userRows]: any = await pool.query('SELECT full_name, email, contact_no FROM users WHERE id = ?', [userId]);
+        const userName = userRows[0]?.full_name || 'Pengguna';
+        const userEmail = userRows[0]?.email || '-';
+        const userPhone = userRows[0]?.contact_no || '-';
+
+        const [catRows]: any = await pool.query('SELECT name FROM categories WHERE id = ?', [category_id]);
+        const categoryName = catRows[0]?.name || 'Fasilitas / Teknis';
+
+        const formattedDate = new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' });
+        const attachCount = (warranty_file && receipt_file) ? 2 : (warranty_file || receipt_file ? 1 : 0);
+        const attachText = attachCount > 0 ? `${attachCount} file(s)` : 'Tiada lampiran';
+
+        const adminEmailBody = `Yth. Admin,
+
+${userName} telah mengirimkan complaint baru melalui sistem.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ DETAIL COMPLAINT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Nomor Tiket   : ${report_number}
+Dari          : ${userName}
+Email         : ${userEmail}
+No. HP        : ${userPhone}
+
+Judul         : ${subcategory || brand_name || 'Aduan Kerosakan'}
+Kategori      : ${categoryName}
+Prioritas     : 🔴 HIGH
+Status        : Menunggu Respon
+
+Deskripsi     :
+${details}
+
+Lampiran      : ${attachText}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 TINDAKAN YANG DAPAT DILAKUKAN:
+1. Klik link berikut untuk melihat detail:
+   https://ptas.my/admin/complaint/${report_number}
+
+2. Respon / proses complaint:
+   https://ptas.my/admin/complaint/${report_number}
+
+3. Tugaskan ke teknisi:
+   https://ptas.my/admin/complaint/${report_number}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Terima kasih.
+
+*This is an automated notification. Please do not reply to this email.*`;
+
+        const [admins]: any = await pool.query('SELECT id, email FROM admins');
+        if (admins) {
+            const adminMsg = `Dari : ${userName} telah membuat aduan baharu sila\nJudul : ${subcategory || brand_name || 'Aduan Kerosakan'} (${details})\nWaktu : ${formattedDate}\nStatus : Menunggu Respon`;
+            for (const admin of admins) {
+                // Case 3: Admin Bell
+                await createNotification(admin.id, 'admin', `🔔 [NEW COMPLAINT]`, adminMsg, 'status_update', complaint.id);
+                // Case 3: Admin Email
+                if (admin.email) {
+                    try {
+                        const emailHtml = buildNotificationEmailHtml(admin.full_name || 'Admin', 'Aduan Baru Diterima', adminEmailBody, report_number, 'admin');
+                        await sendEmail(admin.email, `Aduan Baru: ${report_number}`, emailHtml);
+                    } catch (e) {
+                        console.error('Failed to send admin email:', e);
+                    }
+                }
+            }
+        }
+
+        // Case 6: User Bell
+        await createNotification(userId!, 'user', `📋 ADUAN BERJAYA DIHANTAR`, `no. Aduan anda telah berjaya dihantar ke sistem E-CARE.\n> click to view details`, 'status_update', complaint.id);
+
+        res.status(201).json({ message: 'Complaint submitted successfully', complaint, report_number });
     } catch (error) {
         console.error('Create complaint error:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -477,29 +562,27 @@ export const updateComplaint = async (req: Request, res: Response): Promise<void
             return;
         }
 
-        const { data, error } = await supabaseAdmin
-            .from('complaints')
-            .update({ status, updated_at: new Date().toISOString() })
-            .eq('id', complaintId)
-            .select()
-            .single();
-
-        if (error) {
-            res.status(500).json({ error: 'Failed to update complaint' });
-            return;
+        if (status === 'incomplete' || status === 'bawa_pulang') {
+            await pool.query(
+                'UPDATE complaints SET status = ?, assigned_to = NULL, updated_at = NOW() WHERE id = ?',
+                [status, complaintId]
+            );
+        } else {
+            await pool.query(
+                'UPDATE complaints SET status = ?, updated_at = NOW() WHERE id = ?',
+                [status, complaintId]
+            );
         }
+
+        const [complaintRows]: any = await pool.query('SELECT * FROM complaints WHERE id = ?', [complaintId]);
+        const data = complaintRows[0];
 
         res.json({ message: 'Complaint updated', complaint: data });
 
-        // NOTIFICATION LOGIC
         if (role === 'technician' && status) {
             try {
-                const { data: techData } = await supabaseAdmin
-                    .from('technicians')
-                    .select('name')
-                    .eq('id', req.user!.id)
-                    .single();
-                const techName = techData?.name || 'Technician';
+                const [techRows]: any = await pool.query('SELECT name FROM technicians WHERE id = ?', [req.user!.id]);
+                const techName = techRows[0]?.name || 'Technician';
 
                 const reportNumber = data.report_number;
                 const userId = data.user_id;
@@ -508,18 +591,15 @@ export const updateComplaint = async (req: Request, res: Response): Promise<void
                     const formattedDate = formatNotificationDate(new Date());
 
                     if (status === 'in_process' || status === 'closed') {
-                        const { data: admins } = await supabaseAdmin.from('admins').select('id');
+                        const [admins]: any = await pool.query('SELECT id FROM admins');
                         if (admins) {
                             for (const admin of admins) {
                                 await createNotification(
-                                    admin.id,
-                                    'admin',
-                                    `Status Update: ${reportNumber}`,
+                                    admin.id, 'admin', `Status Update: ${reportNumber}`,
                                     status === 'in_process'
                                         ? `Status Update: Complaint ${reportNumber} is being processed by technician ${techName} at ${formattedDate}.`
                                         : `Status Update: Complaint ${reportNumber} is now completed by technician ${techName} at ${formattedDate}.`,
-                                    'status_update_detailed',
-                                    complaintId
+                                    'status_update_detailed', complaintId
                                 );
                             }
                         }
@@ -527,21 +607,15 @@ export const updateComplaint = async (req: Request, res: Response): Promise<void
 
                     if (status === 'in_process') {
                         await createNotification(
-                            userId,
-                            'user',
-                            `Status Update: ${reportNumber}`,
+                            userId, 'user', `Status Update: ${reportNumber}`,
                             `Status Update: Complaint ${reportNumber} is being processed by technician ${techName} at ${formattedDate}.`,
-                            'status_update_detailed',
-                            complaintId
+                            'status_update_detailed', complaintId
                         );
                     } else if (status === 'closed') {
                         await createNotification(
-                            userId,
-                            'user',
-                            `Status Update: ${reportNumber}`,
+                            userId, 'user', `Status Update: ${reportNumber}`,
                             `Status Update: Complaint ${reportNumber} is now completed by technician ${techName} at ${formattedDate}. Ready for pickup.`,
-                            'status_update_detailed',
-                            complaintId
+                            'status_update_detailed', complaintId
                         );
                     }
                 }
@@ -564,44 +638,24 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
         const role = req.user?.role;
 
         const id = await resolveComplaint(paramId);
-        if (!id) {
-            res.status(404).json({ error: 'Complaint not found' });
-            return;
-        }
-
-        const remarkData = {
-            complaint_id: id,
-            note_transport: note_transport || null,
-            checking: checking || null,
-            remark: remark || null,
-            status: status || null,
-            remark_by: userId,
-        };
-
-        let error;
+        if (!id) { res.status(404).json({ error: 'Complaint not found' }); return; }
 
         if (role === 'admin' || role === 'technician') {
-            // Check remark limit (Max 3 normally, Max 5 if escalated to Main Tech)
-            const { data: complaintData } = await supabaseAdmin
-                .from('complaints')
-                .select('status')
-                .eq('id', id)
-                .single();
+            const [adminIncomplete]: any = await pool.query(
+                `SELECT COUNT(*) as count FROM complaint_remarks WHERE complaint_id = ? AND status IN ('incomplete', 'bawa_pulang')`,
+                [id]
+            );
+            const [techIncomplete]: any = await pool.query(
+                `SELECT COUNT(*) as count FROM technician_remarks WHERE complaint_id = ? AND status IN ('incomplete', 'bawa_pulang')`,
+                [id]
+            );
+            const isIncompleteHistory = adminIncomplete[0].count > 0 || techIncomplete[0].count > 0;
+            const isCriticalWorkflow = isIncompleteHistory || status === 'incomplete' || status === 'bawa_pulang';
+            const MAX_REMARKS = isCriticalWorkflow ? 6 : 3;
 
-            const isMainTechEscalated = complaintData?.status === 'incomplete' || complaintData?.status === 'bawa_pulang';
-            const MAX_REMARKS = isMainTechEscalated ? 5 : 3;
-
-            const { count: adminCount } = await supabaseAdmin
-                .from('complaint_remarks')
-                .select('*', { count: 'exact', head: true })
-                .eq('complaint_id', id);
-
-            const { count: techCount } = await supabaseAdmin
-                .from('technician_remarks')
-                .select('*', { count: 'exact', head: true })
-                .eq('complaint_id', id);
-
-            const totalRemarks = (adminCount || 0) + (techCount || 0);
+            const [adminCountRow]: any = await pool.query('SELECT COUNT(*) as count FROM complaint_remarks WHERE complaint_id = ?', [id]);
+            const [techCountRow]: any = await pool.query('SELECT COUNT(*) as count FROM technician_remarks WHERE complaint_id = ?', [id]);
+            const totalRemarks = adminCountRow[0].count + techCountRow[0].count;
 
             if (totalRemarks >= MAX_REMARKS) {
                 res.status(400).json({ error: `Limit reached: Maximum ${MAX_REMARKS} remarks allowed per complaint.` });
@@ -609,383 +663,185 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
             }
         }
 
-        if (role === 'admin') {
-            const result = await supabaseAdmin
-                .from('complaint_remarks')
-                .insert(remarkData);
-            error = result.error;
-        } else if (role === 'technician') {
-            const result = await supabaseAdmin
-                .from('technician_remarks')
-                .insert(remarkData);
-            error = result.error;
-        } else {
-            res.status(403).json({ error: 'Access denied' });
-            return;
-        }
-
-        if (error) {
-            console.error('Add remark error:', error);
-            res.status(500).json({ error: 'Failed to add remark' });
-            return;
-        }
-
-        // Fetch current complaint to check its status before update
         let previousStatus: string | null = null;
         if (status) {
-            const { data: currentComplaint } = await supabaseAdmin
-                .from('complaints')
-                .select('status')
-                .eq('id', id)
-                .single();
-            previousStatus = currentComplaint?.status || null;
+            try {
+                const [complaintRows]: any = await pool.query('SELECT status FROM complaints WHERE id = ?', [id]);
+                previousStatus = complaintRows[0]?.status || null;
+                if (status === 'incomplete' || status === 'bawa_pulang') {
+                    await pool.query('UPDATE complaints SET status = ?, assigned_to = NULL, updated_at = NOW() WHERE id = ?', [status, id]);
+                } else {
+                    await pool.query('UPDATE complaints SET status = ?, updated_at = NOW() WHERE id = ?', [status, id]);
+                }
+            } catch (err) {
+                console.warn('[addRemark] Failed to update complaints table status (possible ENUM error), ignoring:', err);
+            }
         }
 
-        // Update complaint status if provided
-        if (status) {
-            await supabaseAdmin
-                .from('complaints')
-                .update({ status, updated_at: new Date().toISOString() })
-                .eq('id', id);
+        try {
+            if (role === 'admin') {
+                await pool.query(
+                    'INSERT INTO complaint_remarks (complaint_id, note_transport, checking, remark, status, remark_by) VALUES (?, ?, ?, ?, ?, ?)',
+                    [id, note_transport || null, checking || null, remark || null, status || null, userId]
+                );
+            } else if (role === 'technician') {
+                await pool.query(
+                    'INSERT INTO technician_remarks (complaint_id, note_transport, checking, remark, status, remark_by) VALUES (?, ?, ?, ?, ?, ?)',
+                    [id, note_transport || null, checking || null, remark || null, status || null, userId]
+                );
+            } else {
+                res.status(403).json({ error: 'Access denied' }); return;
+            }
+        } catch (insertError) {
+            console.warn('[addRemark] DB insertion error (possible missing ENUM), falling back to NULL status for remark:', insertError);
+            if (role === 'admin') {
+                await pool.query(
+                    'INSERT INTO complaint_remarks (complaint_id, note_transport, checking, remark, status, remark_by) VALUES (?, ?, ?, ?, NULL, ?)',
+                    [id, note_transport || null, checking || null, remark || null, userId]
+                );
+            } else if (role === 'technician') {
+                await pool.query(
+                    'INSERT INTO technician_remarks (complaint_id, note_transport, checking, remark, status, remark_by) VALUES (?, ?, ?, ?, NULL, ?)',
+                    [id, note_transport || null, checking || null, remark || null, userId]
+                );
+            }
         }
-
-        // NOTIFICATION LOGIC
+        // === NOTIFICATION BLOCK (non-fatal — DB status already updated above) ===
+        try {
         if (role === 'technician') {
-            // Get technician name (and verify user_id needed for notification)
-            const { data: techData } = await supabaseAdmin
-                .from('technicians')
-                .select('name')
-                .eq('id', userId)
-                .single();
-            const techName = techData?.name || 'Technician';
+            const [techRows]: any = await pool.query('SELECT name FROM technicians WHERE id = ?', [userId]);
+            const techName = techRows[0]?.name || 'Technician';
 
-            // Fetch complaint details for report number and user_id (if not already fetched context)
-            const { data: complaintData } = await supabaseAdmin
-                .from('complaints')
-                .select('user_id, report_number, subcategory')
-                .eq('id', id)
-                .single();
-
-            if (complaintData) {
+            const [cRows]: any = await pool.query('SELECT user_id, report_number, subcategory FROM complaints WHERE id = ?', [id]);
+            if (cRows.length > 0) {
+                const complaintData = cRows[0];
                 const reportNumber = complaintData.report_number;
                 const formattedDate = formatNotificationDate(new Date());
                 const isTransitionFromInProcessToComplete = previousStatus === 'in_process' && status === 'closed';
                 const isTransitionToIncomplete = previousStatus !== 'incomplete' && status === 'incomplete';
                 const isTransitionFromIncompleteToComplete = previousStatus === 'incomplete' && status === 'closed';
 
-                // Fetch customer details if we need to email them
-                const { data: customerData } = await supabaseAdmin
-                    .from('users')
-                    .select('name, email')
-                    .eq('id', complaintData.user_id)
-                    .single();
+                const [customerRows]: any = await pool.query('SELECT full_name, email FROM users WHERE id = ?', [complaintData.user_id]);
+                const customerData = customerRows[0] || {};
+                const customerName = customerData.full_name || 'Pengguna';
 
-                // Notify Admins
                 if (status === 'in_process' || status === 'closed') {
                     const adminStatusPayload = JSON.stringify({
                         key: status === 'in_process' ? 'notif_processing_body' : 'notif_completed_body',
-                        params: {
-                            id: reportNumber,
-                            name: techName,
-                            date: new Date().toLocaleDateString('ms-MY'),
-                            time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-                        }
+                        params: { id: reportNumber, name: techName, date: new Date().toLocaleDateString('ms-MY'), time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) }
                     });
-
-                    const { data: admins } = await supabaseAdmin.from('admins').select('id');
+                    const [admins]: any = await pool.query('SELECT id FROM admins');
                     if (admins) {
                         for (const admin of admins) {
-                            await createNotification(
-                                admin.id,
-                                'admin',
-                                `Status Update: ${reportNumber}`,
-                                adminStatusPayload,
-                                'status_update_detailed',
-                                id
-                            );
+                            await createNotification(admin.id, 'admin', `Status Update: ${reportNumber}`, adminStatusPayload, 'status_update_detailed', id);
                         }
                     }
                 }
 
-                // Special Admin Email for Requirement 3: technician updates status from in_process to complete
                 if (isTransitionFromInProcessToComplete || isTransitionFromIncompleteToComplete) {
                     try {
                         const adminEmail = 'adminecare.ptasssb@gmail.com';
                         const subject = `Aduan Selesai: ${reportNumber}`;
-                        const emailHtml = buildNotificationEmailHtml(
-                            'Administrator',
-                            subject,
-                            `Juruteknik ${techName} telah mengemaskini status aduan ${reportNumber} daripada '${previousStatus}' kepada 'Selesai' pada ${new Date().toLocaleDateString('ms-MY')} jam ${new Date().toLocaleTimeString('ms-MY')}.`,
-                            reportNumber,
-                            'admin'
-                        );
+                        const emailHtml = buildNotificationEmailHtml('Administrator', subject, `Juruteknik ${techName} telah mengemaskini status aduan ${reportNumber} daripada '${previousStatus}' kepada 'Selesai' pada ${new Date().toLocaleDateString('ms-MY')} jam ${new Date().toLocaleTimeString('ms-MY')}.`, reportNumber, 'admin');
                         await sendEmail(adminEmail, subject, emailHtml);
                         
-                        // Notify Customer as well
-                        if (customerData?.email) {
-                            const custHtml = buildNotificationEmailHtml(
-                                customerData.name,
-                                subject,
-                                `Aduan anda (${reportNumber}) telah selesai dibaiki oleh juruteknik ${techName}.`,
-                                reportNumber,
-                                'user'
-                            );
+                        if (customerData.email) {
+                            const custHtml = buildNotificationEmailHtml(customerName, subject, `Aduan anda (${reportNumber}) telah selesai dibaiki oleh juruteknik ${techName}.`, reportNumber, 'user');
                             await sendEmail(customerData.email, subject, custHtml);
                         }
-                    } catch (emailErr) {
-                        console.error('Failed to send transition email to admin/customer:', emailErr);
-                    }
+                    } catch (emailErr) {}
                     
-                    // Notify Main Tech via Bell when Incomplete job is Completed
                     if (isTransitionFromIncompleteToComplete) {
-                        try {
-                            const { data: mainTechs } = await supabaseAdmin.from('technicians').select('id').eq('username', 'maintech');
-                            if (mainTechs) {
-                                for (const mt of mainTechs) {
-                                    await createNotification(
-                                        mt.id,
-                                        'main_technician',
-                                        `Status Update: ${reportNumber}`,
-                                        `Juruteknik ${techName} telah menyiapkan aduan ${reportNumber} (sebelum ini bawa pulang / incomplete).`,
-                                        'status_update_detailed',
-                                        id
-                                    );
-                                }
+                        const [mainTechs]: any = await pool.query('SELECT id FROM technicians WHERE username = "maintech"');
+                        if (mainTechs) {
+                            for (const mt of mainTechs) {
+                                await createNotification(mt.id, 'main_technician', `Status Update: ${reportNumber}`, `Juruteknik ${techName} telah menyiapkan aduan ${reportNumber} (sebelum ini bawa pulang / incomplete).`, 'status_update_detailed', id);
                             }
-                        } catch (e) {
-                            console.error('Failed to notify main tech on completion:', e);
                         }
                     }
                 }
 
-                // New Email requirement: Transition to Incomplete
                 if (isTransitionToIncomplete) {
                     try {
                         const adminEmail = 'adminecare.ptasssb@gmail.com';
                         const mainTechEmail = 'technicianasign@gmail.com';
                         const subject = `Aduan Bawa Pulang (Incomplete): ${reportNumber}`;
                         
-                        const adminHtml = buildNotificationEmailHtml(
-                            'Administrator', subject,
-                            `Juruteknik telah update status progress repair kerosakan untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`,
-                            reportNumber, 'admin'
-                        );
+                        const adminHtml = buildNotificationEmailHtml('Administrator', subject, `Juruteknik telah update status progress repair kerosakan untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'admin');
                         await sendEmail(adminEmail, subject, adminHtml);
 
-                        const mainTechHtml = buildNotificationEmailHtml(
-                            'Main Technician', subject,
-                            `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`,
-                            reportNumber, 'admin'
-                        );
+                        const mainTechHtml = buildNotificationEmailHtml('Main Technician', subject, `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'admin');
                         await sendEmail(mainTechEmail, subject, mainTechHtml);
 
-                        // Notify Customer
-                        if (customerData?.email) {
+                        if (customerData.email) {
                             const subcategoryName = complaintData.subcategory || 'kerosakan';
-                            const custHtml = buildNotificationEmailHtml(
-                                customerData.name, subject,
-                                `${reportNumber} aduan anda telah update status progress repair kerosakan ${subcategoryName} oleh juruteknik kami (${techName}). Sila tekan semak aduan untuk lihat lebih lanjut.`,
-                                reportNumber, 'user'
-                            );
+                            const custHtml = buildNotificationEmailHtml(customerName, subject, `${reportNumber} aduan anda telah update status progress repair kerosakan ${subcategoryName} oleh juruteknik kami (${techName}). Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'user');
                             await sendEmail(customerData.email, subject, custHtml);
                         }
-                    } catch (err) {
-                        console.error('Failed to send incomplete notification emails:', err);
-                    }
 
-                    // Notify Main Tech via Bell
-                    try {
-                        const { data: mainTechs } = await supabaseAdmin.from('technicians').select('id').eq('username', 'maintech');
+                        const [mainTechs]: any = await pool.query('SELECT id FROM technicians WHERE username = "maintech"');
                         if (mainTechs) {
                             for (const mt of mainTechs) {
-                                await createNotification(
-                                    mt.id,
-                                    'main_technician',
-                                    `Status Update: ${reportNumber}`,
-                                    `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}.`,
-                                    'status_update_detailed',
-                                    id
-                                );
+                                await createNotification(mt.id, 'main_technician', `Status Update: ${reportNumber}`, `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}.`, 'status_update_detailed', id);
                             }
                         }
-                    } catch (e) {
-                        console.error('Failed to notify main tech on incomplete:', e);
+                    } catch (incompleteNotifErr) {
+                        console.error('[addRemark] Incomplete notification error (non-fatal):', incompleteNotifErr);
                     }
                 }
 
-                // [DUAL NOTIFICATION] Check for Remark/Transport/Checking updates
-                // 1. Dual Notification for Transport Note
                 if (note_transport) {
-                    // Admin Trigger
-                    const transportAdminPayload = JSON.stringify({
-                        key: 'notif_transport_admin',
-                        params: { id: reportNumber, detail: note_transport }
-                    });
-
-                    const { data: admins } = await supabaseAdmin.from('admins').select('id');
+                    const transportAdminPayload = JSON.stringify({ key: 'notif_transport_admin', params: { id: reportNumber, detail: note_transport } });
+                    const [admins]: any = await pool.query('SELECT id FROM admins');
                     if (admins) {
                         for (const admin of admins) {
-                            await createNotification(
-                                admin.id,
-                                'admin',
-                                `Transport Update: ${reportNumber}`,
-                                transportAdminPayload,
-                                'transport_update',
-                                id
-                            );
+                            await createNotification(admin.id, 'admin', `Transport Update: ${reportNumber}`, transportAdminPayload, 'transport_update', id);
                         }
                     }
-
-                    // User Trigger
-                    const transportUserPayload = JSON.stringify({
-                        key: 'notif_transport_user',
-                        params: { id: reportNumber, detail: note_transport }
-                    });
-                    await createNotification(
-                        complaintData.user_id,
-                        'user',
-                        `Transport Update: ${reportNumber}`,
-                        transportUserPayload,
-                        'transport_update',
-                        id
-                    );
+                    const transportUserPayload = JSON.stringify({ key: 'notif_transport_user', params: { id: reportNumber, detail: note_transport } });
+                    await createNotification(complaintData.user_id, 'user', `Transport Update: ${reportNumber}`, transportUserPayload, 'transport_update', id);
                 }
 
-                // 2. Dual Notification for Checking
                 if (checking) {
-                    // Admin Trigger
-                    const checkingAdminPayload = JSON.stringify({
-                        key: 'notif_checking_admin',
-                        params: { id: reportNumber, detail: checking }
-                    });
-
-                    const { data: admins } = await supabaseAdmin.from('admins').select('id');
+                    const checkingAdminPayload = JSON.stringify({ key: 'notif_checking_admin', params: { id: reportNumber, detail: checking } });
+                    const [admins]: any = await pool.query('SELECT id FROM admins');
                     if (admins) {
                         for (const admin of admins) {
-                            await createNotification(
-                                admin.id,
-                                'admin',
-                                `Checking Update: ${reportNumber}`,
-                                checkingAdminPayload,
-                                'checking_update',
-                                id
-                            );
+                            await createNotification(admin.id, 'admin', `Checking Update: ${reportNumber}`, checkingAdminPayload, 'checking_update', id);
                         }
                     }
-
-                    // User Trigger
-                    const checkingUserPayload = JSON.stringify({
-                        key: 'notif_checking_user',
-                        params: { id: reportNumber, detail: checking }
-                    });
-                    await createNotification(
-                        complaintData.user_id,
-                        'user',
-                        `Checking Update: ${reportNumber}`,
-                        checkingUserPayload,
-                        'checking_update',
-                        id
-                    );
+                    const checkingUserPayload = JSON.stringify({ key: 'notif_checking_user', params: { id: reportNumber, detail: checking } });
+                    await createNotification(complaintData.user_id, 'user', `Checking Update: ${reportNumber}`, checkingUserPayload, 'checking_update', id);
                 }
 
-                // 3. Dual Notification for Remark (General)
                 if (remark) {
-                    // Admin Trigger
-                    const remarkAdminPayload = JSON.stringify({
-                        key: 'notif_remark_admin',
-                        params: { id: reportNumber, detail: remark }
-                    });
-
-                    const { data: admins } = await supabaseAdmin.from('admins').select('id');
+                    const remarkAdminPayload = JSON.stringify({ key: 'notif_remark_admin', params: { id: reportNumber, detail: remark } });
+                    const [admins]: any = await pool.query('SELECT id FROM admins');
                     if (admins) {
                         for (const admin of admins) {
-                            await createNotification(
-                                admin.id,
-                                'admin',
-                                `New Remark: ${reportNumber}`,
-                                remarkAdminPayload,
-                                'remark_update',
-                                id
-                            );
+                            await createNotification(admin.id, 'admin', `New Remark: ${reportNumber}`, remarkAdminPayload, 'remark_update', id);
                         }
                     }
-
-                    // User Trigger
-                    const remarkUserPayload = JSON.stringify({
-                        key: 'notif_remark_user',
-                        params: { id: reportNumber, detail: remark }
-                    });
-                    await createNotification(
-                        complaintData.user_id,
-                        'user',
-                        `New Remark: ${reportNumber}`,
-                        remarkUserPayload,
-                        'remark_update',
-                        id
-                    );
+                    const remarkUserPayload = JSON.stringify({ key: 'notif_remark_user', params: { id: reportNumber, detail: remark } });
+                    await createNotification(complaintData.user_id, 'user', `New Remark: ${reportNumber}`, remarkUserPayload, 'remark_update', id);
                 }
 
-                // Notify User
                 if (status === 'in_process') {
-                    const processingPayload = JSON.stringify({
-                        key: 'notif_processing_body',
-                        params: {
-                            id: reportNumber,
-                            name: techName,
-                            date: new Date().toLocaleDateString('ms-MY'),
-                            time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-                        }
-                    });
-
-                    await createNotification(
-                        complaintData.user_id,
-                        'user',
-                        `Status Update: ${reportNumber}`,
-                        processingPayload,
-                        'status_update_detailed',
-                        id
-                    );
+                    const processingPayload = JSON.stringify({ key: 'notif_processing_body', params: { id: reportNumber, name: techName, date: new Date().toLocaleDateString('ms-MY'), time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) } });
+                    await createNotification(complaintData.user_id, 'user', `Status Update: ${reportNumber}`, processingPayload, 'status_update_detailed', id);
                 } else if (status === 'closed') {
-                    const closedPayload = JSON.stringify({
-                        key: 'notif_completed_body',
-                        params: {
-                            id: reportNumber,
-                            name: techName,
-                            date: new Date().toLocaleDateString('ms-MY'),
-                            time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-                        }
-                    });
-
-                    await createNotification(
-                        complaintData.user_id,
-                        'user',
-                        `Status Update: ${reportNumber}`,
-                        closedPayload,
-                        'status_update_detailed',
-                        id
-                    );
-                } else if (status) { // Other status updates (fallback)
-                    // Keep existing logic for other statuses if any? 
-                    // The prompt only detailed logic for in_process and closed.
-                    // Existing logic handled general updates.
-                    // I'll leave a generic one for other statuses if needed, but for now I'll just skip to avoid spam or double notify.
+                    const closedPayload = JSON.stringify({ key: 'notif_completed_body', params: { id: reportNumber, name: techName, date: new Date().toLocaleDateString('ms-MY'), time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) } });
+                    await createNotification(complaintData.user_id, 'user', `Status Update: ${reportNumber}`, closedPayload, 'status_update_detailed', id);
                 }
             }
-            // Optional: If admin updates status manually, notify technician if assigned?
-            // Existing logic only asked for Tech -> Admin and Admin -> Tech (Assignment)
-            // But let's add it if assigned
-            const { data: c } = await supabaseAdmin.from('complaints').select('assigned_to, report_number, assigned_to, created_by').eq('id', id).single();
-            if (c && c.assigned_to) {
-                const updater = role === 'technician' ? 'Technician' : 'Admin';
-                await createNotification(
-                    c.assigned_to,
-                    'technician',
-                    `Job Update: ${c.report_number}`,
-                    `${updater} updated complaint ${c.report_number} to '${status}'.`,
-                    'status_update',
-                    id
-                );
+
+            const [c]: any = await pool.query('SELECT assigned_to, report_number FROM complaints WHERE id = ?', [id]);
+            if (c.length > 0 && c[0].assigned_to) {
+                await createNotification(c[0].assigned_to, 'technician', `Job Update: ${c[0].report_number}`, `Technician updated complaint ${c[0].report_number} to '${status}'.`, 'status_update', id);
             }
+        }
+        } catch (notifError) {
+            console.error('[addRemark] Non-fatal notification error:', notifError);
         }
 
         res.status(201).json({ message: 'Remark added successfully' });
@@ -1003,255 +859,87 @@ export const updateRemark = async (req: Request, res: Response): Promise<void> =
         const userId = req.user?.id;
         const role = req.user?.role;
 
-        console.log(`[UPDATE REMARK] ID: ${remarkId}, User: ${userId}, Role: ${role}`);
+        if (role !== 'technician') { res.status(403).json({ error: 'Access denied' }); return; }
 
-        if (role !== 'technician') {
-            res.status(403).json({ error: 'Access denied' });
-            return;
-        }
+        const [existingRemarkRows]: any = await pool.query('SELECT remark_by, complaint_id FROM technician_remarks WHERE id = ?', [remarkId]);
+        const existingRemark = existingRemarkRows[0];
 
-        // Check ownership
-        const { data: existingRemark, error: fetchError } = await supabaseAdmin
-            .from('technician_remarks')
-            .select('remark_by')
-            .eq('id', remarkId)
-            .single();
+        if (!existingRemark) { res.status(404).json({ error: 'Remark not found' }); return; }
+        if (existingRemark.remark_by !== userId) { res.status(403).json({ error: 'You can only edit your own remarks' }); return; }
 
-        if (fetchError || !existingRemark) {
-            console.error('[UPDATE REMARK] Remark not found or error:', fetchError);
-            res.status(404).json({ error: 'Remark not found' });
-            return;
-        }
+        await pool.query(
+            'UPDATE technician_remarks SET note_transport = ?, checking = ?, remark = ?, status = ? WHERE id = ?',
+            [note_transport || null, checking || null, remark || null, status || null, remarkId]
+        );
 
-        if (existingRemark.remark_by !== userId) {
-            console.error(`[UPDATE REMARK] User mismatch. Owner: ${existingRemark.remark_by}, Requester: ${userId}`);
-            res.status(403).json({ error: 'You can only edit your own remarks' });
-            return;
-        }
-
-        const { error } = await supabaseAdmin
-            .from('technician_remarks')
-            .update({
-                note_transport: note_transport || null,
-                checking: checking || null,
-                remark: remark || null,
-                status: status || null,
-            })
-            .eq('id', remarkId);
-
-        if (error) {
-            console.error('Update remark error:', error);
-            res.status(500).json({ error: 'Failed to update remark' });
-            return;
-        }
-
-        // Update complaint status if provided
         if (status) {
-            // Get complaint_id from the remark
-            const { data: remarkData } = await supabaseAdmin
-                .from('technician_remarks')
-                .select('complaint_id')
-                .eq('id', remarkId)
-                .single();
+            const complaintId = existingRemark.complaint_id;
+            await pool.query('UPDATE complaints SET status = ?, updated_at = NOW() WHERE id = ?', [status, complaintId]);
 
-            if (remarkData) {
-                await supabaseAdmin
-                    .from('complaints')
-                    .update({ status, updated_at: new Date().toISOString() })
-                    .eq('id', remarkData.complaint_id);
+            const [techRows]: any = await pool.query('SELECT name FROM technicians WHERE id = ?', [userId]);
+            const techName = techRows[0]?.name || 'Technician';
 
-                // Fetch tech name for notification
-                const { data: techData } = await supabaseAdmin
-                    .from('technicians')
-                    .select('name')
-                    .eq('id', userId)
-                    .single();
-                const techName = techData?.name || 'Technician';
+            const [cRows]: any = await pool.query('SELECT user_id, report_number FROM complaints WHERE id = ?', [complaintId]);
+            if (cRows.length > 0) {
+                const complaintData = cRows[0];
+                const reportNumber = complaintData.report_number;
+                const formattedDate = formatNotificationDate(new Date());
 
-                // Fetch complaint details
-                const { data: complaintData } = await supabaseAdmin
-                    .from('complaints')
-                    .select('user_id, report_number')
-                    .eq('id', remarkData.complaint_id)
-                    .single();
-
-                if (complaintData) {
-                    const reportNumber = complaintData.report_number;
-                    const formattedDate = formatNotificationDate(new Date());
-                    const statusText = status === 'in_process' ? 'In Process' : 'Complete';
-
-                    // Notify admins about the status update
-                    const { data: admins } = await supabaseAdmin.from('admins').select('id');
-                    if (admins) {
-                        for (const admin of admins) {
-                            await createNotification(
-                                admin.id,
-                                'admin',
-                                `Status Update: ${reportNumber}`,
-                                status === 'in_process'
-                                    ? `Status Update [${reportNumber}]: Service in progress by Technician ${techName} on ${formattedDate}.`
-                                    : `Status Update [${reportNumber}]: Service completed by Technician ${techName} on ${formattedDate}. Case status transitioned to 'Ready for Pickup'.`,
-                                'status_update_detailed',
-                                remarkData.complaint_id
-                            );
-                        }
+                const [admins]: any = await pool.query('SELECT id FROM admins');
+                if (admins) {
+                    for (const admin of admins) {
+                        await createNotification(admin.id, 'admin', `Status Update: ${reportNumber}`, status === 'in_process' ? `Status Update [${reportNumber}]: Service in progress by Technician ${techName} on ${formattedDate}.` : `Status Update [${reportNumber}]: Service completed by Technician ${techName} on ${formattedDate}. Case status transitioned to 'Ready for Pickup'.`, 'status_update_detailed', complaintId);
                     }
+                }
 
-                    // Notify User
-                    if (status === 'in_process') {
-                        await createNotification(
-                            complaintData.user_id,
-                            'user',
-                            `Status Update: ${reportNumber}`,
-                            `Status Update [${reportNumber}]: Service in process by Technician ${techName} on ${formattedDate}.`,
-                            'status_update_detailed',
-                            remarkData.complaint_id
-                        );
-                    } else if (status === 'closed') {
-                        await createNotification(
-                            complaintData.user_id,
-                            'user',
-                            `Status Update: ${reportNumber}`,
-                            `Status Update [${reportNumber}]: Service completed by Technician ${techName} on ${formattedDate}. Case status transitioned to 'Ready for Pickup'.`,
-                            'status_update_detailed',
-                            remarkData.complaint_id
-                        );
-                    }
+                if (status === 'in_process') {
+                    await createNotification(complaintData.user_id, 'user', `Status Update: ${reportNumber}`, `Status Update [${reportNumber}]: Service in process by Technician ${techName} on ${formattedDate}.`, 'status_update_detailed', complaintId);
+                } else if (status === 'closed') {
+                    await createNotification(complaintData.user_id, 'user', `Status Update: ${reportNumber}`, `Status Update [${reportNumber}]: Service completed by Technician ${techName} on ${formattedDate}. Case status transitioned to 'Ready for Pickup'.`, 'status_update_detailed', complaintId);
                 }
             }
+        }
 
-            // [DUAL NOTIFICATION - UPDATE REMARK] 
-            // Fetch complaint details again if needed (re-using logic from addRemark style)
-            // Ideally we do this efficiently. We already have remarkData and complaintData logic roughly set up above.
-            // Let's ensure we have reportNumber and user_id.
+        const complaintId = existingRemark.complaint_id;
+        const [cDataRows]: any = await pool.query('SELECT user_id, report_number FROM complaints WHERE id = ?', [complaintId]);
+        if (cDataRows.length > 0) {
+            const cData = cDataRows[0];
+            const rNum = cData.report_number;
 
-            const { data: remarkRel } = await supabaseAdmin
-                .from('technician_remarks')
-                .select('complaint_id')
-                .eq('id', remarkId)
-                .single();
-
-            if (remarkRel) {
-                const { data: cData } = await supabaseAdmin
-                    .from('complaints')
-                    .select('user_id, report_number')
-                    .eq('id', remarkRel.complaint_id)
-                    .single();
-
-                if (cData) {
-                    const rNum = cData.report_number;
-
-                    // 1. Dual Notification for Transport Note
-                    if (note_transport) {
-                        // Admin Trigger
-                        const transportAdminPayload = JSON.stringify({
-                            key: 'notif_transport_admin',
-                            params: { id: rNum }
-                        });
-
-                        const { data: admins } = await supabaseAdmin.from('admins').select('id');
-                        if (admins) {
-                            for (const admin of admins) {
-                                await createNotification(
-                                    admin.id,
-                                    'admin',
-                                    `Transport Update: ${rNum}`,
-                                    transportAdminPayload,
-                                    'transport_update',
-                                    remarkRel.complaint_id
-                                );
-                            }
-                        }
-
-                        // User Trigger
-                        const transportUserPayload = JSON.stringify({
-                            key: 'notif_transport_user',
-                            params: { id: rNum }
-                        });
-                        await createNotification(
-                            cData.user_id,
-                            'user',
-                            `Transport Update: ${rNum}`,
-                            transportUserPayload,
-                            'transport_update',
-                            remarkRel.complaint_id
-                        );
-                    }
-
-                    // 2. Dual Notification for Checking
-                    if (checking) {
-                        // Admin Trigger
-                        const checkingAdminPayload = JSON.stringify({
-                            key: 'notif_checking_admin',
-                            params: { id: rNum }
-                        });
-
-                        const { data: admins } = await supabaseAdmin.from('admins').select('id');
-                        if (admins) {
-                            for (const admin of admins) {
-                                await createNotification(
-                                    admin.id,
-                                    'admin',
-                                    `Checking Update: ${rNum}`,
-                                    checkingAdminPayload,
-                                    'checking_update',
-                                    remarkRel.complaint_id
-                                );
-                            }
-                        }
-
-                        // User Trigger
-                        const checkingUserPayload = JSON.stringify({
-                            key: 'notif_checking_user',
-                            params: { id: rNum }
-                        });
-                        await createNotification(
-                            cData.user_id,
-                            'user',
-                            `Checking Update: ${rNum}`,
-                            checkingUserPayload,
-                            'checking_update',
-                            remarkRel.complaint_id
-                        );
-                    }
-
-                    // 3. Dual Notification for Remark (General)
-                    if (remark) {
-                        // Admin Trigger
-                        const remarkAdminPayload = JSON.stringify({
-                            key: 'notif_remark_admin',
-                            params: { id: rNum }
-                        });
-
-                        const { data: admins } = await supabaseAdmin.from('admins').select('id');
-                        if (admins) {
-                            for (const admin of admins) {
-                                await createNotification(
-                                    admin.id,
-                                    'admin',
-                                    `New Remark: ${rNum}`,
-                                    remarkAdminPayload,
-                                    'remark_update',
-                                    remarkRel.complaint_id
-                                );
-                            }
-                        }
-
-                        // User Trigger
-                        const remarkUserPayload = JSON.stringify({
-                            key: 'notif_remark_user',
-                            params: { id: rNum }
-                        });
-                        await createNotification(
-                            cData.user_id,
-                            'user',
-                            `New Remark: ${rNum}`,
-                            remarkUserPayload,
-                            'remark_update',
-                            remarkRel.complaint_id
-                        );
+            if (note_transport) {
+                const transportAdminPayload = JSON.stringify({ key: 'notif_transport_admin', params: { id: rNum } });
+                const [admins]: any = await pool.query('SELECT id FROM admins');
+                if (admins) {
+                    for (const admin of admins) {
+                        await createNotification(admin.id, 'admin', `Transport Update: ${rNum}`, transportAdminPayload, 'transport_update', complaintId);
                     }
                 }
+                const transportUserPayload = JSON.stringify({ key: 'notif_transport_user', params: { id: rNum } });
+                await createNotification(cData.user_id, 'user', `Transport Update: ${rNum}`, transportUserPayload, 'transport_update', complaintId);
+            }
+
+            if (checking) {
+                const checkingAdminPayload = JSON.stringify({ key: 'notif_checking_admin', params: { id: rNum } });
+                const [admins]: any = await pool.query('SELECT id FROM admins');
+                if (admins) {
+                    for (const admin of admins) {
+                        await createNotification(admin.id, 'admin', `Checking Update: ${rNum}`, checkingAdminPayload, 'checking_update', complaintId);
+                    }
+                }
+                const checkingUserPayload = JSON.stringify({ key: 'notif_checking_user', params: { id: rNum } });
+                await createNotification(cData.user_id, 'user', `Checking Update: ${rNum}`, checkingUserPayload, 'checking_update', complaintId);
+            }
+
+            if (remark) {
+                const remarkAdminPayload = JSON.stringify({ key: 'notif_remark_admin', params: { id: rNum } });
+                const [admins]: any = await pool.query('SELECT id FROM admins');
+                if (admins) {
+                    for (const admin of admins) {
+                        await createNotification(admin.id, 'admin', `New Remark: ${rNum}`, remarkAdminPayload, 'remark_update', complaintId);
+                    }
+                }
+                const remarkUserPayload = JSON.stringify({ key: 'notif_remark_user', params: { id: rNum } });
+                await createNotification(cData.user_id, 'user', `New Remark: ${rNum}`, remarkUserPayload, 'remark_update', complaintId);
             }
         }
 
@@ -1269,42 +957,15 @@ export const deleteRemark = async (req: Request, res: Response): Promise<void> =
         const userId = req.user?.id;
         const role = req.user?.role;
 
-        console.log(`[DELETE REMARK] ID: ${remarkId}, User: ${userId}, Role: ${role}`);
+        if (role !== 'technician') { res.status(403).json({ error: 'Access denied' }); return; }
 
-        if (role !== 'technician') {
-            res.status(403).json({ error: 'Access denied' });
-            return;
-        }
+        const [existingRemarkRows]: any = await pool.query('SELECT remark_by FROM technician_remarks WHERE id = ?', [remarkId]);
+        const existingRemark = existingRemarkRows[0];
 
-        // Check ownership
-        const { data: existingRemark, error: fetchError } = await supabaseAdmin
-            .from('technician_remarks')
-            .select('remark_by')
-            .eq('id', remarkId)
-            .single();
+        if (!existingRemark) { res.status(404).json({ error: 'Remark not found' }); return; }
+        if (existingRemark.remark_by !== userId) { res.status(403).json({ error: 'You can only delete your own remarks' }); return; }
 
-        if (fetchError || !existingRemark) {
-            console.error('[DELETE REMARK] Remark not found or error:', fetchError);
-            res.status(404).json({ error: 'Remark not found' });
-            return;
-        }
-
-        if (existingRemark.remark_by !== userId) {
-            console.error(`[DELETE REMARK] User mismatch. Owner: ${existingRemark.remark_by}, Requester: ${userId}`);
-            res.status(403).json({ error: 'You can only delete your own remarks' });
-            return;
-        }
-
-        const { error } = await supabaseAdmin
-            .from('technician_remarks')
-            .delete()
-            .eq('id', remarkId);
-
-        if (error) {
-            console.error('Delete remark error:', error);
-            res.status(500).json({ error: 'Failed to delete remark' });
-            return;
-        }
+        await pool.query('DELETE FROM technician_remarks WHERE id = ?', [remarkId]);
 
         res.json({ message: 'Remark deleted successfully' });
     } catch (error) {
@@ -1319,208 +980,78 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
         const { id: paramId } = req.params;
         const { technician_id, status, note_transport, checking, remark } = req.body;
         const adminId = req.user?.id;
-        const forwarderRole = req.user?.role; // Track who forwarded it
 
         const id = await resolveComplaint(paramId);
-        if (!id) {
-            res.status(404).json({ error: 'Complaint not found' });
-            return;
-        }
+        if (!id) { res.status(404).json({ error: 'Complaint not found' }); return; }
 
-        // Get current assignment and report details
-        const { data: complaint } = await supabaseAdmin
-            .from('complaints')
-            .select('assigned_to, report_number, user_id, users(full_name, email)')
-            .eq('id', id)
-            .single();
+        const [complaintRows]: any = await pool.query(
+            'SELECT c.assigned_to, c.report_number, c.user_id, u.full_name, u.email FROM complaints c LEFT JOIN users u ON c.user_id = u.id WHERE c.id = ?',
+            [id]
+        );
+        const complaint = complaintRows[0];
 
-        if (!complaint) {
-            res.status(404).json({ error: 'Complaint not found' });
-            return;
-        }
+        if (!complaint) { res.status(404).json({ error: 'Complaint not found' }); return; }
 
-        // Update assignment
-        const { error } = await supabaseAdmin
-            .from('complaints')
-            .update({
-                assigned_to: technician_id,
-                status: status || 'in_process',
-                updated_at: new Date().toISOString(),
-            })
-            .eq('id', id);
+        const [techRows]: any = await pool.query('SELECT id, name, email FROM technicians WHERE id = ?', [technician_id]);
+        const techExists = techRows[0];
 
-        if (error) {
-            res.status(500).json({ error: 'Failed to forward complaint' });
-            return;
-        }
+        if (!techExists) { res.status(400).json({ error: 'Invalid technician ID - User is not a technician' }); return; }
 
-        // Record forward history
-        await supabaseAdmin.from('forward_history').insert({
-            complaint_id: id,
-            forward_from: complaint?.assigned_to || adminId,
-            forward_to: technician_id,
-        });
+        await pool.query(
+            'UPDATE complaints SET assigned_to = ?, status = ?, updated_at = NOW() WHERE id = ?',
+            [technician_id, status || 'in_process', id]
+        );
 
-        // Verify technician exists before notifying
-        // Verify technician exists and has correct role logic (implicit by table)
-        // Guard Logic: Ensure ID belongs to a valid technician before notifying
-        const { data: techExists } = await supabaseAdmin
-            .from('technicians')
-            .select('id, name, email')
-            .eq('id', technician_id)
-            .single();
+        await pool.query(
+            'INSERT INTO forward_history (complaint_id, forward_from, forward_to) VALUES (?, ?, ?)',
+            [id, complaint.assigned_to || adminId, technician_id]
+        );
 
-        if (!techExists) {
-            console.error(`[FORWARD_ERROR] Security Alert: Attempted to forward to non-technician ID ${technician_id}`);
-            res.status(400).json({ error: 'Invalid technician ID - User is not a technician' });
-            return;
-        }
-
-        // Save forward details as remark entry for timeline display
         const forwardSuffix = `Complaint Forward to Technician : ${techExists.name}`;
         const remarkText = remark ? `${remark}\n__FORWARD__${forwardSuffix}` : `__FORWARD__${forwardSuffix}`;
 
-        await supabaseAdmin.from('complaint_remarks').insert({
-            complaint_id: id,
-            status: status || 'pending',
-            note_transport: note_transport || null,
-            checking: checking || null,
-            remark: remarkText,
-            remark_by: adminId,
-            created_at: new Date().toISOString(),
-        });
-
-        console.log(`[FORWARD_DEBUG] Role Verification Passed. Complaint ${complaint?.report_number} forwarded to Technician: ${techExists.name} (ID: ${technician_id})`);
-
-        // NOTIFICATION: To Technician (Assignment)
-        // [HYBRID STORAGE] Save as JSON for multi-language support (Antigravity Protocol)
-        // NOTIFICATION 1: FOR TECHNICIAN
-        const assignmentPayload = JSON.stringify({
-            key: 'notif_processing_tech',
-            params: {
-                id: complaint?.report_number,
-                userName: (complaint?.users as any)?.full_name || 'Pengguna' // Add userName for tech context
-            }
-        });
-
-        await createNotification(
-            technician_id,
-            'technician',
-            `Job Assigned: ${complaint?.report_number}`,
-            assignmentPayload,
-            'assignment',
-            id
+        await pool.query(
+            'INSERT INTO complaint_remarks (complaint_id, status, note_transport, checking, remark, remark_by, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())',
+            [id, status || 'pending', note_transport || null, checking || null, remarkText, adminId]
         );
 
-        // NOTIFICATION 2: FOR USER (Antigravity Protocol - Double Trigger)
-        // Ensure User gets a specific "Status Update" message
-        if (status === 'in_process' || !status) { // Default to in_process if just forwarding
+        const assignmentPayload = JSON.stringify({ key: 'notif_processing_tech', params: { id: complaint.report_number, userName: complaint.full_name || 'Pengguna' } });
+        await createNotification(technician_id, 'technician', `Job Assigned: ${complaint.report_number}`, assignmentPayload, 'assignment', id);
+
+        if (status === 'in_process' || !status) {
             const formattedDate = formatNotificationDate(new Date());
-
-            // Get technician name
-            const { data: techData } = await supabaseAdmin
-                .from('technicians')
-                .select('name')
-                .eq('id', technician_id)
-                .single();
-            const techName = techData?.name || 'Technician';
-
-            const userPayload = JSON.stringify({
-                key: 'notif_processing_user',
-                params: {
-                    id: complaint?.report_number,
-                    name: techName,
-                    date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-                    time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
-                }
-            });
-
-            await createNotification(
-                complaint.user_id,
-                'user',
-                `Status Update: ${complaint?.report_number}`,
-                userPayload,
-                'status_update_detailed',
-                id
-            );
+            const userPayload = JSON.stringify({ key: 'notif_processing_user', params: { id: complaint.report_number, name: techExists.name, date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }), time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) } });
+            await createNotification(complaint.user_id, 'user', `Status Update: ${complaint.report_number}`, userPayload, 'status_update_detailed', id);
         }
 
-        // Notify Main Tech that job has been forwarded
         try {
-            const { data: mainTechs } = await supabaseAdmin.from('technicians').select('id').eq('username', 'maintech');
-            if (mainTechs) {
+            const [mainTechs]: any = await pool.query('SELECT id FROM technicians WHERE username = "maintech"');
+            if (mainTechs && mainTechs.length > 0) {
                 for (const mt of mainTechs) {
-                    await createNotification(
-                        mt.id,
-                        'main_technician',
-                        `Job Forwarded: ${complaint?.report_number}`,
-                        `Aduan ${complaint?.report_number} berjaya di hantar kepada juruteknik ${techExists.name}.`,
-                        'assignment',
-                        id
-                    );
+                    await createNotification(mt.id, 'main_technician', `Job Forwarded: ${complaint.report_number}`, `Aduan ${complaint.report_number} berjaya di hantar kepada juruteknik ${techExists.name}.`, 'assignment', id);
                 }
             }
-        } catch (e) {
-            console.error('Failed to notify main tech on forward:', e);
-        }
+        } catch (e) {}
 
-        // Email Notifications for Forward Job
         try {
             const adminEmail = 'adminecare.ptasssb@gmail.com';
             const subject = `Agihan Tugasan Aduan: ${complaint.report_number}`;
-            const customerName = (complaint.users as any)?.full_name || (complaint.users as any)?.name || 'Pelanggan';
-            const customerEmail = (complaint.users as any)?.email;
+            const customerName = complaint.full_name || 'Pelanggan';
+            const customerEmail = complaint.email;
 
-            // 1. Email to Assigned Technician
             if (techExists.email) {
-                const techHtml = buildNotificationEmailHtml(
-                    techExists.name, subject,
-                    `Satu tugasan aduan (${complaint.report_number}) telah diagihkan kepada anda oleh pihak pengurusan. Sila semak aplikasi E-CARE untuk maklumat lanjut.`,
-                    complaint.report_number, 'technician'
-                );
+                const techHtml = buildNotificationEmailHtml(techExists.name, subject, `Satu tugasan aduan (${complaint.report_number}) telah diagihkan kepada anda oleh pihak pengurusan. Sila semak aplikasi E-CARE untuk maklumat lanjut.`, complaint.report_number, 'technician');
                 await sendEmail(techExists.email, subject, techHtml);
             }
 
-            // 2. Email to Admin
-            const adminHtml = buildNotificationEmailHtml(
-                'Administrator', subject,
-                `Tugasan aduan (${complaint.report_number}) telah berjaya diagihkan kepada juruteknik ${techExists.name}.`,
-                complaint.report_number, 'admin'
-            );
+            const adminHtml = buildNotificationEmailHtml('Administrator', subject, `Tugasan aduan (${complaint.report_number}) telah berjaya diagihkan kepada juruteknik ${techExists.name}.`, complaint.report_number, 'admin');
             await sendEmail(adminEmail, subject, adminHtml);
 
-            // 3. Email to Customer
             if (customerEmail) {
-                const custHtml = buildNotificationEmailHtml(
-                    customerName, subject,
-                    `Aduan anda (${complaint.report_number}) telah diagihkan kepada juruteknik kami (${techExists.name}) untuk tindakan selanjutnya.`,
-                    complaint.report_number, 'user'
-                );
+                const custHtml = buildNotificationEmailHtml(customerName, subject, `Aduan anda (${complaint.report_number}) telah diagihkan kepada juruteknik kami (${techExists.name}) untuk tindakan selanjutnya.`, complaint.report_number, 'user');
                 await sendEmail(customerEmail, subject, custHtml);
             }
-        } catch (emailErr) {
-            console.error('Failed to send forward job emails:', emailErr);
-        }
-
-        // NOTIFICATION: Status Updates (if status changed explicitly to closed, or generic update)
-        // If status was 'in_process', it's already handled above by the Double Trigger.
-        // If status is 'closed', we might want to notify user too, but forward is usually for assignment (in_process).
-        // The original code had a block for 'status' check. We should preserve it for 'closed' or other statuses, 
-        // but avoid double-sending for 'in_process' since we just did it above.
-
-        if (status && status !== 'in_process') {
-            // Handle other statuses if necessary (e.g. if admin forwards AND closes same time - unlikely but possible)
-            // Or if we want to keep the original block but exclude in_process
-            const reportNumber = complaint?.report_number;
-
-            // ... existing logic for 'closed' if needed ...
-            if (status === 'closed') {
-                // ... copy of closed logic if needed or rely on updateComplaint ...
-                // Usually forward is just assignment (in_process).
-                // Let's leave this part simple: The user requested Double Trigger for "Forward" which implies Assignment/In Process.
-                // We will skip the redundant 'in_process' block from original code.
-            }
-        }
+        } catch (emailErr) {}
 
         res.json({ message: 'Complaint forwarded successfully' });
     } catch (error) {
@@ -1536,87 +1067,36 @@ export const cancelComplaint = async (req: Request, res: Response): Promise<void
         const userId = req.user?.id;
 
         const id = await resolveComplaint(paramId);
-        if (!id) {
-            res.status(404).json({ error: 'Complaint not found' });
-            return;
-        }
+        if (!id) { res.status(404).json({ error: 'Complaint not found' }); return; }
 
-        // Get complaint with user info
-        const { data: complaint, error: fetchError } = await supabaseAdmin
-            .from('complaints')
-            .select('id, user_id, status, report_number, users(full_name)')
-            .eq('id', id)
-            .single();
+        const [complaintRows]: any = await pool.query(
+            'SELECT c.user_id, c.status, c.report_number, u.full_name FROM complaints c LEFT JOIN users u ON c.user_id = u.id WHERE c.id = ?',
+            [id]
+        );
+        const complaint = complaintRows[0];
 
-        if (fetchError || !complaint) {
-            res.status(404).json({ error: 'Complaint not found' });
-            return;
-        }
+        if (!complaint) { res.status(404).json({ error: 'Complaint not found' }); return; }
 
-        // Check ownership
-        if (complaint.user_id !== userId) {
-            res.status(403).json({ error: 'You can only cancel your own complaints' });
-            return;
-        }
+        if (complaint.user_id !== userId) { res.status(403).json({ error: 'You can only cancel your own complaints' }); return; }
 
-        // Only allow cancellation for pending status
         if (complaint.status !== 'pending') {
             res.status(400).json({ error: 'Cannot cancel complaint. Only pending complaints can be cancelled.' });
             return;
         }
 
-        // Update status to 'cancelled' instead of deleting
-        const { error: updateError } = await supabaseAdmin
-            .from('complaints')
-            .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-            .eq('id', id);
-
-        if (updateError) {
-            console.error('Cancel complaint error:', updateError);
-            res.status(500).json({ error: 'Failed to cancel complaint' });
-            return;
-        }
+        await pool.query('UPDATE complaints SET status = "cancelled", updated_at = NOW() WHERE id = ?', [id]);
 
         const formattedDate = formatNotificationDate(new Date());
 
-        // Notify user about cancellation (with complaint ID for navigation)
-        await createNotification(
-            userId!,
-            'user',
-            `Status Update: ${complaint.report_number}`,
-            `Cancelled on ${formattedDate}`,
-            'status_update_detailed',
-            id
-        );
+        await createNotification(userId!, 'user', `Status Update: ${complaint.report_number}`, `Cancelled on ${formattedDate}`, 'status_update_detailed', id);
 
-        // Get admin to notify
-        const { data: admin, error: adminError } = await supabaseAdmin
-            .from('admins')
-            .select('id')
-            .limit(1)
-            .single();
-
-        console.log(`[CANCEL COMPLAINT] Admin query result:`, admin, 'Error:', adminError?.message);
+        const [adminRows]: any = await pool.query('SELECT id FROM admins LIMIT 1');
+        const admin = adminRows[0];
 
         if (admin) {
-            const userName = (complaint.users as any)?.full_name || 'Pengguna';
-            console.log(`[CANCEL COMPLAINT] Creating notification for admin ${admin.id}, userName: ${userName}`);
-
-            // Notify admin about user cancellation
-            await createNotification(
-                admin.id,
-                'admin',
-                `Aduan Dibatalkan oleh Pengguna`,
-                `${userName} telah membatalkan aduan (No Laporan: ${complaint.report_number}). Klik untuk semak.`,
-                'status_update',
-                id
-            );
-            console.log(`[CANCEL COMPLAINT] Admin notification created successfully`);
-        } else {
-            console.log(`[CANCEL COMPLAINT] No admin found to notify!`);
+            const userName = complaint.full_name || 'Pengguna';
+            await createNotification(admin.id, 'admin', `Aduan Dibatalkan oleh Pengguna`, `${userName} telah membatalkan aduan (No Laporan: ${complaint.report_number}). Klik untuk semak.`, 'status_update', id);
         }
-
-        console.log(`[CANCEL COMPLAINT] User ${userId} cancelled complaint ${complaint.report_number}`);
 
         res.json({ message: 'Complaint cancelled successfully' });
     } catch (error) {
@@ -1631,43 +1111,18 @@ export const deleteComplaint = async (req: Request, res: Response): Promise<void
         const { id: paramId } = req.params;
 
         const id = await resolveComplaint(paramId);
-        if (!id) {
-            res.status(404).json({ error: 'Aduan tidak dijumpai' });
-            return;
-        }
+        if (!id) { res.status(404).json({ error: 'Aduan tidak dijumpai' }); return; }
 
-        // Optionally fetch the complaint first to ensure it exists
-        const { data: complaint, error: fetchError } = await supabaseAdmin
-            .from('complaints')
-            .select('report_number')
-            .eq('id', id)
-            .single();
+        const [complaintRows]: any = await pool.query('SELECT report_number FROM complaints WHERE id = ?', [id]);
+        const complaint = complaintRows[0];
 
-        if (fetchError || !complaint) {
-            res.status(404).json({ error: 'Aduan tidak dijumpai' });
-            return;
-        }
+        if (!complaint) { res.status(404).json({ error: 'Aduan tidak dijumpai' }); return; }
 
-        // Delete from technician_remarks
-        await supabaseAdmin.from('technician_remarks').delete().eq('complaint_id', id);
-        
-        // Delete from complaint_remarks
-        await supabaseAdmin.from('complaint_remarks').delete().eq('complaint_id', id);
+        await pool.query('DELETE FROM technician_remarks WHERE complaint_id = ?', [id]);
+        await pool.query('DELETE FROM complaint_remarks WHERE complaint_id = ?', [id]);
+        await pool.query('DELETE FROM notifications WHERE reference_id = ?', [id]);
+        await pool.query('DELETE FROM complaints WHERE id = ?', [id]);
 
-        // Delete from notifications where reference_id = id
-        await supabaseAdmin.from('notifications').delete().eq('reference_id', id);
-
-        // Finally delete the complaint
-        const { error: deleteError } = await supabaseAdmin
-            .from('complaints')
-            .delete()
-            .eq('id', id);
-
-        if (deleteError) {
-            throw deleteError;
-        }
-
-        console.log(`[DELETE COMPLAINT] Admin deleted complaint ${complaint.report_number}`);
         res.json({ message: 'Aduan berjaya dipadam' });
     } catch (error: any) {
         console.error('Error deleting complaint:', error);
@@ -1680,20 +1135,12 @@ export const resolveNumericId = async (req: Request, res: Response): Promise<voi
     try {
         const { id } = req.params;
         const complaintId = parseInt(id, 10);
-        if (isNaN(complaintId)) {
-            res.status(400).json({ error: 'Invalid ID' });
-            return;
-        }
-        const { data, error } = await supabaseAdmin
-            .from('complaints')
-            .select('report_number')
-            .eq('id', complaintId)
-            .single();
-        if (error || !data) {
-            res.status(404).json({ error: 'Complaint not found' });
-            return;
-        }
-        res.json({ report_number: data.report_number });
+        if (isNaN(complaintId)) { res.status(400).json({ error: 'Invalid ID' }); return; }
+
+        const [rows]: any = await pool.query('SELECT report_number FROM complaints WHERE id = ?', [complaintId]);
+        if (rows.length === 0) { res.status(404).json({ error: 'Complaint not found' }); return; }
+
+        res.json({ report_number: rows[0].report_number });
     } catch (error) {
         console.error('Resolve numeric ID error:', error);
         res.status(500).json({ error: 'Internal server error' });

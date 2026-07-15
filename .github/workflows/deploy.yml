@@ -1,4 +1,4 @@
-name: CI/CD Deploy E-Care
+name: CI/CD Deploy E-Care to Hostinger
 
 on:
   push:
@@ -6,53 +6,83 @@ on:
       - main
 
 jobs:
-  deploy:
-    runs-on: self-hosted
+  build-and-deploy:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Show runner info
-        run: |
-          echo "Runner: $(uname -a || hostname)"
-          docker --version || true
-          docker compose version || true
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-      - name: Create backend env file
-        run: |
-          echo "PORT=3000" > backend/.env
-          echo "NODE_ENV=production" >> backend/.env
-          echo "FRONTEND_URL=https://zszonetechnology.top" >> backend/.env
-          echo "JWT_SECRET=ecare_jwt_secret_key_2024_change_in_production" >> backend/.env
-          echo "JWT_EXPIRES_IN=7d" >> backend/.env
-          echo "DB_HOST=host.docker.internal" >> backend/.env
-          echo "DB_USER=root" >> backend/.env
-          echo "DB_PASSWORD=" >> backend/.env
-          echo "DB_NAME=ecare_db" >> backend/.env
-          echo "DB_PORT=3306" >> backend/.env
-          echo "SUPABASE_URL=https://srshalxtikpylcfztlmz.supabase.co" >> backend/.env
-          echo "SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNyc2hhbHh0aWtweWxjZnp0bG16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4NDk4NDAsImV4cCI6MjA4NTQyNTg0MH0.15yIT0pGWgT5UloRyDSVSA88L0mnIJKBom0L1pw9CGw" >> backend/.env
-          echo "SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNyc2hhbHh0aWtweWxjZnp0bG16Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2OTg0OTg0MCwiZXhwIjoyMDg1NDI1ODQwfQ.Mw4wTRl8qMDLXMXClfPqbH2WbfTH4m5eGnGtK0cXXWU" >> backend/.env
-          echo "SMTP_HOST=smtp.gmail.com" >> backend/.env
-          echo "SMTP_PORT=587" >> backend/.env
-          echo "SMTP_USER=${{ secrets.SMTP_USER }}" >> backend/.env
-          echo "SMTP_PASS=${{ secrets.SMTP_PASS }}" >> backend/.env
-          echo "SMTP_FROM=${{ secrets.SMTP_USER }}" >> backend/.env
-          echo "SMTP_FROM_NAME=E-CARE System" >> backend/.env
-          echo "backend/.env created"
+      # 1. BUILD FRONTEND
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm ci
 
-      - name: Stop all containers and cleanup
-        run: |
-          docker compose down --remove-orphans || true
-          docker ps -aq | xargs -r docker rm -f || true
+      - name: Build Frontend
+        working-directory: ./frontend
+        env:
+          VITE_API_URL: "https://api.ptas.my/api"
+          VITE_GOOGLE_CLIENT_ID: "385770142030-f7hgo133gh1rgr89ml4770fllp1hrrl4.apps.googleusercontent.com"
+        run: npm run build
 
-      - name: Build and start containers
-        run: docker compose up -d --build --force-recreate
+      # 2. BUILD BACKEND
+      - name: Install Backend Dependencies
+        working-directory: ./backend
+        run: npm ci
 
-      - name: Verify deployment
+      - name: Build Backend (TypeScript)
+        working-directory: ./backend
+        run: npm run build
+
+      # 3. PREPARE BACKEND FILES FOR FTP
+      # Copy package.json to dist so we can upload it easily along with compiled code
+      - name: Prepare Backend Dist
         run: |
-          echo "Waiting for services to start..."
-          sleep 15
-          curl -sf http://localhost:3000/api/health || echo "Backend health check failed"
-          curl -sf http://localhost/ || echo "Frontend check failed"
-          echo "Deployment verification done"
+          cp backend/package.json backend/dist/
+          cp backend/package-lock.json backend/dist/
+          
+      # 4. UPLOAD FRONTEND VIA FTP
+      - name: Deploy Frontend via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./frontend/dist/
+          # UBAH INI KEPADA FOLDER SEBENAR DI HOSTINGER (Contoh: ./domains/ecare.ptas.my/public_html/)
+          server-dir: ./domains/ptas.my/public_html/
+          
+      # 5. UPLOAD BACKEND VIA FTP
+      - name: Deploy Backend via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./backend/dist/
+          # UBAH INI KEPADA FOLDER SEBENAR DI HOSTINGER (Berdasarkan ftp_script.txt anda)
+          server-dir: ./domains/api.ptas.my/nodejs/
+          exclude: |
+            **/.env
+            **/node_modules/**
+            **/uploads/**
+            uploads/**
+          
+      # 6. TRIGGER HOSTINGER NODE.JS RESTART
+      - name: Create Restart File
+        run: |
+          mkdir -p tmp
+          echo "Restarting server at $(date)" > tmp/restart.txt
+          
+      - name: Deploy Restart File via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./tmp/
+          server-dir: ./domains/api.ptas.my/nodejs/tmp/

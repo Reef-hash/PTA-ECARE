@@ -1,13 +1,27 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+let API_URL = import.meta.env.VITE_API_URL || '/api';
+if (API_URL === 'https://api.ptas.my') {
+    API_URL = 'https://api.ptas.my/api';
+}
 
 const api = axios.create({
     baseURL: API_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
 });
+
+export const getFileUrl = (path: string | undefined | null) => {
+    if (!path) return '';
+    
+    // Fix older database entries that might have the wrong domain saved
+    if (path.includes('/uploads/')) {
+        const uploadIndex = path.indexOf('/uploads/');
+        path = path.substring(uploadIndex);
+    }
+    
+    if (path.startsWith('http')) return path;
+    const base = API_URL.endsWith('/api') ? API_URL.slice(0, -4) : API_URL;
+    return `${base}${path.startsWith('/') ? '' : '/'}${path}`;
+};
 
 // Helper to get cookie (duplicated to avoid circular dependency)
 function getCookie(name: string) {

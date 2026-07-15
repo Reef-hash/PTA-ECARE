@@ -9,7 +9,8 @@ import {
     X,
     Settings,
     ChevronDown,
-    ArrowLeft
+    ArrowLeft,
+    Home
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -118,6 +119,21 @@ export default function MainTechLayout({ children, breadcrumb }: MainTechLayoutP
                         })}
                     </nav>
 
+                    {/* Sidebar Footer - Logout */}
+                    <div className="mt-auto pt-6 pb-2">
+                        <button
+                            onClick={handleLogout}
+                            className="group relative w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:text-white bg-red-50 overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 font-medium border border-red-100 hover:border-transparent"
+                        >
+                            <div className="p-2 rounded-lg bg-white/90 group-hover:bg-white/20 transition-colors shadow-soft-sm text-red-600 group-hover:text-white z-10">
+                                <LogOut className="w-4 h-4" />
+                            </div>
+                            <span className="z-10">{t('common_actions.logout')}</span>
+                            
+                            {/* Decorative gradient background that appears on hover */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-rose-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        </button>
+                    </div>
                 </div>
             </aside>
 
@@ -134,11 +150,17 @@ export default function MainTechLayout({ children, breadcrumb }: MainTechLayoutP
                             <ArrowLeft className="w-5 h-5" />
                         </button>
                         {breadcrumb && (
-                            <p className="text-xs sm:text-sm text-gray-500 truncate">
-                                <span className="text-gray-400">Pages</span>
+                            <div className="flex items-center text-xs sm:text-sm text-gray-500 truncate">
+                                <Link 
+                                    to="/main-tech/dashboard" 
+                                    className="text-gray-400 hover:text-indigo-600 transition-colors flex items-center"
+                                    title={t('main_tech.layout.sidebar.dashboard') || 'Dashboard'}
+                                >
+                                    <Home className="w-4 h-4" />
+                                </Link>
                                 <span className="mx-1 sm:mx-2 text-gray-400">/</span>
                                 <span className="font-medium text-gray-700">{breadcrumb}</span>
-                            </p>
+                            </div>
                         )}
                     </div>
 

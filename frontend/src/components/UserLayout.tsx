@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, Fragment } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ScrollIndicator from './ScrollIndicator';
@@ -12,6 +12,7 @@ import {
     X,
     ChevronDown,
     ArrowLeft,
+    FileText,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -34,6 +35,7 @@ export default function UserLayout({ children, breadcrumb }: UserLayoutProps) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
     const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+    const [repairProgressOpen, setRepairProgressOpen] = useState(false);
 
     const isProfileIncomplete = (user as any)?.ic_number?.startsWith('G-') || false;
 
@@ -42,6 +44,15 @@ export default function UserLayout({ children, breadcrumb }: UserLayoutProps) {
         { path: '/users/register-complaint', label: t('user_sidebar.new_complaint'), icon: FilePlus },
         { path: '/users/complaint-history', label: t('user_sidebar.history'), icon: History },
         { path: '/users/profile', label: t('user_sidebar.profile'), icon: User },
+    ];
+
+    const repairProgressItems = [
+        { path: '/users/complaint-history', label: t('dashboard.total_complaints') || 'Total Complaints' },
+        { path: '/users/complaint-history?status=pending', label: t('dashboard.pending') || 'Pending' },
+        { path: '/users/complaint-history?status=in_process', label: t('dashboard.in_process') || 'In Process' },
+        { path: '/users/complaint-history?status=incomplete', label: t('dashboard.incomplete') || 'Incomplete' },
+        { path: '/users/complaint-history?status=closed', label: t('dashboard.closed') || 'Complete' },
+        { path: '/users/complaint-history?status=cancelled', label: t('dashboard.cancelled') || 'Cancelled' },
     ];
 
     const handleLogout = () => {
@@ -85,7 +96,7 @@ export default function UserLayout({ children, breadcrumb }: UserLayoutProps) {
             <aside
                 className={`fixed top-4 left-4 h-[calc(100vh-2rem)] w-64 bg-[#f8f9fa] rounded-2xl shadow-soft-xl z-50 overflow-y-auto [&::-webkit-scrollbar]:hidden transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:top-0 lg:left-0 lg:h-screen lg:rounded-none lg:shadow-none lg:bg-transparent ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
             >
-                <div className="p-4">
+                <div className="p-4 flex flex-col min-h-full">
                     {/* Close button (mobile) */}
                     <button
                         onClick={() => setSidebarOpen(false)}
@@ -115,23 +126,79 @@ export default function UserLayout({ children, breadcrumb }: UserLayoutProps) {
                             const Icon = item.icon;
                             const isActive = location.pathname === item.path;
                             return (
-                                <Link
-                                    key={item.path}
-                                    to={item.path}
-                                    onClick={() => setSidebarOpen(false)}
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-sm font-medium ${isActive
-                                        ? 'bg-white shadow-soft-md text-gray-800'
-                                        : 'text-gray-600 hover:bg-gray-50'
-                                        }`}
-                                >
-                                    <div className={`p-2 rounded-lg ${isActive ? 'bg-gradient-primary shadow-md text-white' : 'bg-white shadow-soft-md text-gray-800'}`}>
-                                        <Icon className="w-4 h-4" />
-                                    </div>
-                                    {item.label}
-                                </Link>
+                                <Fragment key={item.path}>
+                                    <Link
+                                        to={item.path}
+                                        onClick={() => setSidebarOpen(false)}
+                                        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-sm font-medium ${isActive
+                                            ? 'bg-white shadow-soft-md text-gray-800'
+                                            : 'text-gray-600 hover:bg-gray-50'
+                                            }`}
+                                    >
+                                        <div className={`p-2 rounded-lg ${isActive ? 'bg-gradient-primary shadow-md text-white' : 'bg-white shadow-soft-md text-gray-800'}`}>
+                                            <Icon className="w-4 h-4" />
+                                        </div>
+                                        {item.label}
+                                    </Link>
+
+                                    {/* Repair Progress Submenu */}
+                                    {item.path === '/users/complaint-history' && (
+                                        <div className="mt-2">
+                                            <button
+                                                onClick={() => setRepairProgressOpen(!repairProgressOpen)}
+                                                className="w-full flex items-center justify-between px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-all text-sm font-medium"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 rounded-lg bg-white shadow-soft-md text-gray-800">
+                                                        <FileText className="w-4 h-4" />
+                                                    </div>
+                                                    Repair Progress
+                                                </div>
+                                                <ChevronDown className={`w-4 h-4 transition-transform ${repairProgressOpen ? 'rotate-180' : ''}`} />
+                                            </button>
+                                            {repairProgressOpen && (
+                                                <div className="ml-4 pl-4 border-l border-gray-200 space-y-1 mt-1">
+                                                    {repairProgressItems.map((subItem) => {
+                                                        const isSubActive = location.pathname + location.search === subItem.path;
+                                                        return (
+                                                            <Link
+                                                                key={subItem.path}
+                                                                to={subItem.path}
+                                                                onClick={() => setSidebarOpen(false)}
+                                                                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${isSubActive
+                                                                    ? 'text-gray-900 font-semibold'
+                                                                    : 'text-gray-500 hover:text-gray-800'
+                                                                    }`}
+                                                            >
+                                                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isSubActive ? 'bg-primary-500' : 'bg-gray-400'}`}></span>
+                                                                {subItem.label}
+                                                            </Link>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </Fragment>
                             );
                         })}
                     </nav>
+
+                    {/* Sidebar Footer - Logout */}
+                    <div className="mt-auto pt-6 pb-2">
+                        <button
+                            onClick={handleLogout}
+                            className="group relative w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:text-white bg-red-50 overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 font-medium border border-red-100 hover:border-transparent"
+                        >
+                            <div className="p-2 rounded-lg bg-white/90 group-hover:bg-white/20 transition-colors shadow-soft-sm text-red-600 group-hover:text-white z-10">
+                                <LogOut className="w-4 h-4" />
+                            </div>
+                            <span className="z-10">{t('user_sidebar.logout')}</span>
+                            
+                            {/* Decorative gradient background that appears on hover */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-rose-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        </button>
+                    </div>
                 </div>
             </aside>
 
@@ -148,11 +215,17 @@ export default function UserLayout({ children, breadcrumb }: UserLayoutProps) {
                             <ArrowLeft className="w-5 h-5" />
                         </button>
                         {breadcrumb && (
-                            <p className="text-xs sm:text-sm text-gray-500 truncate">
-                                <span className="text-gray-400">Pages</span>
+                            <div className="flex items-center text-xs sm:text-sm text-gray-500 truncate">
+                                <Link 
+                                    to="/users/dashboard" 
+                                    className="text-gray-400 hover:text-indigo-600 transition-colors flex items-center"
+                                    title={t('sidebar.dashboard') || 'Dashboard'}
+                                >
+                                    <Home className="w-4 h-4" />
+                                </Link>
                                 <span className="mx-1 sm:mx-2 text-gray-400">/</span>
                                 <span className="font-medium text-gray-700">{breadcrumb}</span>
-                            </p>
+                            </div>
                         )}
                     </div>
 
@@ -199,7 +272,7 @@ export default function UserLayout({ children, breadcrumb }: UserLayoutProps) {
 
                 {/* Footer */}
                 <footer className="p-4 text-center text-sm text-gray-500">
-                    © 2026 DFKTVETMARABESUT. All rights reserved.
+                    © 2026 DFK TVETMARA BESUT. All Right Reserved.
                 </footer>
             </main>
 

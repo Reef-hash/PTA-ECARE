@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { supabaseAdmin } from '../config/supabase.js';
+import pool from '../config/mysql.js';
 import { sendEmail } from '../utils/email.js';
 
 // Get notifications for the logged-in user
@@ -8,32 +8,23 @@ export const getNotifications = async (req: Request, res: Response): Promise<voi
         const userId = (req as any).user.id;
         const role = (req as any).user.role;
 
-        console.log(`[NOTIFICATIONS] Fetching for user: ${userId}, role: ${role}`);
+        console.log(`[NOTIFICATIONS] Fetching for user: ${userId} (type: ${typeof userId}), role: ${role}`);
 
-        const { data, error } = await supabaseAdmin
-            .from('notifications')
-            .select('*')
-            .eq('recipient_id', userId)
-            .eq('recipient_role', role)
-            .order('created_at', { ascending: false })
-            .limit(50);
+        const [rows]: any = await pool.query(
+            'SELECT * FROM notifications WHERE recipient_id = ? AND recipient_role = ? ORDER BY created_at DESC LIMIT 50',
+            [userId, role]
+        );
 
-        if (error) throw error;
+        console.log(`[NOTIFICATIONS] Found ${rows?.length || 0} notifications for recipient_id=${userId}`);
 
-        console.log(`[NOTIFICATIONS] Found ${data?.length || 0} notifications`);
-
-        // Count unread
-        const { count, error: countError } = await supabaseAdmin
-            .from('notifications')
-            .select('*', { count: 'exact', head: true })
-            .eq('recipient_id', userId)
-            .eq('recipient_role', role)
-            .eq('is_read', false);
-
-        if (countError) throw countError;
+        const [countResult]: any = await pool.query(
+            'SELECT COUNT(*) as unread_count FROM notifications WHERE recipient_id = ? AND recipient_role = ? AND is_read = 0',
+            [userId, role]
+        );
+        const count = countResult[0].unread_count;
 
         res.json({
-            notifications: data || [],
+            notifications: rows || [],
             unread_count: count || 0
         });
     } catch (error) {
@@ -50,23 +41,15 @@ export const markAsRead = async (req: Request, res: Response): Promise<void> => 
         const { id } = req.params;
 
         if (id === 'all') {
-            const { error } = await supabaseAdmin
-                .from('notifications')
-                .update({ is_read: true })
-                .eq('recipient_id', userId)
-                .eq('recipient_role', role)
-                .eq('is_read', false);
-
-            if (error) throw error;
+            await pool.query(
+                'UPDATE notifications SET is_read = 1 WHERE recipient_id = ? AND recipient_role = ? AND is_read = 0',
+                [userId, role]
+            );
         } else {
-            const { error } = await supabaseAdmin
-                .from('notifications')
-                .update({ is_read: true })
-                .eq('id', id)
-                .eq('recipient_id', userId)
-                .eq('recipient_role', role);
-
-            if (error) throw error;
+            await pool.query(
+                'UPDATE notifications SET is_read = 1 WHERE id = ? AND recipient_id = ? AND recipient_role = ?',
+                [id, userId, role]
+            );
         }
 
         res.json({ success: true });
@@ -173,7 +156,7 @@ const translateDetailedMessage = (msg: string, userName: string, branchName: str
 
 // HTML Email Notification Template (Blue & White Theme)
 export const buildNotificationEmailHtml = (name: string, title: string, message: string, reportNumber?: string, role?: string) => {
-    let baseUrl = 'https://pta-ecare.vercel.app';
+    let baseUrl = 'https://ptas.my';
     if (process.env.FRONTEND_URL) {
         baseUrl = process.env.FRONTEND_URL.replace(/\/$/, ''); // Remove trailing slash if any
     }
@@ -272,20 +255,16 @@ export const createNotification = async (
         console.log(`[CREATE NOTIFICATION] recipientId: ${userId}, recipientRole: ${role}, title: ${start_msg}, referenceId: ${complaint_id}`);
 
         // 1. Create DB notification for loceng bell
-        const { error } = await supabaseAdmin
-            .from('notifications')
-            .insert({
-                recipient_id: userId,
-                recipient_role: role,
-                title: start_msg,
-                message: payload,
-                type,
-                reference_id: complaint_id || null,
-                is_read: false
-            });
-
-        if (error) throw error;
-        console.log('[CREATE NOTIFICATION] Bell DB notification created successfully');
+        try {
+            await pool.query(
+                'INSERT INTO notifications (recipient_id, recipient_role, title, message, type, reference_id, is_read) VALUES (?, ?, ?, ?, ?, ?, 0)',
+                [userId, role, start_msg, payload, type, complaint_id || null]
+            );
+            console.log('[CREATE NOTIFICATION] Bell DB notification created successfully');
+        } catch (dbError: any) {
+            console.error('[CREATE NOTIFICATION] DB INSERT ERROR:', dbError);
+            require('fs').appendFileSync('error_log.txt', new Date().toISOString() + ' - DB ERROR: ' + (dbError.message || dbError) + '\n');
+        }
 
         // 2. Fetch email and send custom HTML transaction email in a safe background task
         try {
@@ -293,33 +272,20 @@ export const createNotification = async (
             let name = '';
 
             if (role === 'user') {
-                const { data: userProfile } = await supabaseAdmin
-                    .from('users')
-                    .select('email, full_name')
-                    .eq('id', userId)
-                    .single();
-                if (userProfile) {
-                    email = userProfile.email || '';
-                    name = userProfile.full_name || '';
+                const [userRows]: any = await pool.query('SELECT email, full_name FROM users WHERE id = ?', [userId]);
+                if (userRows.length > 0) {
+                    email = userRows[0].email || '';
+                    name = userRows[0].full_name || '';
                 }
             } else if (role === 'admin') {
-                const { data: adminProfile } = await supabaseAdmin
-                    .from('admins')
-                    .select('email, admin_name')
-                    .eq('id', userId)
-                    .single();
-                // Ensure all notifications for admin role go to adminecare.ptasssb@gmail.com
+                const [adminRows]: any = await pool.query('SELECT email, admin_name FROM admins WHERE id = ?', [userId]);
                 email = 'adminecare.ptasssb@gmail.com';
-                name = adminProfile?.admin_name || 'Administrator';
+                name = adminRows.length > 0 ? adminRows[0].admin_name : 'Administrator';
             } else if (role === 'technician' || role === 'main_technician') {
-                const { data: techProfile } = await supabaseAdmin
-                    .from('technicians')
-                    .select('email, name')
-                    .eq('id', userId)
-                    .single();
-                if (techProfile) {
-                    email = techProfile.email || '';
-                    name = techProfile.name || '';
+                const [techRows]: any = await pool.query('SELECT email, name FROM technicians WHERE id = ?', [userId]);
+                if (techRows.length > 0) {
+                    email = techRows[0].email || '';
+                    name = techRows[0].name || '';
                 }
             }
 
@@ -328,14 +294,10 @@ export const createNotification = async (
                 let branchName = 'cawangan asal aduan';
                 
                 if (complaint_id) {
-                    const { data: complaintData } = await supabaseAdmin
-                        .from('complaints')
-                        .select('state, report_number')
-                        .eq('id', complaint_id)
-                        .single();
-                    if (complaintData) {
-                        if (complaintData.state) branchName = complaintData.state;
-                        if (complaintData.report_number) reportNumber = complaintData.report_number;
+                    const [complaintRows]: any = await pool.query('SELECT state, report_number FROM complaints WHERE id = ?', [complaint_id]);
+                    if (complaintRows.length > 0) {
+                        if (complaintRows[0].state) branchName = complaintRows[0].state;
+                        if (complaintRows[0].report_number) reportNumber = complaintRows[0].report_number;
                     }
                 }
                 
@@ -376,7 +338,8 @@ export const createNotification = async (
         } catch (emailErr) {
             console.error('[CREATE NOTIFICATION] Failed to fetch profile or send email:', emailErr);
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error('Failed to create notification:', error);
+        require('fs').appendFileSync('error_log.txt', new Date().toISOString() + ' - GENERAL ERROR: ' + (error.message || error) + '\n');
     }
 };

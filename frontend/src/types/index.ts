@@ -97,6 +97,7 @@ export interface Complaint {
     category_name?: string;
     customer?: User;
     model?: string;
+    tracks?: any[];
 }
 
 export interface ComplaintRemark {
@@ -163,7 +164,6 @@ export interface RegisterData {
 
 export interface GoogleAuthData {
     credential?: string;
-    supabase_access_token?: string;
     full_name?: string;
     ic_number?: string;
     contact_no?: string;
@@ -198,6 +198,7 @@ export interface TechnicianStats {
     pending: number;
     in_process: number;
     closed: number;
+    incomplete: number;
 }
 
 // Repair types

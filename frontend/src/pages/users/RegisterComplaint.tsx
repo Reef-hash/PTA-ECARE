@@ -72,7 +72,7 @@ export default function RegisterComplaint() {
                 toast.error(t('complaint_form.error_file_size'));
                 return;
             }
-            if (!['image/jpeg', 'image/png', 'application/pdf'].includes(file.type)) {
+            if (file.type && !['image/jpeg', 'image/png', 'image/jpg', 'application/pdf', 'image/heic'].includes(file.type)) {
                 toast.error(t('complaint_form.error_file_format'));
                 return;
             }
@@ -126,11 +126,7 @@ export default function RegisterComplaint() {
                 formDataToSend.append('receipt_file', receiptFile);
             }
 
-            const response = await api.post('/complaints', formDataToSend, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
+            const response = await api.post('/complaints', formDataToSend);
 
             toast.success(t('complaint_form.success_submitted', { report_number: response.data.report_number }));
             navigate('/users/complaint-history');
@@ -305,7 +301,6 @@ export default function RegisterComplaint() {
                                             {t('complaint_form.upload_file')}
                                             <input
                                                 type="file"
-                                                accept=".jpg,.jpeg,.png,.pdf"
                                                 onChange={(e) => handleFileChange(e, 'warranty')}
                                                 className="hidden"
                                             />
@@ -337,7 +332,6 @@ export default function RegisterComplaint() {
                                             {t('complaint_form.upload_file')}
                                             <input
                                                 type="file"
-                                                accept=".jpg,.jpeg,.png,.pdf"
                                                 onChange={(e) => handleFileChange(e, 'receipt')}
                                                 className="hidden"
                                             />

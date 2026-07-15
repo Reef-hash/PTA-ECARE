@@ -150,7 +150,7 @@ html {
   }
 
   .badge {
-    @apply inline-flex items-center justify-center text-center px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wide;
+    @apply inline-flex items-center justify-center text-center px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wide break-words text-wrap;
   }
 
   .badge-pending {
