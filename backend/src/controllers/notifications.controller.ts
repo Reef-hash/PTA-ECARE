@@ -248,7 +248,7 @@ export const createNotification = async (
     role: 'user' | 'admin' | 'technician' | 'main_technician',
     start_msg: string,
     payload: string,
-    type: 'assignment' | 'status_update' | 'status_update_detailed' | 'transport_update' | 'checking_update' | 'remark_update' | 'system' = 'status_update',
+    type: 'assignment' | 'status_update' | 'status_update_detailed' | 'transport_update' | 'checking_update' | 'remark_update' | 'system' | 'NEW_USER_REGISTERED' = 'status_update',
     complaint_id?: number
 ): Promise<void> => {
     try {

@@ -114,7 +114,7 @@ const notifyGoogleRegistration = async (user: UserRow): Promise<void> => {
         'user',
         'Google Account Registered',
         'Your Google/Gmail customer account has been registered successfully.',
-        'system'
+        'NEW_USER_REGISTERED'
     );
 
     const [admins]: any = await pool.query('SELECT id FROM admins');
@@ -124,7 +124,7 @@ const notifyGoogleRegistration = async (user: UserRow): Promise<void> => {
             'admin',
             'New User Registration',
             `${user.full_name} has just registered using Google. | uid:${user.id}`,
-            'system'
+            'NEW_USER_REGISTERED'
         )));
     }
 
@@ -136,7 +136,7 @@ const notifyGoogleRegistration = async (user: UserRow): Promise<void> => {
             'technician',
             'New Google Customer Registered',
             `A new Google/Gmail customer has registered: ${user.full_name}.`,
-            'system'
+            'NEW_USER_REGISTERED'
         )));
     }
 };

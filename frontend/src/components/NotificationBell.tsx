@@ -155,6 +155,14 @@ export default function NotificationBell() {
             };
         }
 
+        // Handle new user registrations directly to avoid fallback regex
+        if (notification.type === 'NEW_USER_REGISTERED') {
+            return {
+                title: notification.title,
+                message: notification.message.replace(/\|\s*uid:[a-zA-Z0-9-]+/, '').trim()
+            };
+        }
+
         // Translate based on notification type
         if (notification.type === 'status_update') {
             // Check if it's a new complaint or status update
