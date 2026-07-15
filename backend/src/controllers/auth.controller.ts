@@ -431,12 +431,7 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
         // 3. Clean up verified OTP
         await pool.query('DELETE FROM activation_otps WHERE id = ?', [otpRecords[0].id]);
 
-        // 4. Send welcome email now that the email is verified
-        try {
-            await sendWelcomeEmail(user);
-        } catch (emailError) {
-            console.error('Failed to send welcome email:', emailError);
-        }
+        // (The Welcome Email has been disabled as requested by the user, so only the OTP email is sent)
 
         // Notify Admins only if the user has a real IC (not a temporary Google IC)
         if (!user.ic_number.startsWith('G-')) {
@@ -707,7 +702,7 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
                 const newUser = newUserRows[0] as UserRow;
 
                 try { await notifyGoogleRegistration(newUser); } catch (e) { console.error('Notify error:', e); }
-                try { await sendWelcomeEmail(newUser); } catch (e) { console.error('Welcome email error:', e); }
+                // (The Welcome Email has been disabled)
 
                 const token = createUserToken(newUser);
                 res.status(201).json({
@@ -884,7 +879,7 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
         const newUser = newUserRows[0] as UserRow;
 
         try { await notifyGoogleRegistration(newUser); } catch (e) { console.error('Notify error:', e); }
-        try { await sendWelcomeEmail(newUser); } catch (e) { console.error('Welcome email error:', e); }
+        // (The Welcome Email has been disabled)
 
         const token = createUserToken(newUser);
         res.status(201).json({
