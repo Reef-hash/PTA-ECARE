@@ -470,9 +470,9 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
             token,
             role: 'user'
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Verify signup OTP error:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: `Ralat Sistem: ${error.message}` });
     }
 };
 

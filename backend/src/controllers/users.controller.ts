@@ -94,8 +94,8 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
             const otp = Math.floor(100000 + Math.random() * 900000).toString();
             const expires_at = new Date(Date.now() + 15 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
 
-            await pool.query('DELETE FROM password_resets WHERE user_id = ?', [userId]);
-            await pool.query('INSERT INTO password_resets (user_id, otp, expires_at) VALUES (?, ?, ?)', [userId, otp, expires_at]);
+            await pool.query('DELETE FROM activation_otps WHERE email = ? AND role = ?', [emailToUse, 'user']);
+            await pool.query('INSERT INTO activation_otps (email, role, otp, expires_at) VALUES (?, ?, ?, ?)', [emailToUse, 'user', otp, expires_at]);
 
             try {
                 const emailHtml = buildUserSignupOtpEmailHtml(emailToUse, otp);
