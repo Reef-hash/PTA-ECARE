@@ -518,15 +518,15 @@ Terima kasih.
 
         const [admins]: any = await pool.query('SELECT id, email FROM admins');
         if (admins) {
-            const adminMsg = `Dari : ${userName} telah membuat aduan baharu sila\nJudul : ${subcategory || brand_name || 'Aduan Kerosakan'} (${details})\nWaktu : ${formattedDate}\nStatus : Menunggu Respon`;
+            const adminMsg = `Aduan daripada ${userName} untuk "${brand_name}" memerlukan perhatian.\n> Klik untuk agihkan kepada juruteknik`;
             for (const admin of admins) {
                 // Case 3: Admin Bell
-                await createNotification(admin.id, 'admin', `🔔 [NEW COMPLAINT]`, adminMsg, 'status_update', complaint.id);
+                await createNotification(admin.id, 'admin', `🆕 Aduan Baharu Diterima`, adminMsg, 'status_update', complaint.id);
                 // Case 3: Admin Email
                 if (admin.email) {
                     try {
                         const emailHtml = buildNotificationEmailHtml(admin.full_name || 'Admin', 'Aduan Baru Diterima', adminEmailBody, report_number, 'admin');
-                        await sendEmail(admin.email, `Aduan Baru: ${report_number}`, emailHtml);
+                        await sendEmail(admin.email, `🆕 Aduan Baharu Memerlukan Tugasan - ${report_number}`, emailHtml);
                     } catch (e) {
                         console.error('Failed to send admin email:', e);
                     }
@@ -535,7 +535,14 @@ Terima kasih.
         }
 
         // Case 6: User Bell
-        await createNotification(userId!, 'user', `📋 ADUAN BERJAYA DIHANTAR`, `no. Aduan anda telah berjaya dihantar ke sistem E-CARE.\n> click to view details`, 'status_update', complaint.id);
+        await createNotification(
+            userId!, 
+            'user', 
+            `✅ CREATE COMPLAINT SUCCESSFULLY NO. ${report_number}`, 
+            `Aduan "${categoryName}" untuk "${brand_name}" telah direkodkan.\n> Klik untuk lihat status aduan`, 
+            'status_update', 
+            complaint.id
+        );
 
         res.status(201).json({ message: 'Complaint submitted successfully', complaint, report_number });
     } catch (error: any) {
