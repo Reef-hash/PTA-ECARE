@@ -905,7 +905,32 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         }
 
         console.log(`[LOGIN] Comparing password for user: ${user?.id}`);
-        const validPassword = await bcrypt.compare(password, user.password_hash);
+        const dbHash = user.password_hash || user.password;
+        let validPassword = false;
+        
+        if (dbHash && (dbHash.startsWith('$2b$') || dbHash.startsWith('$2a$'))) {
+            validPassword = await bcrypt.compare(password, dbHash);
+        } else {
+            // Fallback for plain text passwords entered directly in phpMyAdmin
+            validPassword = (password === dbHash);
+            
+            // Auto-upgrade plain text to bcrypt hash in database for security
+            if (validPassword) {
+                try {
+                    const newHash = await bcrypt.hash(password, 10);
+                    let table = 'users';
+                    if (role === 'admin') table = 'admins';
+                    else if (role === 'technician' || role === 'main_technician') table = 'technicians';
+                    
+                    const updateCol = user.password_hash !== undefined ? 'password_hash' : 'password';
+                    await pool.query(`UPDATE ${table} SET ${updateCol} = ? WHERE id = ?`, [newHash, user.id]);
+                    console.log(`[LOGIN] Auto-upgraded plain text password for ${role} ${user.id}`);
+                } catch(e) {
+                    console.error('[LOGIN] Auto-upgrade password failed:', e);
+                }
+            }
+        }
+
         console.log(`[LOGIN] Password valid: ${validPassword}`);
         if (!validPassword) {
             if (role === 'user') {
@@ -930,7 +955,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             }
             try { await pool.query('INSERT INTO user_logs (user_id, username, user_ip, success) VALUES (?, ?, ?, ?)', [user.id, ic_number, clientIp, true]); } catch (e) { console.log('[LOGIN] user_logs insert error (ignored):', e); }
         } else if (role === 'admin' || role === 'technician') {
-            if (user.is_active === false) {
+            // MySQL uses 0 for false in TINYINT(1). Null shouldn't block.
+            if (user.is_active === 0 || user.is_active === false || user.is_active === '0') {
                 // Check if there's a pending activation OTP for this admin/technician
                 const [otpRecords]: any = await pool.query('SELECT * FROM activation_otps WHERE email = ? AND role = ? AND expires_at >= ? ORDER BY created_at DESC LIMIT 1', [user.email, role, new Date().toISOString()]);
 
