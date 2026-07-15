@@ -383,6 +383,27 @@ export const register = async (req: Request, res: Response): Promise<void> => {
                 email: user.email
             });
         } else {
+            // Notify user in their bell
+            await pool.query(
+                'INSERT INTO notifications (recipient_id, recipient_role, title, message, type, is_read) VALUES (?, ?, ?, ?, ?, ?)',
+                [user.id, 'user', 'Akaun Berjaya Didaftarkan', 'Akaun anda telah berjaya didaftarkan. Selamat Datang ke E-CARE!', 'NEW_USER_REGISTERED', false]
+            );
+
+            // Notify Admin in their bell (with NEW_USER_REGISTERED type to prevent email)
+            try {
+                const [admins]: any = await pool.query('SELECT id FROM admins');
+                if (admins && admins.length > 0) {
+                    for (const admin of admins) {
+                        await pool.query(
+                            'INSERT INTO notifications (recipient_id, recipient_role, title, message, type, is_read) VALUES (?, ?, ?, ?, ?, ?)',
+                            [admin.id, 'admin', 'Pendaftaran Pengguna Baru', `Pengguna baru telah mendaftar tanpa e-mel: ${user.full_name} | No. K/P: ${user.ic_number}\nuid:${user.id}`, 'NEW_USER_REGISTERED', false]
+                        );
+                    }
+                }
+            } catch (adminNotifyErr) {
+                console.error('Failed to notify admins for no-email registration:', adminNotifyErr);
+            }
+
             // Auto-login since no email OTP is needed
             const tokenPayload = {
                 id: user.id,
