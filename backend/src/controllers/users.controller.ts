@@ -31,6 +31,11 @@ export const getProfile = async (req: Request, res: Response): Promise<void> => 
 export const updateProfile = async (req: Request, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
+        if (!userId) {
+            res.status(401).json({ error: 'Unauthorized' });
+            return;
+        }
+        
         const { full_name, email, contact_no, contact_no_2, address, state, ic_number } = req.body;
 
         if (email && !(await isEmailAllowed(email))) {
