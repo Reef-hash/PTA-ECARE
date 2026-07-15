@@ -134,13 +134,10 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
                         'system'
                     )));
                 }
-                // Notify user in their bell
-                await createNotification(
-                    userId,
-                    'user',
-                    'Profil Dikemaskini',
-                    'Profil anda telah berjaya dikemaskini. Selamat Datang ke E-CARE!',
-                    'system'
+                // Notify user in their bell (Direct insert to avoid sending an email)
+                await pool.query(
+                    'INSERT INTO notifications (recipient_id, recipient_role, title, message, type, is_read) VALUES (?, ?, ?, ?, ?, ?)',
+                    [userId, 'user', 'Profil Dikemaskini', 'Profil anda telah berjaya dikemaskini. Selamat Datang ke E-CARE!', 'system', false]
                 );
             } catch (notifyError) {
                 console.error('Failed to notify admins of completed profile:', notifyError);
