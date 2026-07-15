@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, ChevronDown, ChevronUp } from 'lucide-react';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -25,9 +25,23 @@ export default function NotificationBell() {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isOpen, setIsOpen] = useState(false);
+    const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
     const dropdownRef = useRef<HTMLDivElement>(null);
     const prevUnreadCountRef = useRef<number>(0);
     const audioRef = useRef<HTMLAudioElement | null>(null);
+
+    const toggleExpand = (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        setExpandedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
+    };
     const isFirstLoadRef = useRef(true);
     const navigate = useNavigate();
     const { t, i18n } = useTranslation();
@@ -458,13 +472,24 @@ export default function NotificationBell() {
                                         >
                                             <div className="flex gap-3">
                                                 <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${!notification.is_read ? 'bg-indigo-500' : 'bg-transparent'}`} />
-                                                <div>
-                                                    <p className={`text-sm ${!notification.is_read ? 'font-semibold text-gray-800' : 'text-gray-600'}`}>
-                                                        {translated.title}
-                                                    </p>
-                                                    <p className="text-xs text-gray-500 mt-1 whitespace-pre-wrap">
-                                                        {translated.message}
-                                                    </p>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex justify-between items-start gap-2">
+                                                        <p className={`text-sm ${!notification.is_read ? 'font-semibold text-gray-800' : 'text-gray-600'} pr-4`}>
+                                                            {translated.title}
+                                                        </p>
+                                                        <button 
+                                                            onClick={(e) => toggleExpand(e, notification.id)} 
+                                                            className="p-1 -m-1 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-200 transition-colors flex-shrink-0"
+                                                            title={expandedIds.has(notification.id) ? "Tutup" : "Papar penuh"}
+                                                        >
+                                                            {expandedIds.has(notification.id) ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                                        </button>
+                                                    </div>
+                                                    <div className={`transition-all duration-300 ease-in-out overflow-hidden ${expandedIds.has(notification.id) ? 'max-h-[500px] opacity-100' : 'max-h-5 opacity-90'}`}>
+                                                        <p className={`text-xs text-gray-500 mt-1 whitespace-pre-wrap ${!expandedIds.has(notification.id) ? 'line-clamp-1' : ''}`}>
+                                                            {translated.message}
+                                                        </p>
+                                                    </div>
                                                     <p className="text-[10px] text-gray-400 mt-2">
                                                         {(() => {
                                                             if (!notification.created_at) return '';
