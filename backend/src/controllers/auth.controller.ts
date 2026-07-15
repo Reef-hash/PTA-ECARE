@@ -174,8 +174,8 @@ const notifyGoogleRegistration = async (user: UserRow): Promise<void> => {
         await Promise.all(admins.map((admin: any) => createNotification(
             admin.id,
             'admin',
-            'New Google User Registration',
-            `A new Google/Gmail user has successfully registered.\nName: ${user.full_name} | IC Number: ${user.ic_number}\nClick here to view details.| uid:${user.id}`,
+            'New User Registration',
+            `${user.full_name} has just registered using Google. | uid:${user.id}`,
             'system'
         )));
     }

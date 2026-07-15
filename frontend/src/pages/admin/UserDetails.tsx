@@ -289,40 +289,77 @@ export default function UserDetails() {
                             <p className="text-gray-500">{t('admin_master.no_data')}</p>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead>
-                                    <tr className="table-header text-xs uppercase">
-                                        <th className="px-4 py-3 text-left whitespace-nowrap">#</th>
-                                        <th className="px-4 py-3 text-left whitespace-nowrap">{t('admin_users.report_no')}</th>
-                                        <th className="px-4 py-3 text-left whitespace-nowrap">{t('admin_master.brand')}</th>
-                                        <th className="px-4 py-3 text-left whitespace-nowrap">{t('admin_master.subcategory')}</th>
-                                        <th className="px-4 py-3 text-center whitespace-nowrap">{t('common_actions.status')}</th>
-                                        <th className="px-4 py-3 text-left whitespace-nowrap">{t('common_actions.date')}</th>
-                                        <th className="px-4 py-3 text-center whitespace-nowrap">{t('common_actions.action')}</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="text-sm">
-                                    {filteredComplaints.map((complaint, index) => (
-                                        <tr key={complaint.id} className="table-row">
-                                            <td className="px-4 py-3 text-gray-400 whitespace-nowrap">{index + 1}</td>
-                                            <td className="px-4 py-3 font-medium text-indigo-600 whitespace-nowrap">{complaint.report_number}</td>
-                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.brand_name}</td>
-                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.subcategory}</td>
-                                            <td className="px-4 py-3 text-center whitespace-nowrap">{getStatusBadge(complaint.status)}</td>
-                                            <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{formatDate(complaint.created_at)}</td>
-                                            <td className="px-4 py-3 text-center whitespace-nowrap">
+                        <div className="overflow-hidden sm:rounded-lg">
+                            {/* Mobile Layout */}
+                            <div className="block md:hidden border-t border-gray-200">
+                                {filteredComplaints.map((complaint, index) => (
+                                    <div key={complaint.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-gray-400 font-medium text-xs">#{index + 1}</span>
+                                                <span className="font-bold text-sm text-indigo-600">{complaint.report_number}</span>
+                                            </div>
+                                            <div className="flex flex-col items-end gap-2">
+                                                {getStatusBadge(complaint.status)}
                                                 <Link
                                                     to={`/admin/complaint/${complaint.report_number}`}
-                                                    className="inline-flex items-center justify-center p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
+                                                    className="inline-flex items-center justify-center p-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
                                                 >
                                                     <Eye className="w-4 h-4" />
                                                 </Link>
-                                            </td>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm items-center">
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_master.brand')}</span>
+                                            <span className="text-gray-700 text-xs font-medium">{complaint.brand_name}</span>
+
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_master.subcategory')}</span>
+                                            <span className="text-gray-700 text-xs">{complaint.subcategory}</span>
+
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('common_actions.date')}</span>
+                                            <span className="text-gray-500 text-xs">{formatDate(complaint.created_at)}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Desktop Layout */}
+                            <div className="hidden md:block overflow-x-auto">
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="table-header text-xs uppercase">
+                                            <th className="px-4 py-3 text-left whitespace-nowrap">#</th>
+                                            <th className="px-4 py-3 text-left whitespace-nowrap">{t('admin_users.report_no')}</th>
+                                            <th className="px-4 py-3 text-left whitespace-nowrap">{t('admin_master.brand')}</th>
+                                            <th className="px-4 py-3 text-left whitespace-nowrap">{t('admin_master.subcategory')}</th>
+                                            <th className="px-4 py-3 text-center whitespace-nowrap">{t('common_actions.status')}</th>
+                                            <th className="px-4 py-3 text-left whitespace-nowrap">{t('common_actions.date')}</th>
+                                            <th className="px-4 py-3 text-center whitespace-nowrap">{t('common_actions.action')}</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody className="text-sm">
+                                        {filteredComplaints.map((complaint, index) => (
+                                            <tr key={complaint.id} className="table-row">
+                                                <td className="px-4 py-3 text-gray-400 whitespace-nowrap">{index + 1}</td>
+                                                <td className="px-4 py-3 font-medium text-indigo-600 whitespace-nowrap">{complaint.report_number}</td>
+                                                <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.brand_name}</td>
+                                                <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.subcategory}</td>
+                                                <td className="px-4 py-3 text-center whitespace-nowrap">{getStatusBadge(complaint.status)}</td>
+                                                <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{formatDate(complaint.created_at)}</td>
+                                                <td className="px-4 py-3 text-center whitespace-nowrap">
+                                                    <Link
+                                                        to={`/admin/complaint/${complaint.report_number}`}
+                                                        className="inline-flex items-center justify-center p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </Link>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     )}
                 </div>

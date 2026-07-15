@@ -210,62 +210,113 @@ export default function TechDashboard() {
                 {recentComplaints.length === 0 ? (
                     <p className="text-gray-500 text-center py-8">{t('tech_dashboard.no_complaints')}</p>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="table-header">
-                                    <th className="text-center px-4 py-3 w-12 whitespace-nowrap">No.</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">{t('complaint_list.report_no')}</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">{t('complaint_list.customer')}</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">{t('complaint_form.subcategory')}</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">{t('complaint_form.brand')}</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">{t('table.status')}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {recentComplaints.map((complaint, index) => (
-                                    <tr key={complaint.id} className="table-row">
-                                        <td className="px-4 py-3 text-center text-gray-500 font-medium whitespace-nowrap">
-                                            {index + 1}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex flex-col gap-1">
+                    <div className="overflow-hidden sm:rounded-lg">
+                        {/* Mobile Layout */}
+                        <div className="block md:hidden border-t border-gray-200">
+                            {recentComplaints.map((complaint, index) => (
+                                <div key={complaint.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="flex flex-col gap-1">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-gray-400 font-medium text-xs">#{index + 1}</span>
                                                 <Link
                                                     to={`/admin/technician/complaint/${complaint.report_number}`}
-                                                    className="text-green-600 hover:text-green-700 font-medium"
+                                                    className="font-bold text-sm text-green-600 hover:text-green-700 hover:underline"
                                                 >
                                                     {complaint.report_number}
                                                 </Link>
-                                                <Link
-                                                    to={`/admin/technician/complaint/${complaint.report_number}/track-repair`}
-                                                    className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
-                                                >
-                                                    TRACK REPAIR
-                                                </Link>
                                             </div>
-                                        </td>
-                                        <td className="px-4 py-3 whitespace-nowrap">
-                                            <div>
-                                                <p className="font-medium text-gray-800">{complaint.users?.full_name || '-'}</p>
-                                                <p className="text-xs text-gray-500">
-                                                    ID/IC: {complaint.users?.ic_number || (t('common.no_ic_info') || 'Tiada Maklumat IC')}
-                                                </p>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.subcategory}</td>
-                                        <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.brand_name}</td>
-                                        <td className="px-4 py-3 whitespace-nowrap">
-                                            <div>
-                                                {getStatusBadge(complaint.status)}
-                                                <div className="mt-2">
-                                                    {getStatusMessage(complaint)}
-                                                </div>
-                                            </div>
-                                        </td>
+                                            <Link
+                                                to={`/admin/technician/complaint/${complaint.report_number}/track-repair`}
+                                                className="text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
+                                            >
+                                                TRACK REPAIR
+                                            </Link>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm items-center mb-2">
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('complaint_list.customer')}</span>
+                                        <div>
+                                            <span className="text-gray-700 text-xs font-medium block">{complaint.users?.full_name || '-'}</span>
+                                            <span className="text-gray-500 text-[10px]">ID/IC: {complaint.users?.ic_number || (t('common.no_ic_info') || 'Tiada Maklumat IC')}</span>
+                                        </div>
+
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('complaint_form.brand')}</span>
+                                        <div>
+                                            <span className="text-gray-700 text-xs font-medium block">{complaint.brand_name}</span>
+                                            <span className="text-gray-500 text-[10px]">{complaint.subcategory}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-2 border-t border-gray-100 pt-2">
+                                        {getStatusBadge(complaint.status)}
+                                        <div className="mt-1">
+                                            {getStatusMessage(complaint)}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Desktop Layout */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="table-header">
+                                        <th className="text-center px-4 py-3 w-12 whitespace-nowrap">No.</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('complaint_list.report_no')}</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('complaint_list.customer')}</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('complaint_form.subcategory')}</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('complaint_form.brand')}</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('table.status')}</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {recentComplaints.map((complaint, index) => (
+                                        <tr key={complaint.id} className="table-row">
+                                            <td className="px-4 py-3 text-center text-gray-500 font-medium whitespace-nowrap">
+                                                {index + 1}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="flex flex-col gap-1">
+                                                    <Link
+                                                        to={`/admin/technician/complaint/${complaint.report_number}`}
+                                                        className="text-green-600 hover:text-green-700 font-medium"
+                                                    >
+                                                        {complaint.report_number}
+                                                    </Link>
+                                                    <Link
+                                                        to={`/admin/technician/complaint/${complaint.report_number}/track-repair`}
+                                                        className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
+                                                    >
+                                                        TRACK REPAIR
+                                                    </Link>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 whitespace-nowrap">
+                                                <div>
+                                                    <p className="font-medium text-gray-800">{complaint.users?.full_name || '-'}</p>
+                                                    <p className="text-xs text-gray-500">
+                                                        ID/IC: {complaint.users?.ic_number || (t('common.no_ic_info') || 'Tiada Maklumat IC')}
+                                                    </p>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.subcategory}</td>
+                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.brand_name}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap">
+                                                <div>
+                                                    {getStatusBadge(complaint.status)}
+                                                    <div className="mt-2">
+                                                        {getStatusMessage(complaint)}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 )}
             </div>

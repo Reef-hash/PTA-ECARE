@@ -122,48 +122,88 @@ export default function SearchComplaint() {
                             </span>
                         </div>
 
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-white">
-                                    <tr>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">No. Laporan</th>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Maklumat Barangan</th>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tarikh Aduan</th>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status Terkini</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                    {complaints.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={4} className="px-6 py-12 text-center">
-                                                <div className="flex flex-col items-center justify-center text-gray-400">
-                                                    <AlertCircle className="w-12 h-12 mb-3 text-gray-300" />
-                                                    <p className="text-lg font-medium text-gray-600">Tiada Rekod Dijumpai</p>
-                                                    <p className="text-sm mt-1">Sila pastikan nombor kad pengenalan dimasukkan dengan betul.</p>
+                        <div className="overflow-hidden sm:rounded-lg">
+                            {/* Mobile Layout */}
+                            <div className="block md:hidden border-t border-gray-200">
+                                {complaints.length === 0 ? (
+                                    <div className="px-6 py-12 text-center bg-white">
+                                        <div className="flex flex-col items-center justify-center text-gray-400">
+                                            <AlertCircle className="w-12 h-12 mb-3 text-gray-300" />
+                                            <p className="text-lg font-medium text-gray-600">Tiada Rekod Dijumpai</p>
+                                            <p className="text-sm mt-1">Sila pastikan nombor kad pengenalan dimasukkan dengan betul.</p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    complaints.map((complaint) => (
+                                        <div key={complaint.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-bold text-sm text-indigo-600">{complaint.report_number || `ADU-${complaint.id}`}</span>
                                                 </div>
-                                            </td>
-                                        </tr>
-                                    ) : (
-                                        complaints.map((complaint) => (
-                                            <tr key={complaint.id} className="hover:bg-gray-50 transition-colors">
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className="font-medium text-gray-900">{complaint.report_number || `ADU-${complaint.id}`}</div>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <div className="text-sm font-medium text-gray-900">{complaint.brand_name || complaint.custom_brand} {complaint.model}</div>
-                                                    <div className="text-xs text-gray-500 mt-1 line-clamp-1">{complaint.subcategory || complaint.category_name}</div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className="text-sm text-gray-600">{formatDate(complaint.created_at)}</span>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center gap-1">
                                                     {getStatusBadge(complaint.status)}
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm items-center">
+                                                <span className="text-gray-500 text-[11px] uppercase tracking-wider">Maklumat Barangan</span>
+                                                <div>
+                                                    <span className="text-gray-700 text-xs font-medium block">{complaint.brand_name || complaint.custom_brand} {complaint.model}</span>
+                                                    <span className="text-gray-500 text-[10px]">{complaint.subcategory || complaint.category_name}</span>
+                                                </div>
+
+                                                <span className="text-gray-500 text-[11px] uppercase tracking-wider">Tarikh Aduan</span>
+                                                <span className="text-gray-500 text-xs">{formatDate(complaint.created_at)}</span>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            {/* Desktop Layout */}
+                            <div className="hidden md:block overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-white">
+                                        <tr>
+                                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">No. Laporan</th>
+                                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Maklumat Barangan</th>
+                                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tarikh Aduan</th>
+                                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status Terkini</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                        {complaints.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={4} className="px-6 py-12 text-center">
+                                                    <div className="flex flex-col items-center justify-center text-gray-400">
+                                                        <AlertCircle className="w-12 h-12 mb-3 text-gray-300" />
+                                                        <p className="text-lg font-medium text-gray-600">Tiada Rekod Dijumpai</p>
+                                                        <p className="text-sm mt-1">Sila pastikan nombor kad pengenalan dimasukkan dengan betul.</p>
+                                                    </div>
                                                 </td>
                                             </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
+                                        ) : (
+                                            complaints.map((complaint) => (
+                                                <tr key={complaint.id} className="hover:bg-gray-50 transition-colors">
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="font-medium text-gray-900">{complaint.report_number || `ADU-${complaint.id}`}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="text-sm font-medium text-gray-900">{complaint.brand_name || complaint.custom_brand} {complaint.model}</div>
+                                                        <div className="text-xs text-gray-500 mt-1 line-clamp-1">{complaint.subcategory || complaint.category_name}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <span className="text-sm text-gray-600">{formatDate(complaint.created_at)}</span>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        {getStatusBadge(complaint.status)}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 )}

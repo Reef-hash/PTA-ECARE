@@ -290,83 +290,152 @@ export default function TechComplaints() {
                     </div>
                 ) : (
                     <>
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead>
-                                    <tr className="table-header">
-                                        <th className="text-center px-4 py-3 w-12 whitespace-nowrap">No.</th>
-                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_users.report_no') || 'Report No'}</th>
-                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_users.customer') || 'Customer'}</th>
-                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_master.subcategory')}</th>
-                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_master.brand')}</th>
-                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('common_actions.status')}</th>
-                                        <th className="text-center px-4 py-3 whitespace-nowrap">{t('common_actions.action')}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {paginatedComplaints.map((complaint, index) => (
-                                        <tr key={complaint.id} className="table-row">
-                                            <td className="px-4 py-3 text-center text-gray-500 font-medium whitespace-nowrap">
-                                                {(currentPage - 1) * itemsPerPage + index + 1}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <div className="flex flex-col gap-1">
+                        <div className="overflow-hidden sm:rounded-lg">
+                            {/* Mobile Layout */}
+                            <div className="block md:hidden border-t border-gray-200">
+                                {paginatedComplaints.map((complaint, index) => (
+                                    <div key={complaint.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-gray-400 font-medium text-xs">#{(currentPage - 1) * itemsPerPage + index + 1}</span>
                                                     <Link
                                                         to={`/admin/technician/complaint/${complaint.report_number}`}
-                                                        className="font-medium text-green-600 hover:text-green-700 hover:underline"
+                                                        className="font-bold text-sm text-green-600 hover:text-green-700 hover:underline"
                                                     >
                                                         {complaint.report_number}
                                                     </Link>
-                                                    <Link
-                                                        to={`/admin/technician/complaint/${complaint.report_number}/track-repair`}
-                                                        className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
-                                                    >
-                                                        TRACK REPAIR
-                                                    </Link>
                                                 </div>
-                                            </td>
-                                            <td className="px-4 py-3 whitespace-nowrap">
-                                                <div>
-                                                    <p className="font-medium text-gray-800">{complaint.users?.full_name || '-'}</p>
-                                                    <p className="text-xs text-gray-500">
-                                                        ID/IC: {complaint.users?.ic_number || (t('common.no_ic_info') || 'Tiada Maklumat IC')}
-                                                    </p>
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.subcategory}</td>
-                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.brand_name}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap">
-                                                <div>
-                                                    {getStatusBadge(complaint.status)}
-                                                    <div className="mt-2">
-                                                        {getStatusMessage(complaint)}
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-3 whitespace-nowrap">
-                                                <div className="flex items-center justify-center">
-                                                    <Link
-                                                        to={`/admin/technician/complaint/${complaint.report_number}`}
-                                                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                                        title={t('technician_dashboard.click_to_view') || 'View'}
-                                                    >
-                                                        <Eye className="w-4 h-4" />
-                                                    </Link>
-                                                    <Link
-                                                        to={`/admin/print/${complaint.report_number}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                        title="Cetak Resit"
-                                                    >
-                                                        <Printer className="w-4 h-4" />
-                                                    </Link>
-                                                </div>
-                                            </td>
+                                                <Link
+                                                    to={`/admin/technician/complaint/${complaint.report_number}/track-repair`}
+                                                    className="text-[10px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
+                                                >
+                                                    TRACK REPAIR
+                                                </Link>
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <Link
+                                                    to={`/admin/technician/complaint/${complaint.report_number}`}
+                                                    className="p-1.5 text-green-600 hover:bg-green-50 rounded transition-colors"
+                                                    title={t('technician_dashboard.click_to_view') || 'View'}
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </Link>
+                                                <Link
+                                                    to={`/admin/print/${complaint.report_number}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                    title="Cetak Resit"
+                                                >
+                                                    <Printer className="w-4 h-4" />
+                                                </Link>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm items-center mb-2">
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_users.customer') || 'Customer'}</span>
+                                            <div>
+                                                <span className="text-gray-700 text-xs font-medium block">{complaint.users?.full_name || '-'}</span>
+                                                <span className="text-gray-500 text-[10px]">ID/IC: {complaint.users?.ic_number || (t('common.no_ic_info') || 'Tiada Maklumat IC')}</span>
+                                            </div>
+
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_master.brand')}</span>
+                                            <div>
+                                                <span className="text-gray-700 text-xs font-medium block">{complaint.brand_name}</span>
+                                                <span className="text-gray-500 text-[10px]">{complaint.subcategory}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-2 border-t border-gray-100 pt-2">
+                                            {getStatusBadge(complaint.status)}
+                                            <div className="mt-1">
+                                                {getStatusMessage(complaint)}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Desktop Layout */}
+                            <div className="hidden md:block overflow-x-auto">
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="table-header">
+                                            <th className="text-center px-4 py-3 w-12 whitespace-nowrap">No.</th>
+                                            <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_users.report_no') || 'Report No'}</th>
+                                            <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_users.customer') || 'Customer'}</th>
+                                            <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_master.subcategory')}</th>
+                                            <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_master.brand')}</th>
+                                            <th className="text-left px-4 py-3 whitespace-nowrap">{t('common_actions.status')}</th>
+                                            <th className="text-center px-4 py-3 whitespace-nowrap">{t('common_actions.action')}</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {paginatedComplaints.map((complaint, index) => (
+                                            <tr key={complaint.id} className="table-row">
+                                                <td className="px-4 py-3 text-center text-gray-500 font-medium whitespace-nowrap">
+                                                    {(currentPage - 1) * itemsPerPage + index + 1}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <div className="flex flex-col gap-1">
+                                                        <Link
+                                                            to={`/admin/technician/complaint/${complaint.report_number}`}
+                                                            className="font-medium text-green-600 hover:text-green-700 hover:underline"
+                                                        >
+                                                            {complaint.report_number}
+                                                        </Link>
+                                                        <Link
+                                                            to={`/admin/technician/complaint/${complaint.report_number}/track-repair`}
+                                                            className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-0.5 rounded transition-colors w-fit"
+                                                        >
+                                                            TRACK REPAIR
+                                                        </Link>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3 whitespace-nowrap">
+                                                    <div>
+                                                        <p className="font-medium text-gray-800">{complaint.users?.full_name || '-'}</p>
+                                                        <p className="text-xs text-gray-500">
+                                                            ID/IC: {complaint.users?.ic_number || (t('common.no_ic_info') || 'Tiada Maklumat IC')}
+                                                        </p>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.subcategory}</td>
+                                                <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{complaint.brand_name}</td>
+                                                <td className="px-4 py-3 whitespace-nowrap">
+                                                    <div>
+                                                        {getStatusBadge(complaint.status)}
+                                                        <div className="mt-2">
+                                                            {getStatusMessage(complaint)}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3 whitespace-nowrap">
+                                                    <div className="flex items-center justify-center">
+                                                        <Link
+                                                            to={`/admin/technician/complaint/${complaint.report_number}`}
+                                                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                                            title={t('technician_dashboard.click_to_view') || 'View'}
+                                                        >
+                                                            <Eye className="w-4 h-4" />
+                                                        </Link>
+                                                        <Link
+                                                            to={`/admin/print/${complaint.report_number}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                            title="Cetak Resit"
+                                                        >
+                                                            <Printer className="w-4 h-4" />
+                                                        </Link>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
                         {/* Pagination */}

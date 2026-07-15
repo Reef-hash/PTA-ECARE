@@ -116,56 +116,97 @@ export default function AdminDashboard() {
                 {technicianStats.length === 0 ? (
                     <p className="text-gray-500 text-center py-8">{t('dashboard.no_technicians')}</p>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="table-header">
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">#</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">{t('table.name')}</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">{t('table.department')}</th>
-                                    <th className="text-center px-4 py-3 whitespace-nowrap">{t('table.total')}</th>
-                                    <th className="text-center px-4 py-3 whitespace-nowrap">{t('table.pending')}</th>
-                                    <th className="text-center px-4 py-3 whitespace-nowrap">{t('table.in_process')}</th>
-                                    <th className="text-center px-4 py-3 whitespace-nowrap">{t('table.closed')}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {technicianStats.map((tech, index) => (
-                                    <tr key={tech.technician_id} className="table-row">
-                                        <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{index + 1}</td>
-                                        <td className="px-4 py-3 font-medium whitespace-nowrap">
+                    <div className="overflow-hidden sm:rounded-lg">
+                        {/* Mobile Layout */}
+                        <div className="block md:hidden border-t border-gray-200">
+                            {technicianStats.map((tech, index) => (
+                                <div key={tech.technician_id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
+                                    <div className="flex items-start justify-between mb-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-gray-400 font-medium text-xs">#{index + 1}</span>
                                             <Link
                                                 to={`/admin/technicians/${tech.technician_id}`}
-                                                className="text-indigo-600 hover:text-indigo-800 hover:underline"
+                                                className="text-indigo-600 hover:text-indigo-800 font-bold text-sm"
                                             >
                                                 {tech.technician_name}
                                             </Link>
-                                        </td>
-                                        <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{tech.department}</td>
-                                        <td className="px-4 py-3 text-center whitespace-nowrap">
-                                            <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-                                                {tech.total}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-center whitespace-nowrap">
-                                            <span className="inline-block px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">
-                                                {tech.pending}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-center whitespace-nowrap">
-                                            <span className="inline-block px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-medium">
-                                                {tech.in_process}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-center whitespace-nowrap">
-                                            <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                                                {tech.closed}
-                                            </span>
-                                        </td>
+                                        </div>
+                                        <span className="text-gray-600 text-[10px] bg-gray-100 px-2 py-1 rounded font-medium">{tech.department}</span>
+                                    </div>
+                                    <div className="grid grid-cols-4 gap-2 text-center text-sm">
+                                        <div className="flex flex-col gap-1 items-center bg-blue-50 p-2 rounded border border-blue-100">
+                                            <span className="text-blue-700 font-bold text-base">{tech.total}</span>
+                                            <span className="text-gray-500 text-[10px] uppercase tracking-wider">{t('table.total').substring(0,3)}</span>
+                                        </div>
+                                        <div className="flex flex-col gap-1 items-center bg-yellow-50 p-2 rounded border border-yellow-100">
+                                            <span className="text-yellow-700 font-bold text-base">{tech.pending}</span>
+                                            <span className="text-gray-500 text-[10px] uppercase tracking-wider">{t('table.pending').substring(0,3)}</span>
+                                        </div>
+                                        <div className="flex flex-col gap-1 items-center bg-orange-50 p-2 rounded border border-orange-100">
+                                            <span className="text-orange-700 font-bold text-base">{tech.in_process}</span>
+                                            <span className="text-gray-500 text-[10px] uppercase tracking-wider">{t('table.in_process').substring(0,3)}</span>
+                                        </div>
+                                        <div className="flex flex-col gap-1 items-center bg-green-50 p-2 rounded border border-green-100">
+                                            <span className="text-green-700 font-bold text-base">{tech.closed}</span>
+                                            <span className="text-gray-500 text-[10px] uppercase tracking-wider">{t('table.closed').substring(0,3)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Desktop Layout */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="table-header">
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">#</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('table.name')}</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('table.department')}</th>
+                                        <th className="text-center px-4 py-3 whitespace-nowrap">{t('table.total')}</th>
+                                        <th className="text-center px-4 py-3 whitespace-nowrap">{t('table.pending')}</th>
+                                        <th className="text-center px-4 py-3 whitespace-nowrap">{t('table.in_process')}</th>
+                                        <th className="text-center px-4 py-3 whitespace-nowrap">{t('table.closed')}</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {technicianStats.map((tech, index) => (
+                                        <tr key={tech.technician_id} className="table-row">
+                                            <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{index + 1}</td>
+                                            <td className="px-4 py-3 font-medium whitespace-nowrap">
+                                                <Link
+                                                    to={`/admin/technicians/${tech.technician_id}`}
+                                                    className="text-indigo-600 hover:text-indigo-800 hover:underline"
+                                                >
+                                                    {tech.technician_name}
+                                                </Link>
+                                            </td>
+                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{tech.department}</td>
+                                            <td className="px-4 py-3 text-center whitespace-nowrap">
+                                                <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                                                    {tech.total}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-center whitespace-nowrap">
+                                                <span className="inline-block px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">
+                                                    {tech.pending}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-center whitespace-nowrap">
+                                                <span className="inline-block px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-medium">
+                                                    {tech.in_process}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-center whitespace-nowrap">
+                                                <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                                                    {tech.closed}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 )}
             </div>

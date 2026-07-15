@@ -127,19 +127,32 @@ export default function NotificationsPage() {
             }
         } catch (e) { /* fall through */ }
 
-        let reportMatch = notification.title.match(/[A-Z]\d+/) || notification.message.match(/[A-Z]\d+/);
+        let reportMatch = notification.title.match(/[a-zA-Z]+\d+/) || notification.message.match(/[a-zA-Z]+\d+/);
         const reportNumber = reportMatch ? reportMatch[0] : '';
         const complaintId = notification.reference_id;
-        const statusMatch = notification.message.match(/'([^']+)'/);
-        const rawStatus = statusMatch ? statusMatch[1] : '';
 
-        let translatedStatus = rawStatus;
-        if (rawStatus === 'pending' || rawStatus.toLowerCase().includes('pending') || rawStatus.toLowerCase().includes('menunggu')) {
+        // Translate status based on message content keywords
+        let translatedStatus = '';
+        const msgLower = notification.message.toLowerCase();
+        if (msgLower.includes('pending') || msgLower.includes('menunggu')) {
             translatedStatus = t('notification.status_pending');
-        } else if (rawStatus === 'in_process' || rawStatus.toLowerCase().includes('process') || rawStatus.toLowerCase().includes('diproses')) {
+        } else if (msgLower.includes('process') || msgLower.includes('proses') || msgLower.includes('diproses')) {
             translatedStatus = t('notification.status_in_process');
-        } else if (rawStatus === 'closed' || rawStatus.toLowerCase().includes('closed') || rawStatus.toLowerCase().includes('selesai')) {
+        } else if (msgLower.includes('closed') || msgLower.includes('selesai') || msgLower.includes('completed') || msgLower.includes('siap')) {
             translatedStatus = t('notification.status_closed');
+        } else {
+            // Fallback to legacy single quote matching
+            const statusMatch = notification.message.match(/'([^']+)'/);
+            const rawStatus = statusMatch ? statusMatch[1] : '';
+            if (rawStatus === 'pending' || rawStatus.toLowerCase().includes('pending') || rawStatus.toLowerCase().includes('menunggu')) {
+                translatedStatus = t('notification.status_pending');
+            } else if (rawStatus === 'in_process' || rawStatus.toLowerCase().includes('process') || rawStatus.toLowerCase().includes('diproses')) {
+                translatedStatus = t('notification.status_in_process');
+            } else if (rawStatus === 'closed' || rawStatus.toLowerCase().includes('closed') || rawStatus.toLowerCase().includes('selesai')) {
+                translatedStatus = t('notification.status_closed');
+            } else {
+                translatedStatus = rawStatus;
+            }
         }
 
         if (notification.title.includes('Profil Dikemaskini') || notification.title.includes('Profile Updated') ||

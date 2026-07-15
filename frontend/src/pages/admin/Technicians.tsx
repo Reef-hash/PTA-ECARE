@@ -98,70 +98,135 @@ export default function Technicians() {
                         <p className="text-gray-500">{t('admin_technicians.no_technicians')}</p>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="table-header">
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">#</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">{t('common_actions.name')}</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">Username</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_technicians.department')}</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_technicians.email')}</th>
-                                    <th className="text-left px-4 py-3 whitespace-nowrap">{t('common_actions.phone_no')}</th>
-                                    <th className="text-center px-4 py-3 whitespace-nowrap">{t('common_actions.status')}</th>
-                                    <th className="text-center px-4 py-3 whitespace-nowrap">{t('common_actions.action')}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredTechnicians.map((tech, index) => (
-                                    <tr key={tech.id} className="table-row">
-                                        <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{index + 1}</td>
-                                        <td className="px-4 py-3 font-medium whitespace-nowrap">
+                    <div className="overflow-hidden sm:rounded-lg">
+                        {/* Mobile Layout */}
+                        <div className="block md:hidden border-t border-gray-200">
+                            {filteredTechnicians.map((tech, index) => (
+                                <div key={tech.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-gray-400 font-medium text-xs">#{index + 1}</span>
                                             <Link
                                                 to={`/admin/technicians/${tech.id}`}
-                                                className="text-indigo-600 hover:underline hover:text-indigo-800"
+                                                className="text-indigo-600 hover:underline hover:text-indigo-800 font-bold text-sm"
                                             >
                                                 {tech.name}
                                             </Link>
-                                        </td>
-                                        <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{tech.username}</td>
-                                        <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{tech.department}</td>
-                                        <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{tech.email || '-'}</td>
-                                        <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{tech.contact_number}</td>
-                                        <td className="px-4 py-3 text-center whitespace-nowrap">
-                                            <span className={`badge ${tech.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                {tech.is_active ? t('admin_users.active') : t('admin_users.inactive')}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 whitespace-nowrap">
-                                            <div className="flex items-center justify-center gap-2">
-                                                <Link
-                                                    to={`/admin/technicians/edit/${tech.id}`}
-                                                    className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                                    title={t('common_actions.edit')}
-                                                >
-                                                    <Edit className="w-4 h-4" />
-                                                </Link>
-                                                <button
-                                                    onClick={() => setShowResetModal(tech.id)}
-                                                    className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
-                                                    title={t('admin_technicians.reset_password_title')}
-                                                >
-                                                    <Key className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => setShowDeleteModal(tech.id)}
-                                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                    title={t('common_actions.delete')}
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </td>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <Link
+                                                to={`/admin/technicians/edit/${tech.id}`}
+                                                className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                                                title={t('common_actions.edit')}
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </Link>
+                                            <button
+                                                onClick={() => setShowResetModal(tech.id)}
+                                                className="p-1.5 text-orange-600 hover:bg-orange-50 rounded transition-colors"
+                                                title={t('admin_technicians.reset_password_title')}
+                                            >
+                                                <Key className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => setShowDeleteModal(tech.id)}
+                                                className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                title={t('common_actions.delete')}
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm items-center mb-2">
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider">Username</span>
+                                        <span className="text-gray-700 text-xs font-medium">{tech.username}</span>
+
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_technicians.department')}</span>
+                                        <span className="text-gray-700 text-xs">{tech.department}</span>
+
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('admin_technicians.email')}</span>
+                                        <span className="text-gray-700 text-xs">{tech.email || '-'}</span>
+
+                                        <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('common_actions.phone_no')}</span>
+                                        <span className="text-gray-700 text-xs">{tech.contact_number}</span>
+                                    </div>
+
+                                    <div className="mt-2 flex justify-start">
+                                        <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${tech.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                            {tech.is_active ? t('admin_users.active') : t('admin_users.inactive')}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Desktop Layout */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="table-header">
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">#</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('common_actions.name')}</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">Username</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_technicians.department')}</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('admin_technicians.email')}</th>
+                                        <th className="text-left px-4 py-3 whitespace-nowrap">{t('common_actions.phone_no')}</th>
+                                        <th className="text-center px-4 py-3 whitespace-nowrap">{t('common_actions.status')}</th>
+                                        <th className="text-center px-4 py-3 whitespace-nowrap">{t('common_actions.action')}</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {filteredTechnicians.map((tech, index) => (
+                                        <tr key={tech.id} className="table-row">
+                                            <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{index + 1}</td>
+                                            <td className="px-4 py-3 font-medium whitespace-nowrap">
+                                                <Link
+                                                    to={`/admin/technicians/${tech.id}`}
+                                                    className="text-indigo-600 hover:underline hover:text-indigo-800"
+                                                >
+                                                    {tech.name}
+                                                </Link>
+                                            </td>
+                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{tech.username}</td>
+                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{tech.department}</td>
+                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{tech.email || '-'}</td>
+                                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{tech.contact_number}</td>
+                                            <td className="px-4 py-3 text-center whitespace-nowrap">
+                                                <span className={`badge ${tech.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                    {tech.is_active ? t('admin_users.active') : t('admin_users.inactive')}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 whitespace-nowrap">
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <Link
+                                                        to={`/admin/technicians/edit/${tech.id}`}
+                                                        className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                                        title={t('common_actions.edit')}
+                                                    >
+                                                        <Edit className="w-4 h-4" />
+                                                    </Link>
+                                                    <button
+                                                        onClick={() => setShowResetModal(tech.id)}
+                                                        className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                                                        title={t('admin_technicians.reset_password_title')}
+                                                    >
+                                                        <Key className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setShowDeleteModal(tech.id)}
+                                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title={t('common_actions.delete')}
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 )}
             </div>
