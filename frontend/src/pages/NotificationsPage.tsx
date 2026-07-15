@@ -142,10 +142,27 @@ export default function NotificationsPage() {
             translatedStatus = t('notification.status_closed');
         }
 
-        if (notification.title.includes('Profil Dikemaskini') || notification.title.includes('Profile Updated') ||
-            notification.title.includes('Kata Laluan Ditukar') || notification.title.includes('Password Changed') ||
-            notification.title.includes('Aduan Dibatalkan') || notification.title.includes('Complaint Cancelled')) {
-            return { title: notification.title, message: notification.message };
+        const safeTitle = notification.title || '';
+        const safeMessage = notification.message || '';
+
+        // Handle custom notifications
+        if (
+            safeTitle.includes('REGISTRATION SUCCESS') ||
+            safeTitle.includes('NEW USER REGISTRATION') ||
+            safeTitle.includes('Selamat Datang') ||
+            safeTitle.includes('NEW COMPLAINT') ||
+            safeTitle.includes('ADUAN BERJAYA DIHANTAR')
+        ) {
+            return {
+                title: safeTitle,
+                message: safeMessage.replace(/\|\s*uid:[a-zA-Z0-9-]+/, '').trim()
+            };
+        }
+
+        if (safeTitle.includes('Profil Dikemaskini') || safeTitle.includes('Profile Updated') ||
+            safeTitle.includes('Kata Laluan Ditukar') || safeTitle.includes('Password Changed') ||
+            safeTitle.includes('Aduan Dibatalkan') || safeTitle.includes('Complaint Cancelled')) {
+            return { title: safeTitle, message: safeMessage };
         }
         if (notification.title.includes('Aduan Berjaya Didaftarkan') || notification.title.includes('Complaint Successfully Registered')) {
             return {
