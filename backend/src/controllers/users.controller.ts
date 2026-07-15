@@ -48,6 +48,7 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
 
         let requiresOtp = false;
         let emailToUse = '';
+        let completedGoogleProfile = false;
 
         if (ic_number) {
             const [userRows]: any = await pool.query('SELECT ic_number, email FROM users WHERE id = ?', [userId]);
@@ -72,6 +73,7 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
                 // updates.email_verified = 0;
                 // requiresOtp = true;
                 emailToUse = email || currentUser.email;
+                completedGoogleProfile = true;
             }
         }
 
@@ -113,6 +115,23 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
                 email: emailToUse
             });
             return;
+        }
+
+        if (completedGoogleProfile) {
+            try {
+                const [admins]: any = await pool.query('SELECT id FROM admins');
+                if (admins && admins.length > 0) {
+                    await Promise.all(admins.map((admin: any) => createNotification(
+                        admin.id,
+                        'admin',
+                        'Pendaftaran Pengguna Baru',
+                        `Pengguna baru telah mendaftar dan melengkapkan profil: ${full_name || 'Pengguna'} | No. K/P: ${ic_number}\nuid:${userId}`,
+                        'system'
+                    )));
+                }
+            } catch (notifyError) {
+                console.error('Failed to notify admins of completed profile:', notifyError);
+            }
         }
 
         if (requiresOtp && !emailToUse) {

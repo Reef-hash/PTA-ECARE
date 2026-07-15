@@ -438,28 +438,30 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
             console.error('Failed to send welcome email:', emailError);
         }
 
-        // Notify Admins via DB and Email directly to adminecare.ptasssb@gmail.com
-        try {
-            const [admins]: any = await pool.query('SELECT id FROM admins');
-            if (admins && admins.length > 0) {
-                for (const admin of admins) {
-                    await pool.query('INSERT INTO notifications (recipient_id, recipient_role, title, message, type, is_read) VALUES (?, ?, ?, ?, ?, ?)', [admin.id, 'admin', 'Pendaftaran Pengguna Baru', `Pengguna baru telah mendaftar: ${user.full_name} | No. K/P: ${user.ic_number}\nuid:${user.id}`, 'system', false]);
+        // Notify Admins only if the user has a real IC (not a temporary Google IC)
+        if (!user.ic_number.startsWith('G-')) {
+            try {
+                const [admins]: any = await pool.query('SELECT id FROM admins');
+                if (admins && admins.length > 0) {
+                    for (const admin of admins) {
+                        await pool.query('INSERT INTO notifications (recipient_id, recipient_role, title, message, type, is_read) VALUES (?, ?, ?, ?, ?, ?)', [admin.id, 'admin', 'Pendaftaran Pengguna Baru', `Pengguna baru telah mendaftar: ${user.full_name} | No. K/P: ${user.ic_number}\nuid:${user.id}`, 'system', false]);
+                    }
                 }
-            }
 
-            const adminEmail = 'adminecare.ptasssb@gmail.com';
-            const emailSubject = 'Pendaftaran Pengguna Baru';
-            const emailHtml = buildNotificationEmailHtml(
-                'Administrator',
-                emailSubject,
-                `Seorang pengguna baru telah mendaftar di portal pentadbir:\n\nNama: ${user.full_name}\nNo. K/P: ${user.ic_number}\nE-mel: ${user.email || 'Tiada'}\n\nSila semak butiran di portal pentadbir.`,
-                undefined,
-                'no_link'
-            );
-            await sendEmail(adminEmail, emailSubject, emailHtml);
-            console.log(`[VERIFY-OTP] Admin notification email sent to ${adminEmail}`);
-        } catch (notifyError) {
-            console.error('Failed to notify admins:', notifyError);
+                const adminEmail = 'adminecare.ptasssb@gmail.com';
+                const emailSubject = 'Pendaftaran Pengguna Baru';
+                const emailHtml = buildNotificationEmailHtml(
+                    'Administrator',
+                    emailSubject,
+                    `Seorang pengguna baru telah mendaftar di portal pentadbir:\n\nNama: ${user.full_name}\nNo. K/P: ${user.ic_number}\nE-mel: ${user.email || 'Tiada'}\n\nSila semak butiran di portal pentadbir.`,
+                    undefined,
+                    'no_link'
+                );
+                await sendEmail(adminEmail, emailSubject, emailHtml);
+                console.log(`[VERIFY-OTP] Admin notification email sent to ${adminEmail}`);
+            } catch (notifyError) {
+                console.error('Failed to notify admins:', notifyError);
+            }
         }
 
         // 5. Create local session token
@@ -738,7 +740,7 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
                 console.error('Failed to send Google OTP email:', e);
             }
 
-            try { await notifyGoogleRegistration(newUser); } catch (e) { console.error('Notify error:', e); }
+            // Admin notification will only be triggered when they complete their profile.
 
             res.status(201).json({
                 message: 'Google registration successful — OTP sent to your email',
