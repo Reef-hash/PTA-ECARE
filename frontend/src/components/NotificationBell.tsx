@@ -226,7 +226,7 @@ export default function NotificationBell() {
         // Return original if no match, but strip internal data like uid
         return {
             title: safeTitle,
-            message: safeMessage.replace(/\|\s*uid:[a-zA-Z0-9-]+/, '').trim()
+            message: safeMessage.replace(/(?:\|\s*|\n\s*)uid:[a-zA-Z0-9-]+/, '').trim()
         };
     };
 
@@ -349,8 +349,8 @@ export default function NotificationBell() {
 
         setIsOpen(false);
 
-        // Check for embedded UID in message (format: | uid:UUID)
-        const uidMatch = notification.message.match(/\|\s*uid:([a-zA-Z0-9-]+)/);
+        // Check for embedded UID in message (format: | uid:UUID or \nuid:UUID)
+        const uidMatch = notification.message.match(/(?:\|\s*|\n\s*)uid:([a-zA-Z0-9-]+)/);
         if (uidMatch) {
             navigate(`/admin/users/${uidMatch[1]}`);
             return;
