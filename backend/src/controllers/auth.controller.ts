@@ -336,9 +336,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         const password_hash = await bcrypt.hash(password, 10);
 
         // 3. Insert user into public users table
+        const finalEmail = normalizedEmail || `no-email-${ic_number}@ptas.my`;
         await pool.query(
             `INSERT INTO users (id, full_name, ic_number, email, contact_no, contact_no_2, address, state, password_hash, is_active, email_verified, auth_provider) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'password')`,
-            [userId, full_name, ic_number, normalizedEmail || null, contact_no, contact_no_2 || null, address, state || null, password_hash, normalizedEmail ? 0 : 1, normalizedEmail ? false : true]
+            [userId, full_name, ic_number, finalEmail, contact_no, contact_no_2 || null, address, state || null, password_hash, normalizedEmail ? 0 : 1, normalizedEmail ? false : true]
         );
         const [userRows]: any = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
         if (!userRows || userRows.length === 0) {
@@ -397,9 +398,9 @@ export const register = async (req: Request, res: Response): Promise<void> => {
                 token
             });
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error('Registration error:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: `Ralat Sistem: ${error.message}` });
     }
 };
 
