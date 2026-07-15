@@ -146,8 +146,15 @@ export default function UserRegister() {
             });
 
             login(response.token, response.user, 'user');
-            toast.success(response.message || 'Akaun anda berjaya diaktifkan!');
-            navigate('/users/dashboard');
+            
+            // For Google Auth cases where profile is incomplete
+            if (response.redirect_to_profile || response.profile_complete === false || (response.user.ic_number && response.user.ic_number.startsWith('G-'))) {
+                toast.success('Pengesahan berjaya! Sila lengkapkan profil anda.');
+                navigate('/lengkapkan-profil', { replace: true });
+            } else {
+                toast.success(response.message || 'Akaun anda berjaya diaktifkan!');
+                navigate('/users/dashboard');
+            }
         } catch (error: any) {
             toast.error(error.response?.data?.error || 'Kod OTP tidak sah atau telah tamat tempoh');
         } finally {
@@ -178,6 +185,14 @@ export default function UserRegister() {
                 credential, // direct JWT token from Google Console
                 intent: 'register',
             });
+
+            if (response.requires_otp) {
+                toast.success(response.message || 'Sila sahkan e-mel anda menggunakan kod OTP.');
+                setOtpEmail(response.email);
+                setRequiresOtp(true);
+                setCooldown(60);
+                return;
+            }
 
             login(response.token, response.user, 'user');
             

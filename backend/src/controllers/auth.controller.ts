@@ -716,21 +716,34 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
             const newUserId = randomUUID();
             const password_hash = await bcrypt.hash(`google:${googleSub}:${randomUUID()}`, 10);
             await pool.query(
-                'INSERT INTO users (id, full_name, ic_number, email, contact_no, address, password_hash, google_sub, auth_provider, email_verified, google_picture) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [newUserId, googleName, placeholderIc, googleEmail, '0000000000', 'Pending', password_hash, googleSub, 'google', true, googlePicture]
+                'INSERT INTO users (id, full_name, ic_number, email, contact_no, address, password_hash, google_sub, auth_provider, email_verified, google_picture, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [newUserId, googleName, placeholderIc, googleEmail, '0000000000', 'Pending', password_hash, googleSub, 'google', false, googlePicture, 0]
             );
             const [newUserRows]: any = await pool.query('SELECT * FROM users WHERE id = ?', [newUserId]);
             if (!newUserRows || newUserRows.length === 0) throw new Error('Failed to create user');
             const newUser = newUserRows[0] as UserRow;
 
-            try { await notifyGoogleRegistration(newUser); } catch (e) { console.error('Notify error:', e); }
-            try { await sendWelcomeEmail(newUser); } catch (e) { console.error('Welcome email error:', e); }
+            // Generate OTP
+            const otp = Math.floor(100000 + Math.random() * 900000).toString();
+            const expires_at = new Date(Date.now() + 15 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
 
-            const token = createUserToken(newUser);
+            await pool.query('DELETE FROM activation_otps WHERE email = ? AND role = ?', [googleEmail, 'user']);
+            await pool.query('INSERT INTO activation_otps (email, role, otp, expires_at) VALUES (?, ?, ?, ?)', [googleEmail, 'user', otp, expires_at]);
+
+            try {
+                const emailHtml = buildUserSignupOtpEmailHtml(googleEmail, otp);
+                await sendEmail(googleEmail, 'Sahkan Akaun Google Anda', emailHtml);
+            } catch (e) {
+                console.error('Failed to send Google OTP email:', e);
+            }
+
+            try { await notifyGoogleRegistration(newUser); } catch (e) { console.error('Notify error:', e); }
+
             res.status(201).json({
-                message: 'Google registration successful — please complete profile',
+                message: 'Google registration successful — OTP sent to your email',
                 user: stripPasswordHash(newUser),
-                token,
+                requires_otp: true,
+                email: googleEmail,
                 role: 'user',
                 is_new_user: true,
                 profile_complete: false,
