@@ -157,7 +157,7 @@ Jika anda tidak membuat pendaftaran ini, sila hubungi kami segera.`;
     const [admins]: any = await pool.query('SELECT id FROM admins');
     if (admins && admins.length > 0) {
         await Promise.all(admins.map((admin: any) => createNotification(
-            admin.id, 'admin', 'New User Registration', `${user.full_name} has just registered using Google.`, 'status_update'
+            admin.id, 'admin', '🆕 New User Registration', `${user.full_name} has just registered using Google. | uid:${user.id}`, 'status_update'
         )));
     }
 };
