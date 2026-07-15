@@ -256,8 +256,51 @@ export default function NotificationBell() {
             setUnreadCount(newUnreadCount);
 
             // Play sound logic
-            if (!isFirstLoadRef.current) {
-                // Modified: Play sound if unread count increased OR if we see a new ID at the top
+            if (isFirstLoadRef.current) {
+                // On first load, if there are unread notifications, show the latest one as a popup
+                if (newUnreadCount > 0 && latestNotif && !latestNotif.is_read) {
+                    playNotificationSound();
+                    const translated = getTranslatedNotification(latestNotif);
+                    toast.custom((tToast) => (
+                        <div
+                            className={`${
+                                tToast.visible ? 'animate-enter' : 'animate-leave'
+                            } max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
+                        >
+                            <div className="flex-1 w-0 p-4 cursor-pointer hover:bg-gray-50 rounded-l-lg transition-colors" onClick={() => {
+                                toast.dismiss(tToast.id);
+                                handleClickNotification(latestNotif);
+                            }}>
+                                <div className="flex items-start">
+                                    <div className="flex-shrink-0 pt-0.5">
+                                        <span className="text-2xl">🔔</span>
+                                    </div>
+                                    <div className="ml-3 flex-1">
+                                        <p className="text-sm font-medium text-gray-900">
+                                            {translated.title}
+                                        </p>
+                                        <p className="mt-1 text-sm text-gray-500 line-clamp-2">
+                                            {translated.message}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex border-l border-gray-200">
+                                <button
+                                    onClick={() => toast.dismiss(tToast.id)}
+                                    className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                >
+                                    Tutup
+                                </button>
+                            </div>
+                        </div>
+                    ), {
+                        duration: 5000,
+                        position: 'top-right',
+                    });
+                }
+            } else {
+                // Subsequent loads (background polling)
                 const hasNewCount = newUnreadCount > prevUnreadCountRef.current;
                 const hasNewTopId = latestNotif && latestNotif.id !== lastNotificationIdRef.current;
 
