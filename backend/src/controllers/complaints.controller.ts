@@ -521,12 +521,12 @@ Terima kasih.
             const adminMsg = `Aduan daripada ${userName} untuk "${brand_name}" memerlukan perhatian.\n> Klik untuk agihkan kepada juruteknik`;
             for (const admin of admins) {
                 // Case 3: Admin Bell
-                await createNotification(admin.id, 'admin', `🆕 Aduan Baharu Diterima`, adminMsg, 'new_complaint', complaint.id);
+                await createNotification(admin.id, 'admin', `Report No. ${report_number} Aduan Baharu Diterima`, adminMsg, 'new_complaint', complaint.id);
                 // Case 3: Admin Email
                 if (admin.email) {
                     try {
                         const emailHtml = buildNotificationEmailHtml(admin.full_name || 'Admin', 'Aduan Baru Diterima', adminEmailBody, report_number, 'admin');
-                        await sendEmail(admin.email, `🆕 Aduan Baharu Memerlukan Tugasan - ${report_number}`, emailHtml);
+                        await sendEmail(admin.email, `Aduan Baharu Memerlukan Tugasan - ${report_number}`, emailHtml);
                     } catch (e) {
                         console.error('Failed to send admin email:', e);
                     }
@@ -538,7 +538,7 @@ Terima kasih.
         await createNotification(
             userId!, 
             'user', 
-            `✅ CREATE COMPLAINT SUCCESSFULLY NO. ${report_number}`, 
+            `CREATE COMPLAINT SUCCESSFULLY Report No. ${report_number}`, 
             `Aduan "${categoryName}" untuk "${brand_name}" telah direkodkan.\n> Klik untuk lihat status aduan`, 
             'new_complaint', 
             complaint.id
