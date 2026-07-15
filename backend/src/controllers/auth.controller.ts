@@ -174,10 +174,7 @@ const buildWelcomeEmail = (name: string) => `
     </div>
 `;
 
-const sendWelcomeEmail = async (user: UserRow): Promise<void> => {
-    if (!user.email) return;
-    await sendEmail(user.email, 'Welcome to E-CARE', buildWelcomeEmail(user.full_name));
-};
+
 
 export const buildUserSignupOtpEmailHtml = (email: string, otp: string) => {
     let baseUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace(/\/$/, '') : 'https://ptas.my';
@@ -374,7 +371,7 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
         const [updatedUsers]: any = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
         const user = updatedUsers[0];
 
-        try { await sendWelcomeEmail(user); } catch (e) { }
+
 
         // Case 5: User Notification (Form Registration - Verified Email)
         await createNotification(
