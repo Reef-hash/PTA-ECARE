@@ -521,7 +521,7 @@ Terima kasih.
             const adminMsg = `Aduan daripada ${userName} untuk "${brand_name}" memerlukan perhatian.\n> Klik untuk agihkan kepada juruteknik`;
             for (const admin of admins) {
                 // Case 3: Admin Bell
-                await createNotification(admin.id, 'admin', `🆕 Aduan Baharu Diterima`, adminMsg, 'status_update', complaint.id);
+                await createNotification(admin.id, 'admin', `🆕 Aduan Baharu Diterima`, adminMsg, 'new_complaint', complaint.id);
                 // Case 3: Admin Email
                 if (admin.email) {
                     try {
@@ -540,7 +540,7 @@ Terima kasih.
             'user', 
             `✅ CREATE COMPLAINT SUCCESSFULLY NO. ${report_number}`, 
             `Aduan "${categoryName}" untuk "${brand_name}" telah direkodkan.\n> Klik untuk lihat status aduan`, 
-            'status_update', 
+            'new_complaint', 
             complaint.id
         );
 
