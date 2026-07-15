@@ -62,7 +62,7 @@ export default function NotificationsPage() {
             await handleMarkAsRead(notification.id);
         }
 
-        const uidMatch = notification.message.match(/(?:\|\s*|\n\s*)uid:([a-zA-Z0-9-]+)/);
+        const uidMatch = notification.message.match(/\buid:([a-zA-Z0-9-]+)/);
         if (uidMatch) {
             navigate(`/admin/users/${uidMatch[1]}`);
             return;
