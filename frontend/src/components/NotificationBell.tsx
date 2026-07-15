@@ -449,7 +449,7 @@ export default function NotificationBell() {
                             </div>
                         ) : (
                             <div className="divide-y divide-gray-50">
-                                {notifications.map((notification) => {
+                                {notifications.slice(0, 5).map((notification) => {
                                     const translated = getTranslatedNotification(notification);
                                     return (
                                         <div
