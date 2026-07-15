@@ -266,24 +266,42 @@ export default function NotificationBell() {
                     
                     if (hasNewTopId && latestNotif) {
                         const translated = getTranslatedNotification(latestNotif);
-                        toast((t) => (
-                            <div 
-                                className="flex flex-col gap-1 cursor-pointer w-full" 
-                                onClick={() => {
-                                    toast.dismiss(t.id);
-                                    handleClickNotification(latestNotif);
-                                }}
+                        toast.custom((tToast) => (
+                            <div
+                                className={`${
+                                    tToast.visible ? 'animate-enter' : 'animate-leave'
+                                } max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
                             >
-                                <span className="font-semibold text-sm">{translated.title}</span>
-                                <span className="text-xs text-gray-600 line-clamp-2">{translated.message}</span>
+                                <div className="flex-1 w-0 p-4 cursor-pointer hover:bg-gray-50 rounded-l-lg transition-colors" onClick={() => {
+                                    toast.dismiss(tToast.id);
+                                    handleClickNotification(latestNotif);
+                                }}>
+                                    <div className="flex items-start">
+                                        <div className="flex-shrink-0 pt-0.5">
+                                            <span className="text-2xl">🔔</span>
+                                        </div>
+                                        <div className="ml-3 flex-1">
+                                            <p className="text-sm font-medium text-gray-900">
+                                                {translated.title}
+                                            </p>
+                                            <p className="mt-1 text-sm text-gray-500 line-clamp-2">
+                                                {translated.message}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex border-l border-gray-200">
+                                    <button
+                                        onClick={() => toast.dismiss(tToast.id)}
+                                        className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    >
+                                        Tutup
+                                    </button>
+                                </div>
                             </div>
                         ), {
                             duration: 5000,
                             position: 'top-right',
-                            icon: '🔔',
-                            style: {
-                                minWidth: '300px',
-                            },
                         });
                     }
                 }
