@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Search, UserCheck, UserX, UserPlus, X, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
+import Modal from '../../components/Modal';
 import api from '../../services/api';
 import { User } from '../../types';
 import toast from 'react-hot-toast';
@@ -12,6 +13,8 @@ export default function Users() {
     const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [userToDelete, setUserToDelete] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // Add Customer Modal
     const [showAddModal, setShowAddModal] = useState(false);
@@ -53,15 +56,22 @@ export default function Users() {
         }
     };
 
-    const handleDeleteUser = async (userId: string) => {
-        if (!window.confirm('Adakah anda pasti untuk memadam pelanggan ini? Tindakan ini tidak boleh diundur.')) return;
-        
+    const handleDeleteUser = (userId: string) => {
+        setUserToDelete(userId);
+    };
+
+    const confirmDeleteUser = async () => {
+        if (!userToDelete) return;
+        setIsDeleting(true);
         try {
-            await api.delete(`/admin/users/${userId}`);
-            setUsers(users.filter(u => u.id !== userId));
+            await api.delete(`/admin/users/${userToDelete}`);
+            setUsers(users.filter(u => u.id !== userToDelete));
             toast.success('Pelanggan berjaya dipadam.');
+            setUserToDelete(null);
         } catch (error: any) {
             toast.error(error.response?.data?.error || 'Gagal memadam pelanggan.');
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -542,6 +552,19 @@ export default function Users() {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <Modal
+                isOpen={!!userToDelete}
+                onClose={() => setUserToDelete(null)}
+                title="Padam Pelanggan"
+                description="Adakah anda pasti untuk memadam pelanggan ini? Tindakan ini tidak boleh diundur dan semua data berkaitan akan dipadam."
+                confirmLabel="Padam"
+                cancelLabel="Batal"
+                onConfirm={confirmDeleteUser}
+                isLoading={isDeleting}
+                variant="danger"
+            />
         </AdminLayout >
     );
 }
