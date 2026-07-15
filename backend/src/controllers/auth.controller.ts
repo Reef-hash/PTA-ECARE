@@ -63,17 +63,40 @@ const verifyGoogleCredential = async (credential: string): Promise<TokenPayload>
         throw new Error('GOOGLE_CLIENT_ID is not configured');
     }
 
-    const ticket = await googleClient.verifyIdToken({
-        idToken: credential,
-        audience: GOOGLE_CLIENT_ID,
-    });
+    let payload: any = null;
 
-    const payload = ticket.getPayload();
+    if (credential.startsWith('ya29.')) {
+        // It's a Google OAuth Access Token (from useGoogleLogin implicit flow)
+        const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: { Authorization: `Bearer ${credential}` }
+        });
+        if (!response.ok) {
+            throw new Error('Failed to verify Google access token');
+        }
+        const data: any = await response.json();
+        
+        payload = {
+            sub: data.sub,
+            email: data.email,
+            email_verified: data.email_verified,
+            name: data.name,
+            picture: data.picture
+        };
+    } else {
+        // Assume it's an ID Token (JWT)
+        const ticket = await googleClient.verifyIdToken({
+            idToken: credential,
+            audience: GOOGLE_CLIENT_ID,
+        });
+        payload = ticket.getPayload();
+    }
+
     if (!payload?.sub || !payload.email) {
         throw new Error('Invalid Google token payload');
     }
 
-    if (!payload.email_verified) {
+    // Support both boolean and string representations of email_verified
+    if (payload.email_verified === false || payload.email_verified === 'false') {
         throw new Error('Google email is not verified');
     }
 
