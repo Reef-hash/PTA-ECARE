@@ -67,9 +67,10 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
                 }
                 updates.ic_number = ic_number;
                 
-                updates.status = 'Inactive';
-                updates.email_verified = 0;
-                requiresOtp = true;
+                // No longer requires OTP here since they already verified during Google Auth registration
+                // updates.status = 'Inactive';
+                // updates.email_verified = 0;
+                // requiresOtp = true;
                 emailToUse = email || currentUser.email;
             }
         }
