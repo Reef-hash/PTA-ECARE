@@ -131,7 +131,7 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
                         'admin',
                         'Pendaftaran Pengguna Baru',
                         `Pengguna baru telah mendaftar dan melengkapkan profil: ${full_name || 'Pengguna'} | No. K/P: ${ic_number}\nuid:${userId}`,
-                        'system'
+                        'NEW_USER_REGISTERED'
                     )));
                 }
                 // Notify user in their bell (Direct insert to avoid sending an email)

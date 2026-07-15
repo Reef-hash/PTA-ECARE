@@ -443,17 +443,7 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
                     }
                 }
 
-                const adminEmail = 'adminecare.ptasssb@gmail.com';
-                const emailSubject = 'Pendaftaran Pengguna Baru';
-                const emailHtml = buildNotificationEmailHtml(
-                    'Administrator',
-                    emailSubject,
-                    `Seorang pengguna baru telah mendaftar di portal pentadbir:\n\nNama: ${user.full_name}\nNo. K/P: ${user.ic_number}\nE-mel: ${user.email || 'Tiada'}\n\nSila semak butiran di portal pentadbir.`,
-                    undefined,
-                    'no_link'
-                );
-                await sendEmail(adminEmail, emailSubject, emailHtml);
-                console.log(`[VERIFY-OTP] Admin notification email sent to ${adminEmail}`);
+                // (Admin email notification has been disabled as requested)
             } catch (notifyError) {
                 console.error('Failed to notify admins:', notifyError);
             }
