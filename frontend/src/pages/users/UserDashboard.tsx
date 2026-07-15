@@ -8,9 +8,29 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { parseNotificationMessage } from '../../utils/notificationParser';
 import Modal from '../../components/Modal';
+import Swal from 'sweetalert2';
+import { useAuth } from '../../context/AuthContext';
 
 export default function UserDashboard() {
     const { t, i18n } = useTranslation();
+    const { user } = useAuth();
+
+    useEffect(() => {
+        const welcomeShown = sessionStorage.getItem('welcomeShown');
+        if (!welcomeShown && user) {
+            Swal.fire({
+                title: `Selamat Datang, ${user.full_name || 'Pengguna'}!`,
+                text: 'Selamat datang ke E-CARE Dashboard.',
+                icon: 'success',
+                confirmButtonColor: '#2563eb',
+                confirmButtonText: 'Teruskan',
+                timer: 4000,
+                timerProgressBar: true
+            });
+            sessionStorage.setItem('welcomeShown', 'true');
+        }
+    }, [user]);
+
     const [stats, setStats] = useState({
         total: 0,
         pending: 0,
