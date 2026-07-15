@@ -123,35 +123,7 @@ const notifyGoogleRegistration = async (user: UserRow): Promise<void> => {
         user.id, 'user', '✅ [REGISTRATION SUCCESS]', `Selamat! Akun Anda telah berhasil dibuat.\nMetode : Google OAuth\nEmail : ${user.email}\nWaktu : ${formattedDate}`, 'status_update'
     );
 
-    // Case 4: User Welcome Email
-    try {
-        const emailBody = `Assalamualaikum dan Salam Sejahtera ${user.full_name},
-
-Tahniah! Akaun anda di E-CARE telah berjaya didaftarkan menggunakan akaun Google anda.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- BUTIRAN AKAUN
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Nama Penuh    : ${user.full_name}
-Emel          : ${user.email}
-Kaedah Daftar : Google OAuth
-Status Akaun  : ✅ Aktif
-Tarikh Daftar : ${formattedDate}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🔑 Cara Log Masuk:
-Anda tidak perlu kata laluan. Hanya klik butang 
-"Log Masuk dengan Google" di laman web kami.
-
-🚀 Mulakan sekarang:
-Jika anda tidak membuat pendaftaran ini, sila hubungi kami segera.`;
-        const emailHtml = buildNotificationEmailHtml(user.full_name, 'Selamat Datang ke portal E-CARE!', emailBody, undefined, 'user');
-        await sendEmail(user.email!, 'Selamat Datang ke portal E-CARE!', emailHtml);
-    } catch (emailErr) {
-        console.error('Failed to send welcome email for Google user:', emailErr);
-    }
+    // Case 4: User Welcome Email - REMOVED (combined with OTP email during profile completion)
 
     // Case 1: Admin Notification
     const [admins]: any = await pool.query('SELECT id FROM admins');
@@ -218,6 +190,8 @@ export const buildUserSignupOtpEmailHtml = (email: string, otp: string) => {
             <p style="margin: 5px 0 0; font-size: 14px; opacity: 0.9; color: #ffffff;">Powered by DFKTVETMARABESUT</p>
         </div>
         <div style="padding: 40px; line-height: 1.6; color: #334155;">
+            <h2 style="color: #1e293b; margin-top: 0; text-align: center;">Selamat Datang ke portal E-CARE!</h2>
+            <p style="text-align: center; margin-bottom: 30px;">Tahniah, pendaftaran akaun anda hampir selesai.</p>
             <p style="margin-top: 0;">Sahkan pendaftaran akaun dengan kod berikut:</p>
             <div style="font-size: 32px; font-weight: 700; letter-spacing: 8px; background-color: #f1f5f9; padding: 15px; border-radius: 8px; text-align: center; color: #1e3a8a; margin: 20px 0;">${otp}</div>
             <p>atau klik di bawah untuk sahkan akaun anda:</p>
@@ -540,7 +514,6 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
                 const newUser = newUserRows[0];
 
                 try { await notifyGoogleRegistration(newUser); } catch (e) {}
-                try { await sendWelcomeEmail(newUser); } catch (e) {}
 
                 res.status(201).json({ message: 'Google registration successful', user: stripPasswordHash(newUser), token: createUserToken(newUser), role: 'user', is_new_user: true, profile_complete: true });
                 return;
@@ -560,7 +533,6 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
             const newUser = newUserRows[0];
 
             try { await notifyGoogleRegistration(newUser); } catch (e) {}
-            try { await sendWelcomeEmail(newUser); } catch (e) {}
 
             res.status(201).json({ message: 'Google registration successful — please complete profile', user: stripPasswordHash(newUser), token: createUserToken(newUser), role: 'user', is_new_user: true, profile_complete: false, redirect_to_profile: true });
             return;
