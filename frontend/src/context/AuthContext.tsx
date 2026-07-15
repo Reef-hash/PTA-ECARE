@@ -61,6 +61,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // Next time Admin logs in, they get En.
             // This works.
         }
+
+        // Allow welcome popup to show again for new login session
+        sessionStorage.removeItem('welcomeShown');
     };
 
     const logout = () => {
