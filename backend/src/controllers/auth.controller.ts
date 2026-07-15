@@ -885,9 +885,9 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
             role: 'user',
             is_new_user: true
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Google auth error:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: `Ralat Sistem (Google Auth): ${error.message}` });
     }
 };
 
