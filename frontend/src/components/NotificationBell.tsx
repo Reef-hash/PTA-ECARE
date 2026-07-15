@@ -25,15 +25,10 @@ export default function NotificationBell() {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isOpen, setIsOpen] = useState(false);
-    const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [isListExpanded, setIsListExpanded] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const prevUnreadCountRef = useRef<number>(0);
     const audioRef = useRef<HTMLAudioElement | null>(null);
-
-    const toggleExpand = (e: React.MouseEvent, id: string) => {
-        e.stopPropagation();
-        setExpandedId(prev => prev === id ? null : id);
-    };
     const isFirstLoadRef = useRef(true);
     const navigate = useNavigate();
     const { t, i18n } = useTranslation();
@@ -469,16 +464,9 @@ export default function NotificationBell() {
                                                         <p className={`text-sm ${!notification.is_read ? 'font-semibold text-gray-800' : 'text-gray-600'} pr-4`}>
                                                             {translated.title}
                                                         </p>
-                                                        <button 
-                                                            onClick={(e) => toggleExpand(e, notification.id)} 
-                                                            className="p-1 -m-1 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-200 transition-colors flex-shrink-0"
-                                                            title={expandedId === notification.id ? "Tutup" : "Papar penuh"}
-                                                        >
-                                                            {expandedId === notification.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                                                        </button>
                                                     </div>
-                                                    <div className={`transition-all duration-300 ease-in-out overflow-hidden ${expandedId === notification.id ? 'max-h-[500px] opacity-100' : 'max-h-5 opacity-90'}`}>
-                                                        <p className={`text-xs text-gray-500 mt-1 whitespace-pre-wrap ${expandedId !== notification.id ? 'line-clamp-1' : ''}`}>
+                                                    <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isListExpanded ? 'max-h-[500px] opacity-100' : 'max-h-5 opacity-90'}`}>
+                                                        <p className={`text-xs text-gray-500 mt-1 whitespace-pre-wrap ${!isListExpanded ? 'line-clamp-1' : ''}`}>
                                                             {translated.message}
                                                         </p>
                                                     </div>
@@ -515,9 +503,9 @@ export default function NotificationBell() {
                                                         })()}
                                                     </p>
 
-                                                    <div className={`transition-all duration-300 ease-in-out overflow-hidden ${expandedId === notification.id ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                                                    <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isListExpanded ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'}`}>
                                                         {/* Nested Scrollable List of ALL notifications */}
-                                                        {expandedId === notification.id && (
+                                                        {isListExpanded && (
                                                             <div className="mt-4 pt-4 border-t border-gray-100 max-h-64 overflow-y-auto custom-scrollbar" onClick={(e) => e.stopPropagation()}>
                                                                 <h4 className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Semua Notifikasi</h4>
                                                                 <div className="space-y-2 pr-2">
@@ -557,7 +545,7 @@ export default function NotificationBell() {
                     </div>
 
                     {/* View All button */}
-                    <div className="p-2 border-t border-gray-100 bg-gray-50">
+                    <div className="p-2 border-t border-gray-100 bg-gray-50 flex items-center justify-between gap-1">
                         <button
                             onClick={() => {
                                 setIsOpen(false);
@@ -570,10 +558,22 @@ export default function NotificationBell() {
                                     navigate('/admin/notifications');
                                 }
                             }}
-                            className="w-full text-center text-sm text-indigo-600 hover:text-indigo-800 font-medium py-1.5 rounded hover:bg-indigo-50 transition-colors"
+                            className="flex-1 text-center text-sm text-indigo-600 hover:text-indigo-800 font-medium py-1.5 rounded hover:bg-indigo-50 transition-colors"
                         >
                             {t('common.view_all')}
                         </button>
+                        {notifications.length > 0 && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsListExpanded(prev => !prev);
+                                }}
+                                className="p-1.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors flex-shrink-0 flex items-center justify-center"
+                                title={isListExpanded ? "Tutup" : "Papar penuh"}
+                            >
+                                {isListExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
