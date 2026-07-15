@@ -289,7 +289,7 @@ export const createNotification = async (
                 }
             }
 
-            if (email) {
+            if (email && type !== 'NEW_USER_REGISTERED') {
                 let reportNumber = '';
                 let branchName = 'cawangan asal aduan';
                 
