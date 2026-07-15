@@ -117,13 +117,16 @@ export default function NotificationBell() {
             translatedStatus = t('notification.status_closed');
         }
 
+        const safeTitleUpper = safeTitle.toUpperCase();
+        
         // Handle custom notifications
         if (
-            safeTitle.includes('REGISTRATION SUCCESS') ||
-            safeTitle.includes('NEW USER REGISTRATION') ||
-            safeTitle.includes('Selamat Datang') ||
-            safeTitle.includes('NEW COMPLAINT') ||
-            safeTitle.includes('ADUAN BERJAYA DIHANTAR')
+            safeTitleUpper.includes('REGISTRATION SUCCESS') ||
+            safeTitleUpper.includes('NEW USER REGISTRATION') ||
+            safeTitleUpper.includes('SELAMAT DATANG') ||
+            safeTitleUpper.includes('NEW COMPLAINT') ||
+            safeTitleUpper.includes('ADUAN BERJAYA DIHANTAR') ||
+            safeTitleUpper.includes('ADUAN BARU')
         ) {
             return {
                 title: safeTitle,
