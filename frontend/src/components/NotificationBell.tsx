@@ -430,14 +430,13 @@ export default function NotificationBell() {
                             >
                                 <span>🔊</span> Test
                             </button>
-                            {unreadCount > 0 && (
-                                <button
-                                    onClick={handleMarkAllRead}
-                                    className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
-                                >
-                                    {t('common.mark_all_read')}
-                                </button>
-                            )}
+                            <button
+                                onClick={handleMarkAllRead}
+                                disabled={unreadCount === 0}
+                                className={`text-xs font-medium ${unreadCount > 0 ? 'text-indigo-600 hover:text-indigo-800' : 'text-gray-400 cursor-not-allowed'}`}
+                            >
+                                {t('common.mark_all_read')}
+                            </button>
                         </div>
                     </div>
 
