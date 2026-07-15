@@ -477,41 +477,12 @@ export default function NotificationBell() {
                                                             {expandedId === notification.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                                                         </button>
                                                     </div>
-                                                    <div className={`transition-all duration-300 ease-in-out overflow-hidden ${expandedId === notification.id ? 'max-h-[600px] opacity-100' : 'max-h-5 opacity-90'}`}>
+                                                    <div className={`transition-all duration-300 ease-in-out overflow-hidden ${expandedId === notification.id ? 'max-h-[500px] opacity-100' : 'max-h-5 opacity-90'}`}>
                                                         <p className={`text-xs text-gray-500 mt-1 whitespace-pre-wrap ${expandedId !== notification.id ? 'line-clamp-1' : ''}`}>
                                                             {translated.message}
                                                         </p>
-                                                        {/* Nested Scrollable List of ALL notifications */}
-                                                        {expandedId === notification.id && (
-                                                            <div className="mt-4 pt-4 border-t border-gray-100 max-h-64 overflow-y-auto custom-scrollbar" onClick={(e) => e.stopPropagation()}>
-                                                                <h4 className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Semua Notifikasi</h4>
-                                                                <div className="space-y-2 pr-2">
-                                                                    {notifications.map((subNotif) => {
-                                                                        const subTranslated = getTranslatedNotification(subNotif);
-                                                                        return (
-                                                                            <div 
-                                                                                key={subNotif.id}
-                                                                                onClick={() => handleClickNotification(subNotif)}
-                                                                                className={`p-3 rounded-lg border border-gray-50 hover:bg-gray-50 cursor-pointer ${!subNotif.is_read ? 'bg-blue-50/30' : ''}`}
-                                                                            >
-                                                                                <div className="flex gap-2">
-                                                                                    <div className={`mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0 ${!subNotif.is_read ? 'bg-indigo-500' : 'bg-transparent'}`} />
-                                                                                    <div>
-                                                                                        <p className={`text-xs ${!subNotif.is_read ? 'font-semibold text-gray-800' : 'text-gray-600'}`}>
-                                                                                            {subTranslated.title}
-                                                                                        </p>
-                                                                                        <p className="text-[10px] text-gray-500 mt-1 line-clamp-2">
-                                                                                            {subTranslated.message}
-                                                                                        </p>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        );
-                                                                    })}
-                                                                </div>
-                                                            </div>
-                                                        )}
                                                     </div>
+                                                    
                                                     <p className="text-[10px] text-gray-400 mt-2">
                                                         {(() => {
                                                             if (!notification.created_at) return '';
@@ -543,6 +514,39 @@ export default function NotificationBell() {
                                                             return `${dateStr}, ${timeStr}`;
                                                         })()}
                                                     </p>
+
+                                                    <div className={`transition-all duration-300 ease-in-out overflow-hidden ${expandedId === notification.id ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                                                        {/* Nested Scrollable List of ALL notifications */}
+                                                        {expandedId === notification.id && (
+                                                            <div className="mt-4 pt-4 border-t border-gray-100 max-h-64 overflow-y-auto custom-scrollbar" onClick={(e) => e.stopPropagation()}>
+                                                                <h4 className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Semua Notifikasi</h4>
+                                                                <div className="space-y-2 pr-2">
+                                                                    {notifications.map((subNotif) => {
+                                                                        const subTranslated = getTranslatedNotification(subNotif);
+                                                                        return (
+                                                                            <div 
+                                                                                key={subNotif.id}
+                                                                                onClick={() => handleClickNotification(subNotif)}
+                                                                                className={`p-3 rounded-lg border border-gray-50 hover:bg-gray-50 cursor-pointer ${!subNotif.is_read ? 'bg-blue-50/30' : ''}`}
+                                                                            >
+                                                                                <div className="flex gap-2">
+                                                                                    <div className={`mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0 ${!subNotif.is_read ? 'bg-indigo-500' : 'bg-transparent'}`} />
+                                                                                    <div>
+                                                                                        <p className={`text-xs ${!subNotif.is_read ? 'font-semibold text-gray-800' : 'text-gray-600'}`}>
+                                                                                            {subTranslated.title}
+                                                                                        </p>
+                                                                                        <p className="text-[10px] text-gray-500 mt-1 line-clamp-2">
+                                                                                            {subTranslated.message}
+                                                                                        </p>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
