@@ -145,7 +145,7 @@ const notifyGoogleRegistration = async (user: UserRow): Promise<void> => {
         await Promise.all(admins.map((admin: any) => createNotification(
             admin.id,
             'admin',
-            'New User Registration',
+            'New customer Registration',
             `${user.full_name} has just registered using Google. | uid:${user.id}`,
             'NEW_USER_REGISTERED'
         )));
