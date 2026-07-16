@@ -414,6 +414,11 @@ export const createComplaint = async (req: Request, res: Response): Promise<void
         const userId = req.user?.id;
         const { category_id, subcategory, complaint_type, state, brand_name, model_no, details } = req.body;
 
+        if (!category_id || !brand_name || !details) {
+            res.status(400).json({ error: 'Kategori, Jenama, dan Butiran Kerosakan adalah wajib diisi.' });
+            return;
+        }
+
         const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
 
         console.log('[DEBUG UPLOAD] req.body:', req.body);
@@ -516,16 +521,18 @@ Terima kasih.
 
 *This is an automated notification. Please do not reply to this email.*`;
 
+        const adminNotifTitle = `Aduan Baru untuk ${brand_name}`;
+
         const [admins]: any = await pool.query('SELECT id, email FROM admins');
         if (admins) {
-            const adminMsg = `Aduan daripada ${userName} untuk "${brand_name}" memerlukan perhatian.\n> Klik untuk agihkan kepada juruteknik`;
+            const adminMsg = `No. Laporan: ${report_number}\nKategori: ${categoryName}\nJenama: ${brand_name}\nButiran Kerosakan: ${details}\n> Klik untuk agihkan kepada juruteknik`;
             for (const admin of admins) {
                 // Case 3: Admin Bell
-                await createNotification(admin.id, 'admin', `Report No. ${report_number} Aduan Baharu Diterima`, adminMsg, 'new_complaint', complaint.id);
+                await createNotification(admin.id, 'admin', adminNotifTitle, adminMsg, 'new_complaint', complaint.id);
                 // Case 3: Admin Email
                 if (admin.email) {
                     try {
-                        const emailHtml = buildNotificationEmailHtml(admin.full_name || 'Admin', 'Aduan Baru Diterima', adminEmailBody, report_number, 'admin');
+                        const emailHtml = buildNotificationEmailHtml(admin.full_name || 'Admin', adminNotifTitle, adminEmailBody, report_number, 'admin');
                         await sendEmail(admin.email, `Aduan Baharu Memerlukan Tugasan - ${report_number}`, emailHtml);
                     } catch (e) {
                         console.error('Failed to send admin email:', e);
@@ -535,11 +542,13 @@ Terima kasih.
         }
 
         // Case 6: User Bell
+        const userNotifTitle = `Complaint Successfully Registered!`;
+        const userMsg = `You have successfully submitted a complaint with Complaint No: ${report_number}.\n\n• Category: ${categoryName}\n• Brand: ${brand_name}\n• Damage Details: ${details}\n\nClick here to check the current status of your complaint.`;
         await createNotification(
             userId!, 
             'user', 
-            `CREATE COMPLAINT SUCCESSFULLY Report No. ${report_number}`, 
-            `Aduan "${categoryName}" untuk "${brand_name}" telah direkodkan.\n> Klik untuk lihat status aduan`, 
+            userNotifTitle, 
+            userMsg, 
             'new_complaint', 
             complaint.id
         );
