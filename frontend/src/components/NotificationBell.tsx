@@ -450,7 +450,13 @@ export default function NotificationBell() {
                 const { data } = await api.get(`/complaints/resolve-id/${notification.reference_id}`);
                 const reportNumber = data.report_number;
                 const isStatusUpdate = notification.title.toLowerCase().includes('status') || 
-                                       notification.title.toLowerCase().includes('kemaskini');
+                                       notification.title.toLowerCase().includes('kemaskini') ||
+                                       notification.title.toLowerCase().includes('diproses') ||
+                                       notification.title.toLowerCase().includes('selesai') ||
+                                       notification.type === 'status_update' || 
+                                       notification.type === 'status_update_detailed';
+                
+                const path = window.location.pathname;
                 if (path.startsWith('/users')) {
                     if (isStatusUpdate) {
                         navigate(`/users/complaint/${reportNumber}/track-repair`);
