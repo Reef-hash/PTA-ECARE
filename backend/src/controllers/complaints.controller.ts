@@ -1153,7 +1153,7 @@ export const cancelComplaint = async (req: Request, res: Response): Promise<void
 
         if (admin) {
             const userName = complaint.full_name || 'Pengguna';
-            await createNotification(admin.id, 'admin', `Aduan Dibatalkan oleh Pengguna`, `${userName} telah membatalkan aduan (No Laporan: ${complaint.report_number}). Klik untuk semak.`, 'status_update', id, true);
+            await createNotification(admin.id, 'admin', `Pelanggan : ${userName} telah membatalkan aduan ${complaint.report_number}.`, `Klik untuk semak.`, 'status_update', id, true);
         }
 
         res.json({ message: 'Complaint cancelled successfully' });
