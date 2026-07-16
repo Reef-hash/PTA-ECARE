@@ -414,8 +414,14 @@ export default function NotificationBell() {
             try {
                 const { data } = await api.get(`/complaints/resolve-id/${notification.reference_id}`);
                 const reportNumber = data.report_number;
+                const isStatusUpdate = notification.title.toLowerCase().includes('status') || 
+                                       notification.title.toLowerCase().includes('kemaskini');
                 if (path.startsWith('/users')) {
-                    navigate(`/users/complaint/${reportNumber}`);
+                    if (isStatusUpdate) {
+                        navigate(`/users/complaint/${reportNumber}/track-repair`);
+                    } else {
+                        navigate(`/users/complaint/${reportNumber}`);
+                    }
                 } else if (path.startsWith('/admin/technician')) {
                     navigate(`/admin/technician/complaint/${reportNumber}`);
                 } else {
