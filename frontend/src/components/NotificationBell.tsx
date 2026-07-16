@@ -519,8 +519,8 @@ export default function NotificationBell() {
                                                             {translated.title}
                                                         </p>
                                                     </div>
-                                                    <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isListExpanded ? 'max-h-[500px] opacity-100' : 'max-h-5 opacity-90'}`}>
-                                                        <p className={`text-xs text-gray-500 mt-1 whitespace-pre-wrap ${!isListExpanded ? 'line-clamp-1' : ''}`}>
+                                                    <div className="max-h-12 overflow-hidden">
+                                                        <p className="text-xs text-gray-500 mt-1 whitespace-pre-wrap line-clamp-2">
                                                             {translated.message}
                                                         </p>
                                                     </div>
@@ -531,42 +531,6 @@ export default function NotificationBell() {
                                                             return getRelativeTime(notification.created_at, i18n.language === 'ms');
                                                         })()}
                                                     </p>
-
-                                                    <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isListExpanded ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'}`}>
-                                                        {/* Nested Scrollable List of ALL notifications */}
-                                                        {isListExpanded && (
-                                                            <div className="mt-4 pt-4 border-t border-gray-100 max-h-64 overflow-y-auto custom-scrollbar" onClick={(e) => e.stopPropagation()}>
-                                                                <h4 className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Semua Notifikasi</h4>
-                                                                <div className="space-y-2 pr-2">
-                                                                    {notifications.map((subNotif) => {
-                                                                        const subTranslated = getTranslatedNotification(subNotif);
-                                                                        return (
-                                                                            <div 
-                                                                                key={subNotif.id}
-                                                                                onClick={() => handleClickNotification(subNotif)}
-                                                                                className={`p-3 rounded-lg border border-gray-50 hover:bg-gray-50 cursor-pointer ${!subNotif.is_read ? 'bg-blue-50/30' : ''}`}
-                                                                            >
-                                                                                <div className="flex gap-2">
-                                                                                    <div className={`mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0 ${!subNotif.is_read ? 'bg-indigo-500' : 'bg-transparent'}`} />
-                                                                                    <div>
-                                                                                        <p className={`text-xs ${!subNotif.is_read ? 'font-semibold text-gray-800' : 'text-gray-600'}`}>
-                                                                                            {subTranslated.title}
-                                                                                        </p>
-                                                                                        <p className="text-[10px] text-gray-500 mt-1 line-clamp-2">
-                                                                                            {subTranslated.message}
-                                                                                        </p>
-                                                                                        <p className="text-[9px] text-gray-400 mt-1">
-                                                                                            {getRelativeTime(subNotif.created_at, i18n.language === 'ms')}
-                                                                                        </p>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        );
-                                                                    })}
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -596,18 +560,6 @@ export default function NotificationBell() {
                         >
                             {t('common.view_all')}
                         </button>
-                        {notifications.length > 0 && (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setIsListExpanded(prev => !prev);
-                                }}
-                                className="p-1.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors flex-shrink-0 flex items-center justify-center"
-                                title={isListExpanded ? "Tutup" : "Papar penuh"}
-                            >
-                                {isListExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-                            </button>
-                        )}
                     </div>
                 </div>
             )}
