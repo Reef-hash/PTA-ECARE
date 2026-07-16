@@ -146,8 +146,11 @@ const notifyGoogleRegistration = async (user: UserRow): Promise<void> => {
             admin.id,
             'admin',
             'New customer Registration',
-            `${user.full_name} has just registered using Google. | uid:${user.id}`,
-            'NEW_USER_REGISTERED'
+            `${user.full_name} has just registered using Google.\nuid:${user.id}`,
+            'NEW_USER_REGISTERED',
+            undefined,
+            false,
+            'customer'
         )));
     }
 
@@ -450,7 +453,7 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
                 const [admins]: any = await pool.query('SELECT id FROM admins');
                 if (admins && admins.length > 0) {
                     for (const admin of admins) {
-                        await pool.query('INSERT INTO notifications (recipient_id, recipient_role, title, message, type, is_read) VALUES (?, ?, ?, ?, ?, ?)', [admin.id, 'admin', 'New Customer Registration', `${user.full_name} has just registered using IC Number: ${user.ic_number}. | uid:${user.id}`, 'system', false]);
+                        await pool.query('INSERT INTO notifications (recipient_id, recipient_role, title, message, type, is_read) VALUES (?, ?, ?, ?, ?, ?)', [admin.id, 'admin', 'New Customer Registration', `${user.full_name} has just registered using IC Number: ${user.ic_number}.\nuid:${user.id}`, 'system', false]);
                     }
                 }
 

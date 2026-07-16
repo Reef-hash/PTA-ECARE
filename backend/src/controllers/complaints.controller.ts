@@ -528,7 +528,7 @@ Terima kasih.
             const adminMsg = `Category: ${categoryName}\nBrand: ${brand_name}\nDamage Details: ${details}\n\n> Klik untuk agihkan kepada juruteknik`;
             for (const admin of admins) {
                 // Case 3: Admin Bell
-                await createNotification(admin.id, 'admin', adminNotifTitle, adminMsg, 'new_complaint', complaint.id);
+                await createNotification(admin.id, 'admin', adminNotifTitle, adminMsg, 'new_complaint', complaint.id, false, 'customer');
                 // Case 3: Admin Email
                 if (admin.email) {
                     try {
@@ -753,7 +753,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                     const [admins]: any = await pool.query('SELECT id FROM admins');
                     if (admins) {
                         for (const admin of admins) {
-                            await createNotification(admin.id, 'admin', `Status Update: ${reportNumber}`, adminStatusPayload, 'status_update_detailed', id);
+                            await createNotification(admin.id, 'admin', `Status Update: ${reportNumber}`, adminStatusPayload, 'status_update_detailed', id, false, 'technician');
                         }
                     }
                 }
@@ -850,7 +850,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                     if (admins) {
                         for (const admin of admins) {
                             // Gunakan skipEmail: true untuk elakkan spam e-mel
-                            await createNotification(admin.id, 'admin', summaryTitle, summaryPayload, 'status_update_detailed', id, true);
+                            await createNotification(admin.id, 'admin', summaryTitle, summaryPayload, 'status_update_detailed', id, true, 'technician');
                         }
                     }
                     await createNotification(complaintData.user_id, 'user', summaryTitle, summaryPayload, 'status_update_detailed', id, true);
@@ -985,7 +985,7 @@ export const updateRemark = async (req: Request, res: Response): Promise<void> =
                 if (admins) {
                     for (const admin of admins) {
                         // Gunakan skipEmail: true untuk elakkan spam e-mel
-                        await createNotification(admin.id, 'admin', summaryTitle, summaryPayload, 'status_update_detailed', complaintId, true);
+                        await createNotification(admin.id, 'admin', summaryTitle, summaryPayload, 'status_update_detailed', complaintId, true, 'technician');
                     }
                 }
                 await createNotification(cData.user_id, 'user', summaryTitle, summaryPayload, 'status_update_detailed', complaintId, true);
@@ -1153,7 +1153,7 @@ export const cancelComplaint = async (req: Request, res: Response): Promise<void
 
         if (admin) {
             const userName = complaint.full_name || 'Pengguna';
-            await createNotification(admin.id, 'admin', `Pelanggan : ${userName} telah membatalkan aduan ${complaint.report_number}.`, `Klik untuk semak.`, 'system', id, true);
+            await createNotification(admin.id, 'admin', `Pelanggan : ${userName} telah membatalkan aduan ${complaint.report_number}.`, `Klik untuk semak.`, 'system', id, true, 'customer');
         }
 
         res.json({ message: 'Complaint cancelled successfully' });

@@ -8,25 +8,59 @@ export const getNotifications = async (req: Request, res: Response): Promise<voi
     try {
         const userId = (req as any).user.id;
         const role = (req as any).user.role;
+        const category = req.query.category as string;
 
-        console.log(`[NOTIFICATIONS] Fetching for user: ${userId} (type: ${typeof userId}), role: ${role}`);
+        console.log(`[NOTIFICATIONS] Fetching for user: ${userId} (type: ${typeof userId}), role: ${role}, category: ${category}`);
 
-        const [rows]: any = await pool.query(
-            'SELECT * FROM notifications WHERE recipient_id = ? AND recipient_role = ? ORDER BY created_at DESC LIMIT 50',
-            [userId, role]
-        );
+        let query = 'SELECT * FROM notifications WHERE recipient_id = ? AND recipient_role = ?';
+        const params: any[] = [userId, role];
+
+        if (role === 'admin' && category && category !== 'all') {
+            query += ' AND notif_category = ?';
+            params.push(category);
+        }
+
+        query += ' ORDER BY created_at DESC LIMIT 50';
+
+        const [rows]: any = await pool.query(query, params);
 
         console.log(`[NOTIFICATIONS] Found ${rows?.length || 0} notifications for recipient_id=${userId}`);
 
-        const [countResult]: any = await pool.query(
-            'SELECT COUNT(*) as unread_count FROM notifications WHERE recipient_id = ? AND recipient_role = ? AND is_read = 0',
-            [userId, role]
-        );
-        const count = countResult[0].unread_count;
+        let unreadCounts: any = {};
+        
+        if (role === 'admin') {
+            const [adminCounts]: any = await pool.query(
+                `SELECT notif_category, COUNT(*) as count 
+                 FROM notifications 
+                 WHERE recipient_id = ? AND recipient_role = ? AND is_read = 0 
+                 GROUP BY notif_category`,
+                [userId, role]
+            );
+            
+            unreadCounts = {
+                all: 0,
+                customer: 0,
+                technician: 0,
+                main_technician: 0
+            };
+            
+            adminCounts.forEach((c: any) => {
+                const cat = c.notif_category || 'customer';
+                unreadCounts[cat] = c.count;
+                unreadCounts.all += c.count;
+            });
+        } else {
+            const [countResult]: any = await pool.query(
+                'SELECT COUNT(*) as unread_count FROM notifications WHERE recipient_id = ? AND recipient_role = ? AND is_read = 0',
+                [userId, role]
+            );
+            unreadCounts = { all: countResult[0].unread_count || 0 };
+        }
 
         res.json({
             notifications: rows || [],
-            unread_count: count || 0
+            unread_count: unreadCounts.all, // legacy support
+            unread_counts: unreadCounts     // new per-tab support
         });
     } catch (error) {
         console.error('Get notifications error:', error);
@@ -269,16 +303,17 @@ export const createNotification = async (
     payload: string,
     type: 'assignment' | 'status_update' | 'status_update_detailed' | 'transport_update' | 'checking_update' | 'remark_update' | 'system' | 'NEW_USER_REGISTERED' | 'new_complaint' = 'status_update',
     complaint_id?: number,
-    skipEmail: boolean = false
+    skipEmail: boolean = false,
+    notif_category: 'customer' | 'technician' | 'main_technician' = 'customer'
 ): Promise<void> => {
     try {
-        console.log(`[CREATE NOTIFICATION] recipientId: ${userId}, recipientRole: ${role}, title: ${start_msg}, referenceId: ${complaint_id}`);
+        console.log(`[CREATE NOTIFICATION] recipientId: ${userId}, recipientRole: ${role}, title: ${start_msg}, referenceId: ${complaint_id}, category: ${notif_category}`);
 
         // 1. Create DB notification for loceng bell
         try {
             await pool.query(
-                'INSERT INTO notifications (recipient_id, recipient_role, title, message, type, reference_id, is_read) VALUES (?, ?, ?, ?, ?, ?, 0)',
-                [userId, role, start_msg, payload, type, complaint_id || null]
+                'INSERT INTO notifications (recipient_id, recipient_role, title, message, type, reference_id, is_read, notif_category) VALUES (?, ?, ?, ?, ?, ?, 0, ?)',
+                [userId, role, start_msg, payload, type, complaint_id || null, notif_category]
             );
             console.log('[CREATE NOTIFICATION] Bell DB notification created successfully');
         } catch (dbError: any) {

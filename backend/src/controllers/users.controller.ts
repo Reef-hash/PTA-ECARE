@@ -135,7 +135,10 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
                         'admin',
                         'New Customer Registration',
                         `${userFullName || 'Pengguna'} has just registered using Google.\nuid:${userId}`,
-                        'NEW_USER_REGISTERED'
+                        'NEW_USER_REGISTERED',
+                        undefined,
+                        false,
+                        'customer'
                     )));
                 }
                 // (User bell notification is handled below for all profile updates)

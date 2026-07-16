@@ -17,15 +17,22 @@ interface Notification {
 export default function NotificationsPage() {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [unreadCountsObj, setUnreadCountsObj] = useState<any>({ all: 0, customer: 0, technician: 0, main_technician: 0 });
+    const [activeTab, setActiveTab] = useState<string>('all');
     const navigate = useNavigate();
     const location = useLocation();
     const { t, i18n } = useTranslation();
+    const isAdmin = location.pathname.startsWith('/admin') && !location.pathname.startsWith('/admin/technician');
 
     const fetchNotifications = async () => {
         try {
-            const res = await api.get('/notifications');
+            const endpoint = isAdmin ? `/notifications?category=${activeTab}` : '/notifications';
+            const res = await api.get(endpoint);
             setNotifications(res.data.notifications);
             setUnreadCount(res.data.unread_count);
+            if (res.data.unread_counts) {
+                setUnreadCountsObj(res.data.unread_counts);
+            }
         } catch (error) {
             console.error('Failed to fetch notifications');
         }
@@ -33,7 +40,7 @@ export default function NotificationsPage() {
 
     useEffect(() => {
         fetchNotifications();
-    }, []);
+    }, [activeTab]);
 
     const handleMarkAsRead = async (id: string) => {
         try {
@@ -300,6 +307,38 @@ export default function NotificationsPage() {
                         </button>
                     )}
                 </div>
+
+                {isAdmin && (
+                    <div className="flex space-x-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+                        {[
+                            { id: 'all', label: 'Semua', count: unreadCountsObj.all },
+                            { id: 'customer', label: 'Customer', count: unreadCountsObj.customer },
+                            { id: 'technician', label: 'Technician', count: unreadCountsObj.technician },
+                            { id: 'main_technician', label: 'Main Technician', count: unreadCountsObj.main_technician },
+                        ].map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all ${
+                                    activeTab === tab.id
+                                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
+                                        : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                                }`}
+                            >
+                                {tab.label}
+                                {tab.count > 0 && (
+                                    <span className={`px-2 py-0.5 rounded-full text-xs ${
+                                        activeTab === tab.id
+                                            ? 'bg-white/20 text-white'
+                                            : 'bg-red-100 text-red-600'
+                                    }`}>
+                                        {tab.count}
+                                    </span>
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                )}
 
                 {/* Notification List */}
                 {notifications.length === 0 ? (
