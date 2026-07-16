@@ -1026,7 +1026,7 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
         if (!id) { res.status(404).json({ error: 'Complaint not found' }); return; }
 
         const [complaintRows]: any = await pool.query(
-            'SELECT c.assigned_to, c.report_number, c.user_id, u.full_name, u.email FROM complaints c LEFT JOIN users u ON c.user_id = u.id WHERE c.id = ?',
+            'SELECT c.assigned_to, c.report_number, c.user_id, c.brand_name, c.details, cat.name as cat_name, u.full_name, u.email FROM complaints c LEFT JOIN users u ON c.user_id = u.id LEFT JOIN categories cat ON c.category_id = cat.id WHERE c.id = ?',
             [id]
         );
         const complaint = complaintRows[0];
@@ -1056,33 +1056,57 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
             [id, status || 'pending', note_transport || null, checking || null, remarkText, adminId]
         );
 
-        const assignmentPayload = JSON.stringify({ key: 'notif_processing_tech', params: { id: complaint.report_number, userName: complaint.full_name || 'Pengguna' } });
-        await createNotification(technician_id, 'technician', `Job Assigned: ${complaint.report_number}`, assignmentPayload, 'assignment', id, true);
+        // --- TECHNICIAN NOTIFICATIONS ---
+        // Bell 1: Forward Job
+        await createNotification(technician_id, 'technician', `Job Assigned: ${complaint.report_number}`, `You have been assigned/forwarded a new job: ${complaint.report_number}`, 'assignment', id, true);
+        
+        // Bell 2: Combined Update Maklumat
+        let updates = [];
+        if (remark) updates.push('Catatan (Remark)');
+        if (checking) updates.push('Penemuan Teknikal');
+        if (note_transport) updates.push('Logistik/Pengangkutan');
+        if (status) updates.push(`Status: ${status}`);
 
-        if (status === 'in_process' || !status) {
-            const formattedDate = formatNotificationDate(new Date());
-            const userPayload = JSON.stringify({ key: 'notif_processing_user', params: { id: complaint.report_number, name: techExists.name, date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }), time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) } });
-            await createNotification(complaint.user_id, 'user', `Status Update: ${complaint.report_number}`, userPayload, 'status_update_detailed', id, true);
+        if (updates.length > 0) {
+            const updateStr = updates.join(', ');
+            const summaryPayload = `Kemaskini Maklumat: ${updateStr}.`;
+            await createNotification(technician_id, 'technician', `Job Update: ${complaint.report_number}`, summaryPayload, 'status_update_detailed', id, true);
         }
 
-
-
+        // Email 1: Combined Email for Technician (User gets 0 emails)
         try {
-            const adminEmail = 'adminecare.ptasssb@gmail.com';
-            const subject = `Agihan Tugasan Aduan: ${complaint.report_number}`;
-            const customerName = complaint.full_name || 'Pelanggan';
-            const customerEmail = complaint.email;
-
+            const subject = `Agihan & Kemaskini Aduan: ${complaint.report_number}`;
             if (techExists.email) {
-                const techHtml = buildNotificationEmailHtml(techExists.name, subject, `Satu tugasan aduan (${complaint.report_number}) telah diagihkan kepada anda oleh pihak pengurusan. Sila semak aplikasi E-CARE untuk maklumat lanjut.`, complaint.report_number, 'technician');
+                let summaryHtml = `Tugasan aduan (${complaint.report_number}) telah diagihkan kepada anda oleh pihak pengurusan.<br><br><b>Maklumat Kemaskini:</b><br>`;
+                if (status) summaryHtml += `- <b>Status:</b> ${status}<br>`;
+                if (remark) summaryHtml += `- <b>Catatan (Remark):</b> ${remark}<br>`;
+                if (checking) summaryHtml += `- <b>Penemuan Teknikal:</b> ${checking}<br>`;
+                if (note_transport) summaryHtml += `- <b>Logistik/Pengangkutan:</b> ${note_transport}<br>`;
+                summaryHtml += `<br>Sila semak aplikasi E-CARE untuk maklumat lanjut.`;
+
+                const techHtml = buildNotificationEmailHtml(techExists.name, subject, summaryHtml, complaint.report_number, 'technician');
                 await sendEmail(techExists.email, subject, techHtml);
             }
-
-            if (customerEmail) {
-                const custHtml = buildNotificationEmailHtml(customerName, subject, `Aduan anda (${complaint.report_number}) telah diagihkan kepada juruteknik kami (${techExists.name}) untuk tindakan selanjutnya.`, complaint.report_number, 'user');
-                await sendEmail(customerEmail, subject, custHtml);
-            }
         } catch (emailErr) {}
+
+        // --- USER NOTIFICATIONS ---
+        // User Bell: Detailed Forward Job
+        if (status === 'in_process' || !status) {
+            let aduanDetails = [];
+            if (complaint.cat_name) aduanDetails.push(complaint.cat_name);
+            if (complaint.brand_name) aduanDetails.push(complaint.brand_name);
+
+            let detailString = aduanDetails.join(' ').trim();
+            if (complaint.details) {
+                detailString += ` (${complaint.details})`;
+            }
+            if (detailString) {
+                detailString = ` - ${detailString}`;
+            }
+
+            const userPayload = `Aduan ${complaint.report_number}${detailString} telah diproses oleh ${techExists.name}. Klik untuk lihat process.`;
+            await createNotification(complaint.user_id, 'user', `Aduan Anda Sedang Diproses`, userPayload, 'status_update_detailed', id, true);
+        }
 
         res.json({ message: 'Complaint forwarded successfully' });
     } catch (error) {
