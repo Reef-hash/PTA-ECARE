@@ -267,7 +267,8 @@ export const createNotification = async (
     start_msg: string,
     payload: string,
     type: 'assignment' | 'status_update' | 'status_update_detailed' | 'transport_update' | 'checking_update' | 'remark_update' | 'system' | 'NEW_USER_REGISTERED' | 'new_complaint' = 'status_update',
-    complaint_id?: number
+    complaint_id?: number,
+    skipEmail: boolean = false
 ): Promise<void> => {
     try {
         console.log(`[CREATE NOTIFICATION] recipientId: ${userId}, recipientRole: ${role}, title: ${start_msg}, referenceId: ${complaint_id}`);
@@ -307,7 +308,7 @@ export const createNotification = async (
                 }
             }
 
-            if (email && type !== 'NEW_USER_REGISTERED') {
+            if (email && type !== 'NEW_USER_REGISTERED' && !skipEmail) {
                 let reportNumber = '';
                 let branchName = 'cawangan asal aduan';
                 

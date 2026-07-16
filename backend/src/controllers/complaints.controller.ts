@@ -1099,14 +1099,14 @@ export const cancelComplaint = async (req: Request, res: Response): Promise<void
 
         const formattedDate = formatNotificationDate(new Date());
 
-        await createNotification(userId!, 'user', `Status Update: ${complaint.report_number}`, `Cancelled on ${formattedDate}`, 'status_update_detailed', id);
+        await createNotification(userId!, 'user', `Status Update: ${complaint.report_number}`, `Cancelled on ${formattedDate}`, 'status_update_detailed', id, true);
 
         const [adminRows]: any = await pool.query('SELECT id FROM admins LIMIT 1');
         const admin = adminRows[0];
 
         if (admin) {
             const userName = complaint.full_name || 'Pengguna';
-            await createNotification(admin.id, 'admin', `Aduan Dibatalkan oleh Pengguna`, `${userName} telah membatalkan aduan (No Laporan: ${complaint.report_number}). Klik untuk semak.`, 'status_update', id);
+            await createNotification(admin.id, 'admin', `Aduan Dibatalkan oleh Pengguna`, `${userName} telah membatalkan aduan (No Laporan: ${complaint.report_number}). Klik untuk semak.`, 'status_update', id, true);
         }
 
         res.json({ message: 'Complaint cancelled successfully' });
