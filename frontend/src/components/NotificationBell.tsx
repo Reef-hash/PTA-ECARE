@@ -278,6 +278,17 @@ export default function NotificationBell() {
             };
         }
 
+        // 6. Match User Cancel "Cancelled on 16 Jul 2026 at 04:17 PM"
+        const userCancelMatch = safeMessage.match(/^Cancelled on (.*?)$/);
+        if (userCancelMatch) {
+            const dateStr = userCancelMatch[1];
+            const isMalay = i18n.language === 'ms';
+            return {
+                title: isMalay ? `Status Aduan: ${reportNumber || reportNo}` : `Status Update: ${reportNumber || reportNo}`,
+                message: isMalay ? `Dibatalkan pada ${dateStr}` : safeMessage
+            };
+        }
+
         // Return original if no match, but strip internal data like uid
         return {
             title: safeTitle,
