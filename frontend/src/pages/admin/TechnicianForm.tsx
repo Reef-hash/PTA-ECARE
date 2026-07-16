@@ -91,7 +91,11 @@ export default function TechnicianForm() {
             }
             navigate('/admin/technicians');
         } catch (error: any) {
-            toast.error(error.response?.data?.error || 'Operasi gagal');
+            let errorMsg = error.response?.data?.error || 'Operasi gagal';
+            if (error.response?.data?.details && Array.isArray(error.response.data.details)) {
+                errorMsg = error.response.data.details.map((d: any) => `${d.field}: ${d.message}`).join(', ');
+            }
+            toast.error(errorMsg);
         } finally {
             setIsLoading(false);
         }

@@ -96,18 +96,18 @@ export const changePasswordSchema = z.object({
 
 // Admin schemas
 export const createTechnicianSchema = z.object({
-    name: z.string().min(2, 'Name must be at least 2 characters'),
-    department: z.string().min(2, 'Department is required'),
-    email: z.string().email('Invalid email'),
+    name: z.string().trim().min(2, 'Name must be at least 2 characters'),
+    department: z.string().trim().min(2, 'Department is required'),
+    email: z.string().trim().email('Invalid email'),
     contact_number: z.number().int().positive(),
-    username: z.string().min(3, 'Username must be at least 3 characters'),
+    username: z.string().trim().min(3, 'Username must be at least 3 characters'),
     password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
 export const updateTechnicianSchema = z.object({
-    name: z.string().min(2).optional(),
-    department: z.string().min(2).optional(),
-    email: z.string().email().optional(),
+    name: z.string().trim().min(2).optional(),
+    department: z.string().trim().min(2).optional(),
+    email: z.string().trim().email().optional(),
     contact_number: z.number().int().positive().optional(),
     is_active: z.boolean().optional(),
 });
