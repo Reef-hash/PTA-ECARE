@@ -521,11 +521,11 @@ Terima kasih.
 
 *This is an automated notification. Please do not reply to this email.*`;
 
-        const adminNotifTitle = `Aduan Baru untuk ${brand_name}`;
+        const adminNotifTitle = `${userName} telah membuat aduan ${report_number}`;
 
         const [admins]: any = await pool.query('SELECT id, email FROM admins');
         if (admins) {
-            const adminMsg = `${userId} ${userName} telah membuat aduan ${report_number}\n\nCategory: ${categoryName}\nBrand: ${brand_name}\nDamage Details: ${details}\n\n> Klik untuk agihkan kepada juruteknik`;
+            const adminMsg = `Category: ${categoryName}\nBrand: ${brand_name}\nDamage Details: ${details}\n\n> Klik untuk agihkan kepada juruteknik`;
             for (const admin of admins) {
                 // Case 3: Admin Bell
                 await createNotification(admin.id, 'admin', adminNotifTitle, adminMsg, 'new_complaint', complaint.id);
