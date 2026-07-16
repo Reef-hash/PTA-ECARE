@@ -54,10 +54,14 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
         let requiresOtp = false;
         let emailToUse = '';
         let completedGoogleProfile = false;
+        let userFullName = full_name;
 
         if (ic_number) {
-            const [userRows]: any = await pool.query('SELECT ic_number, email FROM users WHERE id = ?', [userId]);
+            const [userRows]: any = await pool.query('SELECT ic_number, email, full_name FROM users WHERE id = ?', [userId]);
             const currentUser = userRows[0];
+            if (currentUser && currentUser.full_name) {
+                userFullName = currentUser.full_name;
+            }
 
             if (!currentUser) {
                 res.status(404).json({ error: 'Pengguna tidak ditemui.' });
@@ -130,7 +134,7 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
                         admin.id,
                         'admin',
                         'New Customer Registration',
-                        `${full_name || 'Pengguna'} has just registered using Google. | uid:${userId}`,
+                        `${userFullName || 'Pengguna'} has just registered using Google.\nuid:${userId}`,
                         'NEW_USER_REGISTERED'
                     )));
                 }
