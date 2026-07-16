@@ -1,20 +1,10 @@
-import mysql from 'mysql2/promise';
 import dotenv from 'dotenv';
 import path from 'path';
+import pool from './config/mysql.js';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 async function run() {
-    const pool = mysql.createPool({
-        host: process.env.DB_HOST || 'localhost',
-        user: process.env.DB_USER || 'u134652667_ecare',
-        password: process.env.DB_PASSWORD || 'ahmadzahid25',
-        database: process.env.DB_NAME || 'u134652667_ecare',
-        waitForConnections: true,
-        connectionLimit: 10,
-        queueLimit: 0
-    });
-
     try {
         console.log('1. Backing up table...');
         await pool.query('DROP TABLE IF EXISTS notifications_backup');
