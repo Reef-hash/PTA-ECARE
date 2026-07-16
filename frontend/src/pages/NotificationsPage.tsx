@@ -127,7 +127,7 @@ export default function NotificationsPage() {
             }
         } catch (e) { /* fall through */ }
 
-        let reportMatch = notification.title.match(/[A-Z]\d+/) || notification.message.match(/[A-Z]\d+/);
+        let reportMatch = notification.title.match(/[A-Z]+\d+/) || notification.message.match(/[A-Z]+\d+/);
         const reportNumber = reportMatch ? reportMatch[0] : '';
         const complaintId = notification.reference_id;
         const statusMatch = notification.message.match(/'([^']+)'/);
@@ -149,8 +149,8 @@ export default function NotificationsPage() {
         }
         if (notification.title.includes('Aduan Berjaya Didaftarkan') || notification.title.includes('Complaint Successfully Registered')) {
             return {
-                title: t('notification.user_complaint_created_title') as string,
-                message: (t('notification.user_complaint_created_msg', { report_number: reportNumber }) || notification.message) as string
+                title: notification.title,
+                message: notification.message
             };
         }
         if (notification.title.includes('Status Aduan Dikemaskini') || notification.title.includes('Complaint Status Updated')) {
