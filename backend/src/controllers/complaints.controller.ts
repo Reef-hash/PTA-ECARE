@@ -757,7 +757,27 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                         await sendEmail(adminEmail, subject, emailHtml);
                         
                         if (customerData.email) {
-                            const custHtml = buildNotificationEmailHtml(customerName, subject, `Aduan anda (${reportNumber}) telah selesai dibaiki oleh juruteknik ${techName}.`, reportNumber, 'user');
+                            // Fetch latest remark data from DB if current payload fields are empty
+                            let finalRemark = remark;
+                            let finalChecking = checking;
+                            let finalTransport = note_transport;
+
+                            if (!finalRemark || !finalChecking || !finalTransport) {
+                                const [latestRemarks]: any = await pool.query('SELECT remark, checking, note_transport FROM technician_remarks WHERE complaint_id = ? ORDER BY created_at DESC LIMIT 1', [id]);
+                                if (latestRemarks && latestRemarks.length > 0) {
+                                    if (!finalRemark) finalRemark = latestRemarks[0].remark;
+                                    if (!finalChecking) finalChecking = latestRemarks[0].checking;
+                                    if (!finalTransport) finalTransport = latestRemarks[0].note_transport;
+                                }
+                            }
+
+                            let summaryHtml = `Aduan anda (${reportNumber}) telah selesai dibaiki oleh juruteknik ${techName}.<br><br><b>Ringkasan Kerja:</b><br>`;
+                            if (finalRemark) summaryHtml += `- <b>Catatan (Remark):</b> ${finalRemark}<br>`;
+                            if (finalChecking) summaryHtml += `- <b>Penemuan Teknikal:</b> ${finalChecking}<br>`;
+                            if (finalTransport) summaryHtml += `- <b>Logistik/Pengangkutan:</b> ${finalTransport}<br>`;
+                            summaryHtml += `<br>Sila klik butang di bawah untuk menyemak status pengambilan barangan anda.`;
+                            
+                            const custHtml = buildNotificationEmailHtml(customerName, subject, summaryHtml, reportNumber, 'user');
                             await sendEmail(customerData.email, subject, custHtml);
                         }
                     } catch (emailErr) {}
@@ -766,7 +786,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                         const [mainTechs]: any = await pool.query('SELECT id FROM technicians WHERE username = "maintech"');
                         if (mainTechs) {
                             for (const mt of mainTechs) {
-                                await createNotification(mt.id, 'main_technician', `Status Update: ${reportNumber}`, `Juruteknik ${techName} telah menyiapkan aduan ${reportNumber} (sebelum ini bawa pulang / incomplete).`, 'status_update_detailed', id);
+                                await createNotification(mt.id, 'main_technician', `Status Update: ${reportNumber}`, `Juruteknik ${techName} telah menyiapkan aduan ${reportNumber} (sebelum ini bawa pulang / incomplete).`, 'status_update_detailed', id, true);
                             }
                         }
                     }
@@ -793,7 +813,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                         const [mainTechs]: any = await pool.query('SELECT id FROM technicians WHERE username = "maintech"');
                         if (mainTechs) {
                             for (const mt of mainTechs) {
-                                await createNotification(mt.id, 'main_technician', `Status Update: ${reportNumber}`, `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}.`, 'status_update_detailed', id);
+                                await createNotification(mt.id, 'main_technician', `Status Update: ${reportNumber}`, `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}.`, 'status_update_detailed', id, true);
                             }
                         }
                     } catch (incompleteNotifErr) {
@@ -801,49 +821,32 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                     }
                 }
 
-                if (note_transport) {
-                    const transportAdminPayload = JSON.stringify({ key: 'notif_transport_admin', params: { id: reportNumber, detail: note_transport } });
+                // --- BATCH NOTIFICATION UNTUK LOCENG IN-APP ---
+                let updates = [];
+                if (remark) updates.push('Catatan (Remark)');
+                if (checking) updates.push('Penemuan Teknikal');
+                if (note_transport) updates.push('Logistik/Pengangkutan');
+                if (status && status !== previousStatus) {
+                    if (status === 'in_process') updates.push('Status: Dalam Proses');
+                    else if (status === 'closed') updates.push('Status: Selesai');
+                    else if (status === 'incomplete') updates.push('Status: Incomplete');
+                }
+
+                if (updates.length > 0) {
+                    const updateStr = updates.join(', ');
+                    const summaryTitle = status && status !== previousStatus ? `Kemaskini Status: ${reportNumber}` : `Job Update: ${reportNumber}`;
+                    const summaryPayload = `Juruteknik ${techName} telah mengemaskini maklumat berikut: ${updateStr}.`;
+                    
                     const [admins]: any = await pool.query('SELECT id FROM admins');
                     if (admins) {
                         for (const admin of admins) {
-                            await createNotification(admin.id, 'admin', `Transport Update: ${reportNumber}`, transportAdminPayload, 'transport_update', id);
+                            // Gunakan skipEmail: true untuk elakkan spam e-mel
+                            await createNotification(admin.id, 'admin', summaryTitle, summaryPayload, 'status_update_detailed', id, true);
                         }
                     }
-                    const transportUserPayload = JSON.stringify({ key: 'notif_transport_user', params: { id: reportNumber, detail: note_transport } });
-                    await createNotification(complaintData.user_id, 'user', `Transport Update: ${reportNumber}`, transportUserPayload, 'transport_update', id);
+                    await createNotification(complaintData.user_id, 'user', summaryTitle, summaryPayload, 'status_update_detailed', id, true);
                 }
-
-                if (checking) {
-                    const checkingAdminPayload = JSON.stringify({ key: 'notif_checking_admin', params: { id: reportNumber, detail: checking } });
-                    const [admins]: any = await pool.query('SELECT id FROM admins');
-                    if (admins) {
-                        for (const admin of admins) {
-                            await createNotification(admin.id, 'admin', `Checking Update: ${reportNumber}`, checkingAdminPayload, 'checking_update', id);
-                        }
-                    }
-                    const checkingUserPayload = JSON.stringify({ key: 'notif_checking_user', params: { id: reportNumber, detail: checking } });
-                    await createNotification(complaintData.user_id, 'user', `Checking Update: ${reportNumber}`, checkingUserPayload, 'checking_update', id);
-                }
-
-                if (remark) {
-                    const remarkAdminPayload = JSON.stringify({ key: 'notif_remark_admin', params: { id: reportNumber, detail: remark } });
-                    const [admins]: any = await pool.query('SELECT id FROM admins');
-                    if (admins) {
-                        for (const admin of admins) {
-                            await createNotification(admin.id, 'admin', `New Remark: ${reportNumber}`, remarkAdminPayload, 'remark_update', id);
-                        }
-                    }
-                    const remarkUserPayload = JSON.stringify({ key: 'notif_remark_user', params: { id: reportNumber, detail: remark } });
-                    await createNotification(complaintData.user_id, 'user', `New Remark: ${reportNumber}`, remarkUserPayload, 'remark_update', id);
-                }
-
-                if (status === 'in_process') {
-                    const processingPayload = JSON.stringify({ key: 'notif_processing_body', params: { id: reportNumber, name: techName, date: new Date().toLocaleDateString('ms-MY'), time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) } });
-                    await createNotification(complaintData.user_id, 'user', `Status Update: ${reportNumber}`, processingPayload, 'status_update_detailed', id);
-                } else if (status === 'closed') {
-                    const closedPayload = JSON.stringify({ key: 'notif_completed_body', params: { id: reportNumber, name: techName, date: new Date().toLocaleDateString('ms-MY'), time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) } });
-                    await createNotification(complaintData.user_id, 'user', `Status Update: ${reportNumber}`, closedPayload, 'status_update_detailed', id);
-                }
+                // --- END BATCH NOTIFICATION ---
             }
 
             const [c]: any = await pool.query('SELECT assigned_to, report_number FROM complaints WHERE id = ?', [id]);
@@ -896,62 +899,89 @@ export const updateRemark = async (req: Request, res: Response): Promise<void> =
                 const reportNumber = complaintData.report_number;
                 const formattedDate = formatNotificationDate(new Date());
 
-                const [admins]: any = await pool.query('SELECT id FROM admins');
-                if (admins) {
-                    for (const admin of admins) {
-                        await createNotification(admin.id, 'admin', `Status Update: ${reportNumber}`, status === 'in_process' ? `Status Update [${reportNumber}]: Service in progress by Technician ${techName} on ${formattedDate}.` : `Status Update [${reportNumber}]: Service completed by Technician ${techName} on ${formattedDate}. Case status transitioned to 'Ready for Pickup'.`, 'status_update_detailed', complaintId);
-                    }
-                }
+                let previousStatus = null;
+                const [oldStatusRows]: any = await pool.query('SELECT status FROM complaints WHERE id = ?', [complaintId]);
+                previousStatus = oldStatusRows[0]?.status;
 
-                if (status === 'in_process') {
-                    await createNotification(complaintData.user_id, 'user', `Status Update: ${reportNumber}`, `Status Update [${reportNumber}]: Service in process by Technician ${techName} on ${formattedDate}.`, 'status_update_detailed', complaintId);
-                } else if (status === 'closed') {
-                    await createNotification(complaintData.user_id, 'user', `Status Update: ${reportNumber}`, `Status Update [${reportNumber}]: Service completed by Technician ${techName} on ${formattedDate}. Case status transitioned to 'Ready for Pickup'.`, 'status_update_detailed', complaintId);
+                const [customerRows]: any = await pool.query('SELECT full_name, email FROM users WHERE id = ?', [complaintData.user_id]);
+                const customerData = customerRows[0] || {};
+                const customerName = customerData.full_name || 'Pengguna';
+
+                // Check if status transitioned to closed
+                const isTransitionToComplete = previousStatus !== 'closed' && status === 'closed';
+
+                if (isTransitionToComplete) {
+                    try {
+                        const adminEmail = 'adminecare.ptasssb@gmail.com';
+                        const subject = `Aduan Selesai: ${reportNumber}`;
+                        const emailHtml = buildNotificationEmailHtml('Administrator', subject, `Juruteknik ${techName} telah mengemaskini status aduan ${reportNumber} kepada 'Selesai'.`, reportNumber, 'admin');
+                        await sendEmail(adminEmail, subject, emailHtml);
+                        
+                        if (customerData.email) {
+                            // Fetch latest remark data from DB if current payload fields are empty
+                            let finalRemark = remark;
+                            let finalChecking = checking;
+                            let finalTransport = note_transport;
+
+                            if (!finalRemark || !finalChecking || !finalTransport) {
+                                const [latestRemarks]: any = await pool.query('SELECT remark, checking, note_transport FROM technician_remarks WHERE complaint_id = ? ORDER BY created_at DESC LIMIT 1', [complaintId]);
+                                if (latestRemarks && latestRemarks.length > 0) {
+                                    if (!finalRemark) finalRemark = latestRemarks[0].remark;
+                                    if (!finalChecking) finalChecking = latestRemarks[0].checking;
+                                    if (!finalTransport) finalTransport = latestRemarks[0].note_transport;
+                                }
+                            }
+
+                            let summaryHtml = `Aduan anda (${reportNumber}) telah selesai dibaiki oleh juruteknik ${techName}.<br><br><b>Ringkasan Kerja:</b><br>`;
+                            if (finalRemark) summaryHtml += `- <b>Catatan (Remark):</b> ${finalRemark}<br>`;
+                            if (finalChecking) summaryHtml += `- <b>Penemuan Teknikal:</b> ${finalChecking}<br>`;
+                            if (finalTransport) summaryHtml += `- <b>Logistik/Pengangkutan:</b> ${finalTransport}<br>`;
+                            summaryHtml += `<br>Sila klik butang di bawah untuk menyemak status pengambilan barangan anda.`;
+                            
+                            const custHtml = buildNotificationEmailHtml(customerName, subject, summaryHtml, reportNumber, 'user');
+                            await sendEmail(customerData.email, subject, custHtml);
+                        }
+                    } catch (emailErr) {}
                 }
             }
         }
 
         const complaintId = existingRemark.complaint_id;
         const [cDataRows]: any = await pool.query('SELECT user_id, report_number FROM complaints WHERE id = ?', [complaintId]);
+        
         if (cDataRows.length > 0) {
             const cData = cDataRows[0];
             const rNum = cData.report_number;
 
-            if (note_transport) {
-                const transportAdminPayload = JSON.stringify({ key: 'notif_transport_admin', params: { id: rNum } });
-                const [admins]: any = await pool.query('SELECT id FROM admins');
-                if (admins) {
-                    for (const admin of admins) {
-                        await createNotification(admin.id, 'admin', `Transport Update: ${rNum}`, transportAdminPayload, 'transport_update', complaintId);
-                    }
-                }
-                const transportUserPayload = JSON.stringify({ key: 'notif_transport_user', params: { id: rNum } });
-                await createNotification(cData.user_id, 'user', `Transport Update: ${rNum}`, transportUserPayload, 'transport_update', complaintId);
+            const [techRows]: any = await pool.query('SELECT name FROM technicians WHERE id = ?', [userId]);
+            const techName = techRows[0]?.name || 'Technician';
+
+            // --- BATCH NOTIFICATION UNTUK LOCENG IN-APP ---
+            let updates = [];
+            if (remark) updates.push('Catatan (Remark)');
+            if (checking) updates.push('Penemuan Teknikal');
+            if (note_transport) updates.push('Logistik/Pengangkutan');
+            if (status) {
+                if (status === 'in_process') updates.push('Status: Dalam Proses');
+                else if (status === 'closed') updates.push('Status: Selesai');
+                else if (status === 'incomplete') updates.push('Status: Incomplete');
             }
 
-            if (checking) {
-                const checkingAdminPayload = JSON.stringify({ key: 'notif_checking_admin', params: { id: rNum } });
+            if (updates.length > 0) {
+                const updateStr = updates.join(', ');
+                const summaryTitle = status ? `Kemaskini Status: ${rNum}` : `Job Update: ${rNum}`;
+                const summaryPayload = `Juruteknik ${techName} telah mengemaskini maklumat berikut: ${updateStr}.`;
+                
                 const [admins]: any = await pool.query('SELECT id FROM admins');
                 if (admins) {
                     for (const admin of admins) {
-                        await createNotification(admin.id, 'admin', `Checking Update: ${rNum}`, checkingAdminPayload, 'checking_update', complaintId);
+                        // Gunakan skipEmail: true untuk elakkan spam e-mel
+                        await createNotification(admin.id, 'admin', summaryTitle, summaryPayload, 'status_update_detailed', complaintId, true);
                     }
                 }
-                const checkingUserPayload = JSON.stringify({ key: 'notif_checking_user', params: { id: rNum } });
-                await createNotification(cData.user_id, 'user', `Checking Update: ${rNum}`, checkingUserPayload, 'checking_update', complaintId);
+                await createNotification(cData.user_id, 'user', summaryTitle, summaryPayload, 'status_update_detailed', complaintId, true);
             }
-
-            if (remark) {
-                const remarkAdminPayload = JSON.stringify({ key: 'notif_remark_admin', params: { id: rNum } });
-                const [admins]: any = await pool.query('SELECT id FROM admins');
-                if (admins) {
-                    for (const admin of admins) {
-                        await createNotification(admin.id, 'admin', `New Remark: ${rNum}`, remarkAdminPayload, 'remark_update', complaintId);
-                    }
-                }
-                const remarkUserPayload = JSON.stringify({ key: 'notif_remark_user', params: { id: rNum } });
-                await createNotification(cData.user_id, 'user', `New Remark: ${rNum}`, remarkUserPayload, 'remark_update', complaintId);
-            }
+            // --- END BATCH NOTIFICATION ---
         }
 
         res.json({ message: 'Remark updated successfully' });
