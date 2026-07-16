@@ -1035,14 +1035,7 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
             await createNotification(complaint.user_id, 'user', `Status Update: ${complaint.report_number}`, userPayload, 'status_update_detailed', id, true);
         }
 
-        try {
-            const [mainTechs]: any = await pool.query('SELECT id FROM technicians WHERE username = "maintech"');
-            if (mainTechs && mainTechs.length > 0) {
-                for (const mt of mainTechs) {
-                    await createNotification(mt.id, 'main_technician', `Job Forwarded: ${complaint.report_number}`, `Aduan ${complaint.report_number} berjaya di hantar kepada juruteknik ${techExists.name}.`, 'assignment', id, true);
-                }
-            }
-        } catch (e) {}
+
 
         try {
             const adminEmail = 'adminecare.ptasssb@gmail.com';
