@@ -254,6 +254,30 @@ export default function NotificationBell() {
             };
         }
 
+        // 4. Match Admin New Complaint "Ahmad Zahid telah membuat aduan PTAS00001"
+        const adminNewMatch = safeTitle.match(/^(.*?) telah membuat aduan ([A-Z0-9]+)$/);
+        if (adminNewMatch) {
+            const userName = adminNewMatch[1];
+            const repNo = adminNewMatch[2];
+            const isMalay = i18n.language === 'ms';
+            return {
+                title: isMalay ? `${userName} telah membuat aduan ${repNo}` : `${userName} has registered complaint ${repNo}`,
+                message: safeMessage
+            };
+        }
+
+        // 5. Match Admin Cancel "Pelanggan : Ahmad Zahid telah membatalkan aduan PTAS00001."
+        const adminCancelMatch = safeTitle.match(/^Pelanggan : (.*?) telah membatalkan aduan ([A-Z0-9]+)\.?$/);
+        if (adminCancelMatch) {
+            const userName = adminCancelMatch[1];
+            const repNo = adminCancelMatch[2];
+            const isMalay = i18n.language === 'ms';
+            return {
+                title: isMalay ? `Pelanggan : ${userName} telah membatalkan aduan ${repNo}.` : `Customer : ${userName} has cancelled complaint ${repNo}.`,
+                message: isMalay ? safeMessage : safeMessage.replace('Klik untuk semak', 'Click to review')
+            };
+        }
+
         // Return original if no match, but strip internal data like uid
         return {
             title: safeTitle,
@@ -476,7 +500,7 @@ export default function NotificationBell() {
                                 className="text-xs text-gray-500 hover:text-indigo-600 flex items-center gap-1"
                                 title="Test Sound"
                             >
-                                <span>🔊</span> Test
+                                <span className="mr-1">🔊</span> {t('common.test') || 'Test'}
                             </button>
                             <button
                                 onClick={handleMarkAllRead}
@@ -490,7 +514,7 @@ export default function NotificationBell() {
                                 disabled={notifications.length === 0}
                                 className={`text-xs font-medium ${notifications.length > 0 ? 'text-red-600 hover:text-red-800' : 'text-gray-400 cursor-not-allowed'}`}
                             >
-                                Padam Semua
+                                {i18n.language === 'ms' ? 'Padam Semua' : 'Clear All'}
                             </button>
                         </div>
                     </div>

@@ -211,6 +211,30 @@ export default function NotificationsPage() {
             };
         }
 
+        // Match Admin New Complaint "Ahmad Zahid telah membuat aduan PTAS00001"
+        const adminNewMatch = notification.title.match(/^(.*?) telah membuat aduan ([A-Z0-9]+)$/);
+        if (adminNewMatch) {
+            const userName = adminNewMatch[1];
+            const repNo = adminNewMatch[2];
+            const isMalay = i18n.language === 'ms';
+            return {
+                title: isMalay ? `${userName} telah membuat aduan ${repNo}` : `${userName} has registered complaint ${repNo}`,
+                message: notification.message
+            };
+        }
+
+        // Match Admin Cancel "Pelanggan : Ahmad Zahid telah membatalkan aduan PTAS00001."
+        const adminCancelMatch = notification.title.match(/^Pelanggan : (.*?) telah membatalkan aduan ([A-Z0-9]+)\.?$/);
+        if (adminCancelMatch) {
+            const userName = adminCancelMatch[1];
+            const repNo = adminCancelMatch[2];
+            const isMalay = i18n.language === 'ms';
+            return {
+                title: isMalay ? `Pelanggan : ${userName} telah membatalkan aduan ${repNo}.` : `Customer : ${userName} has cancelled complaint ${repNo}.`,
+                message: isMalay ? notification.message : notification.message.replace('Klik untuk semak', 'Click to review')
+            };
+        }
+
         return {
             title: notification.title,
             message: notification.message.replace(/\|\s*uid:[a-zA-Z0-9-]+/, '').trim()
