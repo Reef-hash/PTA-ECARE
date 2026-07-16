@@ -21,6 +21,36 @@ import notificationSound from '../assets/notification.mp3';
 // Notification sound
 const NOTIFICATION_SOUND_URL = notificationSound;
 
+const getRelativeTime = (dateString: string, isMalay: boolean) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffSecs = Math.floor(diffMs / 1000);
+    const diffMins = Math.floor(diffSecs / 60);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffSecs < 60) {
+        return isMalay ? 'Baru sahaja' : 'Just now';
+    } else if (diffMins < 60) {
+        return isMalay ? `${diffMins} minit yang lalu` : `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    } else if (diffHours < 24) {
+        return isMalay ? `${diffHours} jam yang lalu` : `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    } else if (diffDays < 7) {
+        return isMalay ? `${diffDays} hari yang lalu` : `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    } else {
+        const locale = isMalay ? 'ms-MY' : 'en-US';
+        return date.toLocaleDateString(locale, {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        });
+    }
+};
+
 export default function NotificationBell() {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -492,32 +522,7 @@ export default function NotificationBell() {
                                                     <p className="text-[10px] text-gray-400 mt-2">
                                                         {(() => {
                                                             if (!notification.created_at) return '';
-                                                            
-                                                            const date = new Date(notification.created_at);
-                                                            if (isNaN(date.getTime())) return ''; // Check for invalid date
-
-                                                            const isMalay = i18n.language === 'ms';
-                                                            const locale = isMalay ? 'ms-MY' : 'en-US';
-
-                                                            const dateStr = date.toLocaleDateString(locale, {
-                                                                day: 'numeric',
-                                                                month: 'long',
-                                                                year: 'numeric'
-                                                            });
-
-                                                            let timeStr = date.toLocaleTimeString(locale, {
-                                                                hour: '2-digit',
-                                                                minute: '2-digit',
-                                                                hour12: true
-                                                            });
-
-                                                            if (isMalay) {
-                                                                timeStr = timeStr
-                                                                    .replace('AM', 'PG')
-                                                                    .replace('PM', 'PTG');
-                                                            }
-
-                                                            return `${dateStr}, ${timeStr}`;
+                                                            return getRelativeTime(notification.created_at, i18n.language === 'ms');
                                                         })()}
                                                     </p>
 
@@ -543,6 +548,9 @@ export default function NotificationBell() {
                                                                                         </p>
                                                                                         <p className="text-[10px] text-gray-500 mt-1 line-clamp-2">
                                                                                             {subTranslated.message}
+                                                                                        </p>
+                                                                                        <p className="text-[9px] text-gray-400 mt-1">
+                                                                                            {getRelativeTime(subNotif.created_at, i18n.language === 'ms')}
                                                                                         </p>
                                                                                     </div>
                                                                                 </div>
