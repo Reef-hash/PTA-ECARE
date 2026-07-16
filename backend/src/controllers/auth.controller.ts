@@ -151,17 +151,7 @@ const notifyGoogleRegistration = async (user: UserRow): Promise<void> => {
         )));
     }
 
-    const [technicians]: any = await pool.query('SELECT id FROM technicians WHERE is_active = ?', [true]);
-
-    if (technicians && technicians.length > 0) {
-        await Promise.all(technicians.map((technician: any) => createNotification(
-            technician.id,
-            'technician',
-            'New Google Customer Registered',
-            `A new Google/Gmail customer has registered: ${user.full_name}.`,
-            'NEW_USER_REGISTERED'
-        )));
-    }
+// Technician notification removed per user request
 };
 
 const buildOtpEmail = (name: string, otp: string) => `
@@ -293,7 +283,7 @@ export const verifyIC = async (req: Request, res: Response): Promise<void> => {
         }
 
         const user = data[0];
-        const token = jwt.sign({ id: user.id, role: 'user', ic_number: user.ic_number }, JWT_SECRET, { expiresIn: '1h' } as SignOptions);
+        const token = jwt.sign({ id: user.id, role: 'user', ic_number: user.ic_number }, JWT_SECRET, { expiresIn: '24h' } as SignOptions);
 
         res.json({ registered: true, user, token });
     } catch (error) {
