@@ -129,8 +129,8 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
                     await Promise.all(admins.map((admin: any) => createNotification(
                         admin.id,
                         'admin',
-                        'Pendaftaran Pengguna Baru',
-                        `Pengguna baru telah mendaftar dan melengkapkan profil: ${full_name || 'Pengguna'} | No. K/P: ${ic_number}\nuid:${userId}`,
+                        'New Customer Registration',
+                        `${full_name || 'Pengguna'} has just registered using Google. | uid:${userId}`,
                         'NEW_USER_REGISTERED'
                     )));
                 }
