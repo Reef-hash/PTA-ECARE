@@ -386,7 +386,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
                     for (const admin of admins) {
                         await pool.query(
                             'INSERT INTO notifications (recipient_id, recipient_role, title, message, type, is_read) VALUES (?, ?, ?, ?, ?, ?)',
-                            [admin.id, 'admin', 'Pendaftaran Pengguna Baru', `Pengguna baru telah mendaftar tanpa e-mel: ${user.full_name} | No. K/P: ${user.ic_number}\nuid:${user.id}`, 'NEW_USER_REGISTERED', false]
+                            [admin.id, 'admin', 'New customer Registration', `${user.full_name} has just registered a new account. | uid:${user.id}`, 'NEW_USER_REGISTERED', false]
                         );
                     }
                 }
