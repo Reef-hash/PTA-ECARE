@@ -525,7 +525,7 @@ Terima kasih.
 
         const [admins]: any = await pool.query('SELECT id, email FROM admins');
         if (admins) {
-            const adminMsg = `No. Laporan: ${report_number}\nKategori: ${categoryName}\nJenama: ${brand_name}\nButiran Kerosakan: ${details}\n> Klik untuk agihkan kepada juruteknik`;
+            const adminMsg = `${userId} ${userName} telah membuat aduan ${report_number}\n\nCategory: ${categoryName}\nBrand: ${brand_name}\nDamage Details: ${details}\n\n> Klik untuk agihkan kepada juruteknik`;
             for (const admin of admins) {
                 // Case 3: Admin Bell
                 await createNotification(admin.id, 'admin', adminNotifTitle, adminMsg, 'new_complaint', complaint.id);
