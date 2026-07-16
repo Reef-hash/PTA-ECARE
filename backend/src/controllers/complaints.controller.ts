@@ -1092,19 +1092,13 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
         // --- USER NOTIFICATIONS ---
         // User Bell: Detailed Forward Job
         if (status === 'in_process' || !status) {
-            let aduanDetails = [];
-            if (complaint.cat_name) aduanDetails.push(complaint.cat_name);
-            if (complaint.brand_name) aduanDetails.push(complaint.brand_name);
+            let userPayload = `Aduan ${complaint.report_number} telah diproses oleh ${techExists.name}.\n`;
+            if (complaint.cat_name) userPayload += `\nKategori: ${complaint.cat_name}`;
+            if (complaint.brand_name) userPayload += `\nJenama: ${complaint.brand_name}`;
+            if (complaint.details) userPayload += `\nKerosakan: ${complaint.details}`;
+            
+            userPayload += `\n\nClick to view details`;
 
-            let detailString = aduanDetails.join(' ').trim();
-            if (complaint.details) {
-                detailString += ` (${complaint.details})`;
-            }
-            if (detailString) {
-                detailString = ` - ${detailString}`;
-            }
-
-            const userPayload = `Aduan ${complaint.report_number}${detailString} telah diproses oleh ${techExists.name}. Klik untuk lihat process.`;
             await createNotification(complaint.user_id, 'user', `Aduan Anda Sedang Diproses`, userPayload, 'status_update_detailed', id, true);
         }
 
