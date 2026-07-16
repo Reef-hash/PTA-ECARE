@@ -1027,19 +1027,19 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
         );
 
         const assignmentPayload = JSON.stringify({ key: 'notif_processing_tech', params: { id: complaint.report_number, userName: complaint.full_name || 'Pengguna' } });
-        await createNotification(technician_id, 'technician', `Job Assigned: ${complaint.report_number}`, assignmentPayload, 'assignment', id);
+        await createNotification(technician_id, 'technician', `Job Assigned: ${complaint.report_number}`, assignmentPayload, 'assignment', id, true);
 
         if (status === 'in_process' || !status) {
             const formattedDate = formatNotificationDate(new Date());
             const userPayload = JSON.stringify({ key: 'notif_processing_user', params: { id: complaint.report_number, name: techExists.name, date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }), time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) } });
-            await createNotification(complaint.user_id, 'user', `Status Update: ${complaint.report_number}`, userPayload, 'status_update_detailed', id);
+            await createNotification(complaint.user_id, 'user', `Status Update: ${complaint.report_number}`, userPayload, 'status_update_detailed', id, true);
         }
 
         try {
             const [mainTechs]: any = await pool.query('SELECT id FROM technicians WHERE username = "maintech"');
             if (mainTechs && mainTechs.length > 0) {
                 for (const mt of mainTechs) {
-                    await createNotification(mt.id, 'main_technician', `Job Forwarded: ${complaint.report_number}`, `Aduan ${complaint.report_number} berjaya di hantar kepada juruteknik ${techExists.name}.`, 'assignment', id);
+                    await createNotification(mt.id, 'main_technician', `Job Forwarded: ${complaint.report_number}`, `Aduan ${complaint.report_number} berjaya di hantar kepada juruteknik ${techExists.name}.`, 'assignment', id, true);
                 }
             }
         } catch (e) {}
@@ -1054,9 +1054,6 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
                 const techHtml = buildNotificationEmailHtml(techExists.name, subject, `Satu tugasan aduan (${complaint.report_number}) telah diagihkan kepada anda oleh pihak pengurusan. Sila semak aplikasi E-CARE untuk maklumat lanjut.`, complaint.report_number, 'technician');
                 await sendEmail(techExists.email, subject, techHtml);
             }
-
-            const adminHtml = buildNotificationEmailHtml('Administrator', subject, `Tugasan aduan (${complaint.report_number}) telah berjaya diagihkan kepada juruteknik ${techExists.name}.`, complaint.report_number, 'admin');
-            await sendEmail(adminEmail, subject, adminHtml);
 
             if (customerEmail) {
                 const custHtml = buildNotificationEmailHtml(customerName, subject, `Aduan anda (${complaint.report_number}) telah diagihkan kepada juruteknik kami (${techExists.name}) untuk tindakan selanjutnya.`, complaint.report_number, 'user');
