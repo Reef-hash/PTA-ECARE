@@ -48,7 +48,7 @@ export default function TechnicianForm() {
                 department: tech.department,
                 email: tech.email || '',
                 contact_number: tech.contact_number?.toString() || '',
-                is_active: tech.is_active,
+                is_active: Boolean(tech.is_active),
             });
         } catch (error) {
             toast.error('Gagal memuatkan data');
@@ -79,13 +79,14 @@ export default function TechnicianForm() {
                     department: formData.department,
                     email: formData.email || undefined,
                     contact_number: formData.contact_number ? parseInt(formData.contact_number) : undefined,
-                    is_active: formData.is_active,
+                    is_active: Boolean(formData.is_active),
                 });
                 toast.success('Juruteknik berjaya dikemaskini');
             } else {
                 await api.post('/admin/technicians', {
                     ...formData,
                     contact_number: formData.contact_number ? parseInt(formData.contact_number) : undefined,
+                    is_active: Boolean(formData.is_active),
                 });
                 toast.success('Juruteknik berjaya ditambah');
             }

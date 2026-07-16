@@ -109,7 +109,7 @@ export const updateTechnicianSchema = z.object({
     department: z.string().trim().min(2).optional(),
     email: z.string().trim().email().optional(),
     contact_number: z.number().int().positive().optional(),
-    is_active: z.boolean().optional(),
+    is_active: z.coerce.boolean().optional(),
 });
 
 export const updateUserStatusSchema = z.object({
