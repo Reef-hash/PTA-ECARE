@@ -339,7 +339,18 @@ export default function NotificationBell() {
             setNotifications(notifications.map(n => ({ ...n, is_read: true })));
             setUnreadCount(0);
         } catch (error) {
-            console.error('Failed to mark all as read');
+            console.error('Failed to mark all as read', error);
+        }
+    };
+
+    const handleClearAll = async () => {
+        if (!window.confirm('Adakah anda pasti ingin memadam semua notifikasi?')) return;
+        try {
+            await api.delete('/notifications/clear-all');
+            setNotifications([]);
+            setUnreadCount(0);
+        } catch (error) {
+            console.error('Failed to clear all notifications', error);
         }
     };
 
@@ -418,7 +429,7 @@ export default function NotificationBell() {
 
             {isOpen && (
                 <div className="fixed inset-x-2 top-auto sm:absolute sm:inset-x-auto sm:top-full sm:right-0 mt-2 sm:w-80 bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden z-50 animate-fade-in">
-                    <div className="p-3 border-b border-gray-100 flex items-center justify-between bg-gray-50">
+                    <div className="p-3 border-b border-gray-100 flex items-center justify-between bg-gray-50 flex-wrap gap-2">
                         <h3 className="font-semibold text-gray-700 text-sm">{t('common.notifications')}</h3>
                         <div className="flex items-center gap-3">
                             <button
@@ -437,6 +448,13 @@ export default function NotificationBell() {
                                 className={`text-xs font-medium ${unreadCount > 0 ? 'text-indigo-600 hover:text-indigo-800' : 'text-gray-400 cursor-not-allowed'}`}
                             >
                                 {t('common.mark_all_read')}
+                            </button>
+                            <button
+                                onClick={handleClearAll}
+                                disabled={notifications.length === 0}
+                                className={`text-xs font-medium ${notifications.length > 0 ? 'text-red-600 hover:text-red-800' : 'text-gray-400 cursor-not-allowed'}`}
+                            >
+                                Padam Semua
                             </button>
                         </div>
                     </div>

@@ -59,6 +59,24 @@ export const markAsRead = async (req: Request, res: Response): Promise<void> => 
     }
 };
 
+// Clear all notifications
+export const clearAllNotifications = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const userId = (req as any).user.id;
+        const role = (req as any).user.role;
+
+        await pool.query(
+            'DELETE FROM notifications WHERE recipient_id = ? AND recipient_role = ?',
+            [userId, role]
+        );
+
+        res.json({ success: true, message: 'All notifications cleared' });
+    } catch (error) {
+        console.error('Clear notifications error:', error);
+        res.status(500).json({ error: 'Failed to clear notifications' });
+    }
+};
+
 // Helper to parse and translate notification message payloads from JSON to human-readable Malay
 const translateMessage = (payload: string): string => {
     try {
