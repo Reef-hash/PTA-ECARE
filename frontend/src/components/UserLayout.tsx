@@ -60,7 +60,7 @@ export default function UserLayout({ children, breadcrumb }: UserLayoutProps) {
         navigate('/users');
     };
 
-    const handleCompleteProfile = async (profileData: { ic_number: string; contact_no: string; address: string }) => {
+    const handleCompleteProfile = async (profileData: { ic_number: string; contact_no: string; contact_no_2: string; address: string }) => {
         setIsUpdatingProfile(true);
         try {
             const response = await api.put('/users/profile', profileData);

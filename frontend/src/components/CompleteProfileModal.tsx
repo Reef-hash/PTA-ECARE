@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 interface CompleteProfileModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (profileData: { ic_number: string; contact_no: string; address: string; }) => void;
+    onSubmit: (profileData: { ic_number: string; contact_no: string; contact_no_2: string; address: string; }) => void;
     isLoading?: boolean;
     isMandatory?: boolean;
 }
@@ -22,6 +22,7 @@ export default function CompleteProfileModal({
     const [formData, setFormData] = useState({
         ic_number: '',
         contact_no: '',
+        contact_no_2: '',
         address: '',
     });
 
@@ -31,6 +32,7 @@ export default function CompleteProfileModal({
             setFormData({
                 ic_number: '',
                 contact_no: '',
+                contact_no_2: '',
                 address: '',
             });
         }
@@ -58,7 +60,7 @@ export default function CompleteProfileModal({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         
-        if (!formData.ic_number || !formData.contact_no || !formData.address) {
+        if (!formData.ic_number || !formData.contact_no || !formData.contact_no_2 || !formData.address) {
             toast.error(t('user_auth.fill_required') || 'Sila isi semua maklumat wajib');
             return;
         }
@@ -129,6 +131,21 @@ export default function CompleteProfileModal({
                             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                             disabled={isLoading}
                         />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            No Telefon 2 <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="tel"
+                            value={formData.contact_no_2}
+                            onChange={(e) => setFormData({ ...formData, contact_no_2: e.target.value.replace(/\D/g, '') })}
+                            placeholder="Jika tiada, masukkan No Telefon 1"
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                            disabled={isLoading}
+                        />
+                        <p className="text-xs text-gray-400 mt-1">Jika tiada nombor kedua, masukkan nombor telefon yang sama.</p>
                     </div>
 
                     <div>
