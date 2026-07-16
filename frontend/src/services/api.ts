@@ -55,11 +55,22 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        // DISABLE AUTO-LOGOUT FOR DEBUGGING
-        // if (error.response?.status === 401) {
-        //     console.error('API 401 Unauthorized - Preventing Auto-Logout for Debug');
-        //     // Do NOT clear storage
-        // }
+        // If the token is invalid or expired
+        if (error.response?.status === 401 || error.response?.status === 403) {
+            // Check if the error is from the token validation (to avoid clearing on other 403s)
+            const errorMsg = error.response?.data?.error;
+            if (errorMsg === 'Invalid or expired token' || errorMsg === 'Authentication required' || errorMsg === 'Access token required') {
+                // Clear the token so subsequent requests don't keep failing with it
+                localStorage.removeItem('token');
+                
+                // If it's a background request like /notifications, we can just let it fail silently.
+                // If it's a user action, the specific page (like RegisterComplaint) will catch the 401/403 and handle UI.
+                
+                // For a global redirect approach (if we are not actively filling a form):
+                // We could dispatch an event or check current path, but for now just clear token
+                // to stop infinite failing polling.
+            }
+        }
         return Promise.reject(error);
     }
 );

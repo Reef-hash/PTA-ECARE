@@ -33,13 +33,26 @@ export default function RegisterComplaint() {
 
     useEffect(() => {
         loadMasterData();
+        
+        // Restore form data from sessionStorage on mount
+        const savedData = sessionStorage.getItem('registerComplaintFormData');
+        if (savedData) {
+            try {
+                const parsed = JSON.parse(savedData);
+                setFormData(parsed);
+            } catch (e) {
+                console.error('Failed to parse saved form data');
+            }
+        }
     }, []);
 
     useEffect(() => {
         if (formData.category_id) {
             loadSubcategories(parseInt(formData.category_id));
         }
-    }, [formData.category_id]);
+        // Save form data to sessionStorage whenever it changes
+        sessionStorage.setItem('registerComplaintFormData', JSON.stringify(formData));
+    }, [formData.category_id, formData]);
 
     const loadMasterData = async () => {
         try {
@@ -128,9 +141,28 @@ export default function RegisterComplaint() {
 
             const response = await api.post('/complaints', formDataToSend);
 
+            // Clear saved data on success
+            sessionStorage.removeItem('registerComplaintFormData');
+
             toast.success(t('complaint_form.success_submitted', { report_number: response.data.report_number }));
             navigate('/users/complaint-history');
         } catch (error: any) {
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                import('sweetalert2').then(({ default: Swal }) => {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Sesi Telah Tamat',
+                        text: 'Sesi anda telah tamat. Teks aduan anda telah disimpan sementara. Sila log masuk semula untuk meneruskan.',
+                        confirmButtonText: 'Log Masuk Semula',
+                        confirmButtonColor: '#3085d6',
+                        allowOutsideClick: false
+                    }).then(() => {
+                        localStorage.removeItem('token');
+                        navigate('/users/verify-ic'); // redirect to IC login for users
+                    });
+                });
+                return;
+            }
             toast.error(error.response?.data?.error || t('complaint_form.error_submit_failed'));
         } finally {
             setIsLoading(false);
