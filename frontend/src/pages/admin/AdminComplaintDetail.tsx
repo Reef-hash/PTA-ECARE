@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import {
     FileText, User,
     Forward, Send, Save, Printer, XCircle,
-    Download, Eye, Wrench, ZoomIn, X
+    Download, Eye, Wrench, ZoomIn, X, ShieldAlert, Info
 } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
 import MainTechLayout from '../../components/MainTechLayout';
@@ -454,6 +454,41 @@ export default function AdminComplaintDetail() {
                                 </div>
                             </div>
 
+                            {/* Main Tech restriction: read-only after job forwarded */}
+                            {isMainTech && complaint.assigned_to ? (
+                                <div className="space-y-4">
+                                    {/* Info Banner - Job sudah di-forward */}
+                                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                <ShieldAlert className="w-5 h-5 text-amber-600" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-semibold text-amber-800 mb-1">Tugasan Sudah Diagihkan</h4>
+                                                <p className="text-sm text-amber-700">
+                                                    Job ini telah di-forward kepada juruteknik. Anda tidak boleh membuat sebarang perubahan lagi.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Technician Info */}
+                                    {complaint.technicians && (
+                                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                    <Info className="w-4 h-4 text-blue-600" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-blue-500 font-medium uppercase tracking-wider">Juruteknik Ditugaskan</p>
+                                                    <p className="font-semibold text-blue-800">{complaint.technicians.name}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <>
                             {(() => {
                                 const isEscalated = (complaint.tracks && complaint.tracks.some(track => track.status === 'incomplete' || track.status === 'bawa_pulang')) || complaint.status === 'incomplete' || complaint.status === 'bawa_pulang';
                                 const maxRemarks = isEscalated ? 6 : 3;
@@ -477,7 +512,7 @@ export default function AdminComplaintDetail() {
                                                     className="input-field"
                                                 >
                                                     <option value="">-- {t('common.select_status')} --</option>
-                                                    <option value="pending">{t('admin_users.status_pending')}</option>
+                                                    {!isMainTech && <option value="pending">{t('admin_users.status_pending')}</option>}
                                                     <option value="in_process">{t('admin_users.status_in_process')}</option>
                                                     <option value="incomplete">{t('technician_dashboard.status_incomplete', 'Incomplete / Bawa Pulang')}</option>
                                                     <option value="closed">{t('admin_users.status_closed')}</option>
@@ -528,7 +563,7 @@ export default function AdminComplaintDetail() {
                                 );
                             })()}
 
-                            {/* Forward to Technician */}
+                            {/* Forward to Technician - Hidden for Main Tech when already forwarded */}
                             {complaint.status !== 'closed' && (
                                 <div className="mt-6 pt-6 border-t">
                                     <h3 className="font-semibold mb-4 flex items-center gap-2">
@@ -561,7 +596,7 @@ export default function AdminComplaintDetail() {
                                         className="input-field mb-3"
                                     >
                                         <option value="">-- {t('common.select_status')} --</option>
-                                        <option value="pending">{t('admin_users.status_pending')}</option>
+                                        {!isMainTech && <option value="pending">{t('admin_users.status_pending')}</option>}
                                         <option value="in_process">{t('admin_users.status_in_process')}</option>
                                         <option value="incomplete">{t('technician_dashboard.status_incomplete', 'Incomplete / Bawa Pulang')}</option>
                                         <option value="closed">{t('admin_users.status_closed')}</option>
@@ -576,6 +611,8 @@ export default function AdminComplaintDetail() {
                                         {t('admin_complaint_detail.btn_forward')}
                                     </button>
                                 </div>
+                            )}
+                                </>
                             )}
                         </div>
                     )}
