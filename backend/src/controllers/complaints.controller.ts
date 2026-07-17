@@ -1147,16 +1147,18 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
             firstTechName = firstHistoryRows[0].name;
         }
 
-        const emailTemplateHtml = `maklumat aduan
+        const emailTemplateHtml = `MAKLUMAT ADUAN ${complaint.report_number}
 date create : ${createDate}
-First technician : ${firstTechName}
-second technician : ${techExists.name}
 customer name : ${complaint.full_name || 'Pelanggan'}
 subcategory : ${complaint.subcategory || '-'}
 brand : ${complaint.brand_name || '-'}
 defect details : ${complaint.details || '-'}
+MAKLMUAT ADUAN JURUTEKNIK YANG MENGURUSKAN ADUAN INI :
+First technician : ${firstTechName}
+second technician : ${techExists.name}
 
-REMARK UPDATE (note: Maklumat ini di buat oleh maintechnician bukan mane2 technician atau admin)
+REMARK UPDATE FROM MAINTECH
+ (note: Maklumat ini di buat oleh maintechnician bukan mane2 technician atau admin)
 Status: ${status || '-'}
 transport note : ${note_transport || '-'}
 checking : ${checking || '-'}
