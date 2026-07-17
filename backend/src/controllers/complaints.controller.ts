@@ -1143,6 +1143,8 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
             if (firstTechRows && firstTechRows.length > 0) {
                 firstTechName = firstTechRows[0].name;
             }
+        } else {
+            firstTechName = techExists.name;
         }
 
         const emailTemplateHtml = `maklumat aduan<br>
