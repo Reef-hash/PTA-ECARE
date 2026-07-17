@@ -1068,7 +1068,7 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
         if (!id) { res.status(404).json({ error: 'Complaint not found' }); return; }
 
         const [complaintRows]: any = await pool.query(
-            'SELECT c.assigned_to, c.report_number, c.user_id, c.brand_name, c.details, cat.name as cat_name, u.full_name, u.email FROM complaints c LEFT JOIN users u ON c.user_id = u.id LEFT JOIN categories cat ON c.category_id = cat.id WHERE c.id = ?',
+            'SELECT c.assigned_to, c.created_at, c.subcategory, c.report_number, c.user_id, c.brand_name, c.details, cat.name as cat_name, u.full_name, u.email FROM complaints c LEFT JOIN users u ON c.user_id = u.id LEFT JOIN categories cat ON c.category_id = cat.id WHERE c.id = ?',
             [id]
         );
         const complaint = complaintRows[0];
@@ -1135,21 +1135,63 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
             await createNotification(technician_id, 'technician', summaryTitle, summaryPayload, 'status_update_detailed', id, true);
         }
 
-        // Email 1: Combined Email for Technician (User gets 0 emails)
-        try {
-            const subject = `Agihan & Kemaskini Aduan: ${complaint.report_number}`;
-            if (techExists.email) {
-                let summaryHtml = `Tugasan aduan (${complaint.report_number}) telah diagihkan kepada anda oleh pihak pengurusan.<br><br><b>Maklumat Kemaskini:</b><br>`;
-                if (status) summaryHtml += `- <b>Status:</b> ${status}<br>`;
-                if (remark) summaryHtml += `- <b>Catatan (Remark):</b> ${remark}<br>`;
-                if (checking) summaryHtml += `- <b>Penemuan Teknikal:</b> ${checking}<br>`;
-                if (note_transport) summaryHtml += `- <b>Logistik/Pengangkutan:</b> ${note_transport}<br>`;
-                summaryHtml += `<br>Sila semak aplikasi E-CARE untuk maklumat lanjut.`;
-
-                const techHtml = buildNotificationEmailHtml(techExists.name, subject, summaryHtml, complaint.report_number, 'technician');
-                await sendEmail(techExists.email, subject, techHtml);
+        // --- EMAILS ---
+        const createDate = new Date(complaint.created_at).toLocaleDateString('en-GB'); // dd/mm/yyyy
+        let firstTechName = 'Tidak Diketahui';
+        if (complaint.assigned_to) {
+            const [firstTechRows]: any = await pool.query('SELECT name FROM technicians WHERE id = ?', [complaint.assigned_to]);
+            if (firstTechRows && firstTechRows.length > 0) {
+                firstTechName = firstTechRows[0].name;
             }
-        } catch (emailErr) {}
+        }
+
+        const emailTemplateHtml = `maklumat aduan<br>
+date create : ${createDate}<br>
+First technician : ${firstTechName}<br>
+customer name : ${complaint.full_name || 'Pelanggan'}<br>
+subcategory  : ${complaint.subcategory || '-'}<br>
+brand : ${complaint.brand_name || '-'}<br>
+defect details : ${complaint.details || '-'}<br>
+<br>
+<b>REMARK UPDATE</b> (note: Maklumat ini di buat oleh maintechnician bukan mane2 technician atau admin)<br>
+<br>
+Status: ${status || '-'}<br>
+transport note : ${note_transport || '-'}<br>
+checking : ${checking || '-'}<br>
+remark : ${remark || '-'}<br>
+<br>
+click to view details ...`;
+
+        try {
+            const trackReportPath = `${complaint.report_number}/track-repair`;
+
+            // 1. Email for Technician B
+            if (techExists.email) {
+                const subjectTech = `MAINTECH HAS ASSIGN INCOMPLETE JOB ${complaint.report_number} TO ${techExists.name.toUpperCase()}`;
+                const techHtml = buildNotificationEmailHtml(techExists.name, subjectTech, emailTemplateHtml, trackReportPath, 'technician');
+                await sendEmail(techExists.email, subjectTech, techHtml);
+            }
+
+            // 2. Email for Admin
+            const [admins]: any = await pool.query('SELECT email FROM admins WHERE email IS NOT NULL');
+            const adminEmails = admins.map((a: any) => a.email).filter(Boolean);
+            if (adminEmails.length > 0) {
+                const subjectAdmin = `MAIN TECH HAS ASSIGN INCOMPLETE JOB ${complaint.report_number} TO ${techExists.name.toUpperCase()}`;
+                const adminHtml = buildNotificationEmailHtml('Admin', subjectAdmin, emailTemplateHtml, trackReportPath, 'admin');
+                for (const email of adminEmails) {
+                    await sendEmail(email, subjectAdmin, adminHtml);
+                }
+            }
+
+            // 3. Email for User
+            if (complaint.email) {
+                const subjectUser = `MAIN TECH HAS ASSIGN YOUR INCOMPLETE COMPLAINT JOB ${complaint.report_number} TO ${techExists.name.toUpperCase()}`;
+                const userHtml = buildNotificationEmailHtml(complaint.full_name || 'Pelanggan', subjectUser, emailTemplateHtml, trackReportPath, 'user');
+                await sendEmail(complaint.email, subjectUser, userHtml);
+            }
+        } catch (emailErr) {
+            console.error('Failed to send forward job emails:', emailErr);
+        }
 
         // --- USER NOTIFICATIONS ---
         // User Bell: Detailed Forward Job

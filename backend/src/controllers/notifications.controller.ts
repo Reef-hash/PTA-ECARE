@@ -228,7 +228,7 @@ export const buildNotificationEmailHtml = (name: string, title: string, message:
                                        title.toLowerCase().includes('bawa pulang') ||
                                        message.toLowerCase().includes('progress');
                 
-                if (isStatusUpdate) {
+                if (isStatusUpdate && !reportNumber.includes('track-repair')) {
                     linkUrl = `${baseUrl}/users/complaint/${reportNumber}/track-repair`;
                 } else {
                     linkUrl = `${baseUrl}/users/complaint/${reportNumber}`;
@@ -271,7 +271,7 @@ export const buildNotificationEmailHtml = (name: string, title: string, message:
                                        title.toLowerCase().includes('bawa pulang') ||
                                        message.toLowerCase().includes('progress');
                 
-                if (isStatusUpdate) {
+                if (isStatusUpdate && !reportNumber.includes('track-repair')) {
                     linkUrl = `${baseUrl}/main-tech/complaint/${reportNumber}/track-repair`;
                 } else {
                     linkUrl = `${baseUrl}/main-tech/complaint/${reportNumber}`;
