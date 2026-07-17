@@ -762,8 +762,9 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                     try {
                         const adminEmail = 'adminecare.ptasssb@gmail.com';
                         const subject = `Aduan Selesai: ${reportNumber}`;
-                        const emailHtml = buildNotificationEmailHtml('Administrator', subject, `Juruteknik ${techName} telah mengemaskini status aduan ${reportNumber} daripada '${previousStatus}' kepada 'Selesai' pada ${new Date().toLocaleDateString('ms-MY')} jam ${new Date().toLocaleTimeString('ms-MY')}.`, reportNumber, 'admin');
-                        await sendEmail(adminEmail, subject, emailHtml);
+                        const adminSubject = `Juruteknik ${techName} update status : closed`;
+                        const emailHtml = buildNotificationEmailHtml('Administrator', adminSubject, `Juruteknik ${techName} telah mengemaskini status aduan ${reportNumber} daripada '${previousStatus}' kepada 'Selesai' pada ${new Date().toLocaleDateString('ms-MY')} jam ${new Date().toLocaleTimeString('ms-MY')}.`, reportNumber, 'admin');
+                        await sendEmail(adminEmail, adminSubject, emailHtml);
                         
                         if (customerData.email) {
                             // Fetch latest remark data from DB if current payload fields are empty
@@ -806,12 +807,13 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                         const adminEmail = 'adminecare.ptasssb@gmail.com';
                         const mainTechEmail = 'technicianasign@gmail.com';
                         const subject = `Aduan Bawa Pulang (Incomplete): ${reportNumber}`;
+                        const adminSubject = `Juruteknik ${techName} update status : incomplete`;
                         
-                        const adminHtml = buildNotificationEmailHtml('Administrator', subject, `Juruteknik telah update status progress repair kerosakan untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'admin');
-                        await sendEmail(adminEmail, subject, adminHtml);
+                        const adminHtml = buildNotificationEmailHtml('Administrator', adminSubject, `Juruteknik telah update status progress repair kerosakan untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'admin');
+                        await sendEmail(adminEmail, adminSubject, adminHtml);
 
-                        const mainTechHtml = buildNotificationEmailHtml('Main Technician', subject, `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'admin');
-                        await sendEmail(mainTechEmail, subject, mainTechHtml);
+                        const mainTechHtml = buildNotificationEmailHtml('Main Technician', adminSubject, `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'admin');
+                        await sendEmail(mainTechEmail, adminSubject, mainTechHtml);
 
                         if (customerData.email) {
                             const subcategoryName = complaintData.subcategory || 'kerosakan';
@@ -938,8 +940,9 @@ export const updateRemark = async (req: Request, res: Response): Promise<void> =
                     try {
                         const adminEmail = 'adminecare.ptasssb@gmail.com';
                         const subject = `Aduan Selesai: ${reportNumber}`;
-                        const emailHtml = buildNotificationEmailHtml('Administrator', subject, `Juruteknik ${techName} telah mengemaskini status aduan ${reportNumber} kepada 'Selesai'.`, reportNumber, 'admin');
-                        await sendEmail(adminEmail, subject, emailHtml);
+                        const adminSubject = `Juruteknik ${techName} update status : closed`;
+                        const emailHtml = buildNotificationEmailHtml('Administrator', adminSubject, `Juruteknik ${techName} telah mengemaskini status aduan ${reportNumber} kepada 'Selesai'.`, reportNumber, 'admin');
+                        await sendEmail(adminEmail, adminSubject, emailHtml);
                         
                         if (customerData.email) {
                             // Fetch latest remark data from DB if current payload fields are empty
