@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Bell, ChevronDown, ChevronUp } from 'lucide-react';
+import { Bell, ChevronDown, ChevronUp, Volume2, VolumeX } from 'lucide-react';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -63,6 +63,18 @@ export default function NotificationBell() {
     const navigate = useNavigate();
     const { t, i18n } = useTranslation();
 
+    const [isMuted, setIsMuted] = useState(() => {
+        const saved = localStorage.getItem('notification_muted');
+        return saved === 'true';
+    });
+
+    const toggleMute = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const newMuted = !isMuted;
+        setIsMuted(newMuted);
+        localStorage.setItem('notification_muted', String(newMuted));
+    };
+
     const lastNotificationIdRef = useRef<string | null>(null);
 
     // Initialize audio on mount
@@ -73,6 +85,7 @@ export default function NotificationBell() {
 
     // Play notification sound
     const playNotificationSound = useCallback(() => {
+        if (isMuted) return;
         if (audioRef.current) {
             audioRef.current.currentTime = 0;
             const promise = audioRef.current.play();
@@ -83,7 +96,7 @@ export default function NotificationBell() {
                 });
             }
         }
-    }, []);
+    }, [isMuted]);
 
     // Helper to translate notification content based on type
     const getTranslatedNotification = (notification: Notification): { title: string; message: string } => {
@@ -551,10 +564,18 @@ export default function NotificationBell() {
                                     e.stopPropagation();
                                     playNotificationSound();
                                 }}
-                                className="text-xs text-gray-500 hover:text-indigo-600 flex items-center gap-1"
+                                disabled={isMuted}
+                                className={`text-xs flex items-center gap-1 ${isMuted ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-indigo-600'}`}
                                 title="Test Sound"
                             >
                                 <span className="mr-1">🔊</span> {t('common.test') || 'Test'}
+                            </button>
+                            <button
+                                onClick={toggleMute}
+                                className={`p-1 rounded-md transition-colors ${isMuted ? 'text-red-500 hover:bg-red-50' : 'text-indigo-600 hover:bg-indigo-50'}`}
+                                title={isMuted ? 'Unmute Sound' : 'Mute Sound'}
+                            >
+                                {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                             </button>
                             <button
                                 onClick={handleMarkAllRead}
