@@ -105,11 +105,7 @@ export default function NotificationsPage() {
                 } else if (path.startsWith('/admin/technician')) {
                     navigate(`/admin/technician/complaint/${reportNumber}`);
                 } else if (path.startsWith('/main-tech')) {
-                    if (isStatusUpdate) {
-                        navigate(`/main-tech/complaint/${reportNumber}/track-repair`);
-                    } else {
-                        navigate(`/main-tech/complaint/${reportNumber}`);
-                    }
+                    navigate(`/main-tech/complaint/${reportNumber}`);
                 } else {
                     navigate(`/admin/complaint/${reportNumber}`);
                 }
