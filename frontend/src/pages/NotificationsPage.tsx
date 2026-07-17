@@ -254,6 +254,42 @@ export default function NotificationsPage() {
             };
         }
 
+        // Match "Juruteknik X Telah mengemaskini Aduan Y" or "Pihak Pengurusan Telah mengemaskini Aduan Y"
+        const updateDetailMatch = notification.title.match(/^(.*?) Telah mengemaskini Aduan ([A-Z0-9]+)$/);
+        if (updateDetailMatch) {
+            const updater = updateDetailMatch[1];
+            const repNo = updateDetailMatch[2];
+            const isMalay = i18n.language === 'ms';
+            
+            let translatedTitle = notification.title;
+            let translatedMessage = notification.message;
+
+            if (!isMalay) {
+                let transUpdater = updater;
+                if (updater.startsWith('Juruteknik')) {
+                    transUpdater = updater.replace('Juruteknik', 'Technician');
+                } else if (updater === 'Pihak Pengurusan') {
+                    transUpdater = 'Management';
+                }
+                translatedTitle = `${transUpdater} has updated Complaint ${repNo}`;
+
+                translatedMessage = translatedMessage
+                    .replace('Maklumat berikut:', 'Following details:')
+                    .replace('~ Status : inproces', '~ Status : In Process')
+                    .replace('~ Status : Selesai', '~ Status : Completed')
+                    .replace('~ Status : Incomplete', '~ Status : Incomplete')
+                    .replace('~ Status : Bawa Pulang', '~ Status : Brought Home');
+            } else {
+                translatedMessage = translatedMessage
+                    .replace('~ Status : inproces', '~ Status : Dalam Proses');
+            }
+
+            return {
+                title: translatedTitle,
+                message: translatedMessage
+            };
+        }
+
         // Match User Cancel "Cancelled on 16 Jul 2026 at 04:17 PM"
         const userCancelMatch = notification.message.match(/^Cancelled on (.*?)$/);
         if (userCancelMatch) {
