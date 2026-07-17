@@ -560,17 +560,6 @@ export default function NotificationBell() {
                         <h3 className="font-semibold text-gray-700 text-sm">{t('common.notifications')}</h3>
                         <div className="flex items-center gap-3">
                             <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    playNotificationSound();
-                                }}
-                                disabled={isMuted}
-                                className={`text-xs flex items-center gap-1 ${isMuted ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-indigo-600'}`}
-                                title="Test Sound"
-                            >
-                                <span className="mr-1">🔊</span> {t('common.test') || 'Test'}
-                            </button>
-                            <button
                                 onClick={toggleMute}
                                 className={`p-1 rounded-md transition-colors ${isMuted ? 'text-red-500 hover:bg-red-50' : 'text-indigo-600 hover:bg-indigo-50'}`}
                                 title={isMuted ? 'Unmute Sound' : 'Mute Sound'}
