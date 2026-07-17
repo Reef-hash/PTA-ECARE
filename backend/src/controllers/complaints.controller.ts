@@ -1283,6 +1283,36 @@ export const deleteComplaint = async (req: Request, res: Response): Promise<void
     }
 };
 
+// Bulk delete complaints (admin only)
+export const bulkDeleteComplaints = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { reportNumbers } = req.body;
+        
+        if (!Array.isArray(reportNumbers) || reportNumbers.length === 0) {
+            res.status(400).json({ error: 'Sila pilih sekurang-kurangnya satu aduan' });
+            return;
+        }
+
+        // Get IDs
+        const placeholders = reportNumbers.map(() => '?').join(',');
+        const [rows]: any = await pool.query(`SELECT id FROM complaints WHERE report_number IN (${placeholders})`, reportNumbers);
+        const ids = rows.map((r: any) => r.id);
+
+        if (ids.length > 0) {
+            const idPlaceholders = ids.map(() => '?').join(',');
+            await pool.query(`DELETE FROM technician_remarks WHERE complaint_id IN (${idPlaceholders})`, ids);
+            await pool.query(`DELETE FROM complaint_remarks WHERE complaint_id IN (${idPlaceholders})`, ids);
+            await pool.query(`DELETE FROM notifications WHERE reference_id IN (${idPlaceholders})`, ids);
+            await pool.query(`DELETE FROM complaints WHERE id IN (${idPlaceholders})`, ids);
+        }
+
+        res.json({ message: 'Aduan berjaya dipadam secara pukal' });
+    } catch (error) {
+        console.error('Error bulk deleting complaints:', error);
+        res.status(500).json({ error: 'Ralat memadam aduan' });
+    }
+};
+
 /** Resolve numeric complaint ID to report_number (for notifications) */
 export const resolveNumericId = async (req: Request, res: Response): Promise<void> => {
     try {

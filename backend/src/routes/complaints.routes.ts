@@ -15,6 +15,7 @@ import {
     getTechnicianDashboardStats,
     cancelComplaint,
     deleteComplaint,
+    bulkDeleteComplaints,
     resolveNumericId,
 } from '../controllers/complaints.controller.js';
 
@@ -62,6 +63,7 @@ router.post('/:id/forward', requireRole('admin', 'main_technician'), validate(fo
 router.delete('/:id/cancel', requireRole('user'), cancelComplaint);
 
 // Delete complaint entirely (admin only)
+router.post('/bulk-delete', requireRole('admin'), bulkDeleteComplaints);
 router.delete('/:id', requireRole('admin'), deleteComplaint);
 
 export default router;

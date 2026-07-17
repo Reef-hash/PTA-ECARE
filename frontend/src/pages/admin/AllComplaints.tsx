@@ -38,6 +38,10 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
     // Delete confirmation
     const [deleteTarget, setDeleteTarget] = useState<{ id: number; reportNumber: string } | null>(null);
 
+    // Bulk delete state
+    const [selectedReports, setSelectedReports] = useState<string[]>([]);
+    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+
     // Filter options from data
     const [technicians, setTechnicians] = useState<Technician[]>([]);
 
@@ -90,10 +94,52 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
             await api.delete(`/complaints/${deleteTarget.reportNumber}`);
             toast.success(`Aduan ${deleteTarget.reportNumber} berjaya dipadam`);
             setDeleteTarget(null);
+            
+            // Remove from selected if it was selected
+            setSelectedReports(prev => prev.filter(r => r !== deleteTarget.reportNumber));
+            
             loadComplaints();
         } catch (error) {
             toast.error('Gagal memadam aduan');
         }
+    };
+
+    const handleBulkDelete = async () => {
+        if (selectedReports.length === 0) return;
+        if (!window.confirm(`Adakah anda pasti untuk memadam ${selectedReports.length} aduan yang dipilih? Tindakan ini tidak boleh diundurkan.`)) return;
+        
+        setIsBulkDeleting(true);
+        try {
+            await api.post('/complaints/bulk-delete', { reportNumbers: selectedReports });
+            toast.success(`${selectedReports.length} aduan berjaya dipadam`);
+            setSelectedReports([]);
+            loadComplaints();
+        } catch (error) {
+            toast.error('Gagal memadam aduan yang dipilih');
+        } finally {
+            setIsBulkDeleting(false);
+        }
+    };
+
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.checked) {
+            // Select all on current page
+            const currentPageReports = paginatedComplaints.map(c => c.report_number);
+            const newSelected = [...new Set([...selectedReports, ...currentPageReports])];
+            setSelectedReports(newSelected);
+        } else {
+            // Deselect all on current page
+            const currentPageReports = paginatedComplaints.map(c => c.report_number);
+            setSelectedReports(prev => prev.filter(r => !currentPageReports.includes(r)));
+        }
+    };
+
+    const handleSelectReport = (reportNumber: string) => {
+        setSelectedReports(prev => 
+            prev.includes(reportNumber) 
+                ? prev.filter(r => r !== reportNumber) 
+                : [...prev, reportNumber]
+        );
     };
 
     const loadTechnicians = async () => {
@@ -524,6 +570,29 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                             </button>
                         </div>
                     )}
+                    
+                    {/* Bulk Delete Action */}
+                    {selectedReports.length > 0 && (
+                        <div className="flex items-center justify-between bg-red-50 p-3 rounded-lg border border-red-100">
+                            <span className="text-sm text-red-700 font-medium">
+                                {selectedReports.length} {t('common.selected') || 'aduan dipilih'}
+                            </span>
+                            <button
+                                onClick={handleBulkDelete}
+                                disabled={isBulkDeleting}
+                                className="btn-danger py-1.5 px-4 flex items-center gap-2 text-sm"
+                            >
+                                {isBulkDeleting ? (
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                    <>
+                                        <Trash2 className="w-4 h-4" />
+                                        Padam Terpilih
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Table */}
@@ -545,6 +614,12 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                                         <div className="flex justify-between items-start mb-3">
                                             <div className="flex flex-col gap-1.5">
                                                 <div className="flex items-center gap-2">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                                        checked={selectedReports.includes(complaint.report_number)}
+                                                        onChange={() => handleSelectReport(complaint.report_number)}
+                                                    />
                                                     <span className="text-gray-400 font-medium text-xs">#{(currentPage - 1) * itemsPerPage + index + 1}</span>
                                                     <Link
                                                         to={`/admin/complaint/${complaint.report_number}`}
@@ -628,6 +703,14 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                                 <table className="w-full">
                                     <thead>
                                         <tr className="table-header">
+                                            <th className="px-4 py-3 w-10 text-center">
+                                                <input 
+                                                    type="checkbox" 
+                                                    className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                                    checked={paginatedComplaints.length > 0 && paginatedComplaints.every(c => selectedReports.includes(c.report_number))}
+                                                    onChange={handleSelectAll}
+                                                />
+                                            </th>
                                             <th className="text-center px-4 py-3 w-12 whitespace-nowrap">No.</th>
                                             <th className="text-left px-4 py-3 whitespace-nowrap min-w-[140px]">{t('complaint_list.report_no')}</th>
                                             <th className="text-left px-4 py-3 min-w-[200px]">{t('complaint_list.customer')}</th>
@@ -640,7 +723,15 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                                     </thead>
                                     <tbody>
                                         {paginatedComplaints.map((complaint, index) => (
-                                            <tr key={complaint.id} className="table-row">
+                                            <tr key={complaint.id} className={`table-row ${selectedReports.includes(complaint.report_number) ? 'bg-indigo-50/50' : ''}`}>
+                                                <td className="px-4 py-3 text-center">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                                        checked={selectedReports.includes(complaint.report_number)}
+                                                        onChange={() => handleSelectReport(complaint.report_number)}
+                                                    />
+                                                </td>
                                                 <td className="px-4 py-3 text-center text-gray-500 font-medium whitespace-nowrap">
                                                     {(currentPage - 1) * itemsPerPage + index + 1}
                                                 </td>
