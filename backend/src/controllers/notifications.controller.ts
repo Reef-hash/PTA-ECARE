@@ -220,7 +220,19 @@ export const buildNotificationEmailHtml = (name: string, title: string, message:
     switch (role) {
         case 'user':
             if (reportNumber) {
-                linkUrl = `${baseUrl}/users/complaint/${reportNumber}`;
+                const isStatusUpdate = title.toLowerCase().includes('status') || 
+                                       title.toLowerCase().includes('kemaskini') ||
+                                       title.toLowerCase().includes('diproses') ||
+                                       title.toLowerCase().includes('selesai') ||
+                                       title.toLowerCase().includes('incomplete') ||
+                                       title.toLowerCase().includes('bawa pulang') ||
+                                       message.toLowerCase().includes('progress');
+                
+                if (isStatusUpdate) {
+                    linkUrl = `${baseUrl}/users/complaint/${reportNumber}/track-repair`;
+                } else {
+                    linkUrl = `${baseUrl}/users/complaint/${reportNumber}`;
+                }
             } else {
                 linkUrl = `${baseUrl}/users/complaint-history`;
             }
