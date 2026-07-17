@@ -812,7 +812,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                         const adminHtml = buildNotificationEmailHtml('Administrator', adminSubject, `Juruteknik telah update status progress repair kerosakan untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'admin');
                         await sendEmail(adminEmail, adminSubject, adminHtml);
 
-                        const mainTechHtml = buildNotificationEmailHtml('Main Technician', adminSubject, `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'admin');
+                        const mainTechHtml = buildNotificationEmailHtml('Main Technician', adminSubject, `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'main_technician');
                         await sendEmail(mainTechEmail, adminSubject, mainTechHtml);
 
                         if (customerData.email) {

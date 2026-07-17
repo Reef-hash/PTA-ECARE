@@ -261,6 +261,26 @@ export const buildNotificationEmailHtml = (name: string, title: string, message:
             }
             buttonText = 'Semak Aduan';
             break;
+        case 'main_technician':
+            if (reportNumber) {
+                const isStatusUpdate = title.toLowerCase().includes('status') || 
+                                       title.toLowerCase().includes('kemaskini') ||
+                                       title.toLowerCase().includes('diproses') ||
+                                       title.toLowerCase().includes('selesai') ||
+                                       title.toLowerCase().includes('incomplete') ||
+                                       title.toLowerCase().includes('bawa pulang') ||
+                                       message.toLowerCase().includes('progress');
+                
+                if (isStatusUpdate) {
+                    linkUrl = `${baseUrl}/main-tech/complaint/${reportNumber}/track-repair`;
+                } else {
+                    linkUrl = `${baseUrl}/main-tech/complaint/${reportNumber}`;
+                }
+            } else {
+                linkUrl = `${baseUrl}/main-tech/complaints`;
+            }
+            buttonText = 'Semak Aduan';
+            break;
         default:
             linkUrl = baseUrl;
             buttonText = 'Buka Portal E-CARE';
