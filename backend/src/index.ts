@@ -31,6 +31,23 @@ const PORT = Number(process.env.PORT) || 3000;
         // Alter technician_remarks table
         await pool.query("ALTER TABLE technician_remarks MODIFY COLUMN status ENUM('pending', 'in_process', 'incomplete', 'bawa_pulang', 'ready_pickup', 'closed', 'cancelled') NULL");
         console.log('Database schema migrations completed successfully.');
+
+        // Ensure notifications.notif_category column exists (defensive - prevents createNotification INSERT failures)
+        const [notifCols]: any = await pool.query("SHOW COLUMNS FROM notifications LIKE 'notif_category'");
+        if (notifCols.length === 0) {
+            await pool.query("ALTER TABLE notifications ADD COLUMN notif_category ENUM('customer','technician','main_technician') DEFAULT 'customer'");
+            console.log('Added missing notif_category column to notifications table.');
+        }
+
+        // Fix corrupted auto_increment on notifications (Out of range value for column 'id')
+        const [tblStatus]: any = await pool.query("SHOW TABLE STATUS WHERE Name = 'notifications'");
+        const aiVal = Number(tblStatus[0]?.Auto_increment || 0);
+        if (aiVal === 0 || aiVal > 2147483647 || isNaN(aiVal)) {
+            const [maxRow]: any = await pool.query("SELECT COALESCE(MAX(id),0) as maxid FROM notifications");
+            const nextId = Number(maxRow[0].maxid) + 1;
+            await pool.query(`ALTER TABLE notifications AUTO_INCREMENT = ${nextId}`);
+            console.log(`Fixed notifications auto_increment to ${nextId}.`);
+        }
     } catch (err: any) {
         console.error('Migration error (this may be safe to ignore if enum already exists):', err.message);
     }
