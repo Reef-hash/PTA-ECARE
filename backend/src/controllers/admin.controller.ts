@@ -10,9 +10,13 @@ import { randomUUID } from 'crypto';
 export const getStats = async (req: Request, res: Response): Promise<void> => {
     try {
         const [allComplaints]: any = await pool.query('SELECT id, status, assigned_to FROM complaints');
-        const [forwardedRows]: any = await pool.query('SELECT complaint_id FROM forward_history');
+        const [incompleteRemarksRows]: any = await pool.query(`
+            SELECT complaint_id FROM technician_remarks WHERE status IN ('incomplete', 'bawa_pulang')
+            UNION 
+            SELECT complaint_id FROM complaint_remarks WHERE status IN ('incomplete', 'bawa_pulang')
+        `);
         
-        const forwardedIds = new Set((forwardedRows || []).map((r: any) => r.complaint_id));
+        const incompleteHistoryIds = new Set((incompleteRemarksRows || []).map((r: any) => r.complaint_id));
 
         const stats = {
             total: allComplaints?.length || 0,
@@ -44,7 +48,7 @@ export const getStats = async (req: Request, res: Response): Promise<void> => {
                 if (!c.assigned_to) stats.incomplete_not_assigned++;
                 else stats.incomplete_assigned++;
             }
-            if (c.status === 'closed' && forwardedIds.has(c.id)) {
+            if (c.status === 'closed' && incompleteHistoryIds.has(c.id)) {
                 stats.incomplete_completed++;
             }
         });

@@ -101,7 +101,7 @@ export const getComplaints = async (req: Request, res: Response): Promise<void> 
             } else if (status === 'incomplete_assigned') {
                 whereClauses.push('c.status = "incomplete" AND c.assigned_to IS NOT NULL');
             } else if (status === 'incomplete_completed') {
-                whereClauses.push('c.status = "closed" AND c.id IN (SELECT complaint_id FROM forward_history)');
+                whereClauses.push('c.status = "closed" AND c.id IN (SELECT complaint_id FROM technician_remarks WHERE status IN ("incomplete", "bawa_pulang") UNION SELECT complaint_id FROM complaint_remarks WHERE status IN ("incomplete", "bawa_pulang"))');
             } else if (status === 'incomplete_in') {
                 whereClauses.push('(c.status = "incomplete" OR c.status = "bawa_pulang")');
             } else if (status === 'incomplete_out') {
