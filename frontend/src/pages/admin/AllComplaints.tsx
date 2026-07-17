@@ -855,7 +855,7 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                 isOpen={showBulkDeleteModal}
                 onClose={() => setShowBulkDeleteModal(false)}
                 onConfirm={confirmBulkDelete}
-                title="Pengesahan Padam Pukal"
+                title="Pengesahan Padam Aduan"
                 description={`Adakah anda pasti untuk memadam ${selectedReports.length} aduan yang dipilih? Tindakan ini tidak boleh diundurkan.`}
                 confirmLabel="Padam Terpilih"
                 cancelLabel="Batal"
