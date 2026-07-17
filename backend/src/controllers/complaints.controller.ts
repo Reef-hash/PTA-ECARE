@@ -835,16 +835,20 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                         const subject = `Aduan Bawa Pulang (Incomplete): ${reportNumber}`;
                         const adminSubject = `Juruteknik ${techName} update status : incomplete`;
                         
-                        const adminHtml = buildNotificationEmailHtml('Administrator', adminSubject, `Juruteknik telah update status progress repair kerosakan untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'admin');
-                        await sendEmail(adminEmail, adminSubject, adminHtml);
+                        try {
+                            const adminHtml = buildNotificationEmailHtml('Administrator', adminSubject, `Juruteknik telah update status progress repair kerosakan untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'admin');
+                            await sendEmail(adminEmail, adminSubject, adminHtml);
 
-                        const mainTechHtml = buildNotificationEmailHtml('Main Technician', adminSubject, `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'main_technician');
-                        await sendEmail(mainTechEmail, adminSubject, mainTechHtml);
+                            const mainTechHtml = buildNotificationEmailHtml('Main Technician', adminSubject, `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'main_technician');
+                            await sendEmail(mainTechEmail, adminSubject, mainTechHtml);
 
-                        if (customerData.email) {
-                            const subcategoryName = complaintData.subcategory || 'kerosakan';
-                            const custHtml = buildNotificationEmailHtml(customerName, subject, `${reportNumber} aduan anda telah update status progress repair kerosakan ${subcategoryName} oleh juruteknik kami (${techName}). Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'user');
-                            await sendEmail(customerData.email, subject, custHtml);
+                            if (customerData.email) {
+                                const subcategoryName = complaintData.subcategory || 'kerosakan';
+                                const custHtml = buildNotificationEmailHtml(customerName, subject, `${reportNumber} aduan anda telah update status progress repair kerosakan ${subcategoryName} oleh juruteknik kami (${techName}). Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'user');
+                                await sendEmail(customerData.email, subject, custHtml);
+                            }
+                        } catch (emailErr) {
+                            console.error('[addRemark] Incomplete email notification error:', emailErr);
                         }
 
                         const [allTechs]: any = await pool.query('SELECT id FROM technicians');
@@ -1011,16 +1015,20 @@ export const updateRemark = async (req: Request, res: Response): Promise<void> =
                         const subject = `Aduan Bawa Pulang (Incomplete): ${reportNumber}`;
                         const adminSubject = `Juruteknik ${techName} update status : incomplete`;
                         
-                        const adminHtml = buildNotificationEmailHtml('Administrator', adminSubject, `Juruteknik telah update status progress repair kerosakan untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'admin');
-                        await sendEmail(adminEmail, adminSubject, adminHtml);
+                        try {
+                            const adminHtml = buildNotificationEmailHtml('Administrator', adminSubject, `Juruteknik telah update status progress repair kerosakan untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'admin');
+                            await sendEmail(adminEmail, adminSubject, adminHtml);
 
-                        const mainTechHtml = buildNotificationEmailHtml('Main Technician', adminSubject, `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'main_technician');
-                        await sendEmail(mainTechEmail, adminSubject, mainTechHtml);
+                            const mainTechHtml = buildNotificationEmailHtml('Main Technician', adminSubject, `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'main_technician');
+                            await sendEmail(mainTechEmail, adminSubject, mainTechHtml);
 
-                        if (customerData.email) {
-                            const subcategoryName = complaintData.subcategory || 'kerosakan';
-                            const custHtml = buildNotificationEmailHtml(customerName, subject, `${reportNumber} aduan anda telah update status progress repair kerosakan ${subcategoryName} oleh juruteknik kami (${techName}). Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'user');
-                            await sendEmail(customerData.email, subject, custHtml);
+                            if (customerData.email) {
+                                const subcategoryName = complaintData.subcategory || 'kerosakan';
+                                const custHtml = buildNotificationEmailHtml(customerName, subject, `${reportNumber} aduan anda telah update status progress repair kerosakan ${subcategoryName} oleh juruteknik kami (${techName}). Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'user');
+                                await sendEmail(customerData.email, subject, custHtml);
+                            }
+                        } catch (emailErr) {
+                            console.error('[updateRemark] Incomplete email notification error:', emailErr);
                         }
 
                         const [allTechs]: any = await pool.query('SELECT id FROM technicians');
