@@ -1075,7 +1075,7 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
 
         if (!complaint) { res.status(404).json({ error: 'Complaint not found' }); return; }
 
-        const [techRows]: any = await pool.query('SELECT id, name, email, contact_number, department, role FROM technicians WHERE id = ?', [technician_id]);
+        const [techRows]: any = await pool.query('SELECT id, name, email, contact_number, department FROM technicians WHERE id = ?', [technician_id]);
         const techExists = techRows[0];
 
         if (!techExists) { res.status(400).json({ error: 'Invalid technician ID - User is not a technician' }); return; }
@@ -1098,7 +1098,7 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
             [id, status || 'pending', note_transport || null, checking || null, remarkText, adminId]
         );
 
-        const notifRole = techExists.role === 'maintechnician' ? 'main_technician' : 'technician';
+        const notifRole = techExists.email === 'technicianasign@gmail.com' ? 'main_technician' : 'technician';
 
         // --- TECHNICIAN NOTIFICATIONS ---
         // Bell 1: Forward Job
