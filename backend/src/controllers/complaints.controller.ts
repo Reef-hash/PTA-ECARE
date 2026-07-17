@@ -842,19 +842,19 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                     else if (status === 'closed') statusText = 'Selesai';
                     else if (status === 'incomplete') statusText = 'Incomplete';
                     else if (status === 'bawa_pulang') statusText = 'Bawa Pulang';
-                    payloadParts.push(`Status : ${statusText}`);
+                    payloadParts.push(`~ Status : ${statusText}`);
                 }
                 if (note_transport) {
                     updatesCount++;
-                    payloadParts.push(`Transport Note : ${note_transport}`);
+                    payloadParts.push(`~ Transport Note : ${note_transport}`);
                 }
                 if (checking) {
                     updatesCount++;
-                    payloadParts.push(`Checking : ${checking}`);
+                    payloadParts.push(`~ Checking : ${checking}`);
                 }
                 if (remark) {
                     updatesCount++;
-                    payloadParts.push(`Remark : ${remark}`);
+                    payloadParts.push(`~ Remark : ${remark}`);
                 }
 
                 if (updatesCount > 0) {
@@ -992,19 +992,19 @@ export const updateRemark = async (req: Request, res: Response): Promise<void> =
                 else if (status === 'closed') statusText = 'Selesai';
                 else if (status === 'incomplete') statusText = 'Incomplete';
                 else if (status === 'bawa_pulang') statusText = 'Bawa Pulang';
-                payloadParts.push(`Status : ${statusText}`);
+                payloadParts.push(`~ Status : ${statusText}`);
             }
             if (note_transport) {
                 updatesCount++;
-                payloadParts.push(`Transport Note : ${note_transport}`);
+                payloadParts.push(`~ Transport Note : ${note_transport}`);
             }
             if (checking) {
                 updatesCount++;
-                payloadParts.push(`Checking : ${checking}`);
+                payloadParts.push(`~ Checking : ${checking}`);
             }
             if (remark) {
                 updatesCount++;
-                payloadParts.push(`Remark : ${remark}`);
+                payloadParts.push(`~ Remark : ${remark}`);
             }
 
             if (updatesCount > 0) {
@@ -1111,19 +1111,19 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
             else if (status === 'closed') statusText = 'Selesai';
             else if (status === 'incomplete') statusText = 'Incomplete';
             else if (status === 'bawa_pulang') statusText = 'Bawa Pulang';
-            payloadParts.push(`Status : ${statusText}`);
+            payloadParts.push(`~ Status : ${statusText}`);
         }
         if (note_transport) {
             updatesCount++;
-            payloadParts.push(`Transport Note : ${note_transport}`);
+            payloadParts.push(`~ Transport Note : ${note_transport}`);
         }
         if (checking) {
             updatesCount++;
-            payloadParts.push(`Checking : ${checking}`);
+            payloadParts.push(`~ Checking : ${checking}`);
         }
         if (remark) {
             updatesCount++;
-            payloadParts.push(`Remark : ${remark}`);
+            payloadParts.push(`~ Remark : ${remark}`);
         }
 
         if (updatesCount > 0) {
