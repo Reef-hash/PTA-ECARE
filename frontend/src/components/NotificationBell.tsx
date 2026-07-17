@@ -515,6 +515,8 @@ export default function NotificationBell() {
                     }
                 } else if (path.startsWith('/admin/technician')) {
                     navigate(`/admin/technician/complaint/${reportNumber}`);
+                } else if (path.startsWith('/main-tech')) {
+                    navigate(`/main-tech/complaint/${reportNumber}`);
                 } else {
                     navigate(`/admin/complaint/${reportNumber}`);
                 }
@@ -534,6 +536,8 @@ export default function NotificationBell() {
             }
         } else if (path.startsWith('/admin/technician')) {
             resolveAndNavigate('/admin/technician/complaints');
+        } else if (path.startsWith('/main-tech')) {
+            resolveAndNavigate('/main-tech/complaints');
         } else {
             resolveAndNavigate('/admin/complaints');
         }
