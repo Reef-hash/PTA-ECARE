@@ -41,6 +41,7 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
     // Bulk delete state
     const [selectedReports, setSelectedReports] = useState<string[]>([]);
     const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+    const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
 
     // Filter options from data
     const [technicians, setTechnicians] = useState<Technician[]>([]);
@@ -104,11 +105,14 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
         }
     };
 
-    const handleBulkDelete = async () => {
+    const handleBulkDeleteClick = () => {
         if (selectedReports.length === 0) return;
-        if (!window.confirm(`Adakah anda pasti untuk memadam ${selectedReports.length} aduan yang dipilih? Tindakan ini tidak boleh diundurkan.`)) return;
-        
+        setShowBulkDeleteModal(true);
+    };
+
+    const confirmBulkDelete = async () => {
         setIsBulkDeleting(true);
+        setShowBulkDeleteModal(false);
         try {
             await api.post('/complaints/bulk-delete', { reportNumbers: selectedReports });
             toast.success(`${selectedReports.length} aduan berjaya dipadam`);
@@ -578,7 +582,7 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                                 {selectedReports.length} {t('common.selected') || 'aduan dipilih'}
                             </span>
                             <button
-                                onClick={handleBulkDelete}
+                                onClick={handleBulkDeleteClick}
                                 disabled={isBulkDeleting}
                                 className="btn-danger py-1.5 px-4 flex items-center gap-2 text-sm"
                             >
@@ -844,6 +848,16 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                 title="Pengesahan Padam"
                 description={deleteTarget ? `Adakah anda pasti mahu memadam aduan ${deleteTarget.reportNumber}? Tindakan ini tidak boleh diundur.` : ''}
                 confirmLabel="Padam"
+                cancelLabel="Batal"
+                variant="danger"
+            />
+            <Modal
+                isOpen={showBulkDeleteModal}
+                onClose={() => setShowBulkDeleteModal(false)}
+                onConfirm={confirmBulkDelete}
+                title="Pengesahan Padam Pukal"
+                description={`Adakah anda pasti untuk memadam ${selectedReports.length} aduan yang dipilih? Tindakan ini tidak boleh diundurkan.`}
+                confirmLabel="Padam Terpilih"
                 cancelLabel="Batal"
                 variant="danger"
             />
