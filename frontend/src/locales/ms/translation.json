@@ -273,6 +273,8 @@
     "notif_processing_body": "Status Terkini: Aduan {{id}} sedang diproses oleh juruteknik {{name}} pada {{date}} jam {{time}}.",
     "notif_completed_title": "Kemas Kini Status: {{id}}",
     "notif_completed_body": "Aduan {{id}} telah disiapkan oleh juruteknik {{name}} pada {{date}} jam {{time}}. Sedia untuk diambil.",
+    "notif_incomplete_maintech_title": "{{techName}} telah update aduan {{reportNumber}} ke incomplete/bring to workshop",
+    "notif_incomplete_maintech_body": "Sila agihkan ke juruteknik untuk proses selanjutnya",
     "notif_new_job": "Tugasan Baru: {{id}}",
     "notif_processing_user": "Status Terkini: Aduan anda {{id}} kini DALAM PROSES oleh juruteknik {{name}} pada {{date}} jam {{time}}.",
     "notif_processing_user_title": "Kemas Kini Status: {{id}}",

@@ -273,6 +273,8 @@
     "notif_processing_body": "Status Update: Complaint {{id}} is being processed by technician {{name}} on {{date}} at {{time}}.",
     "notif_completed_title": "Status Update: {{id}}",
     "notif_completed_body": "Complaint {{id}} was completed by technician {{name}} on {{date}} at {{time}}. Ready for pickup.",
+    "notif_incomplete_maintech_title": "{{techName}} has updated complaint {{reportNumber}} to incomplete/bring to workshop",
+    "notif_incomplete_maintech_body": "Please assign to a technician for further processing",
     "notif_new_job": "Job Assigned: {{id}}",
     "notif_processing_user": "Status Update: YOUR Complaint {{id}} is now IN PROCESS by juruteknik {{name}} at {{date}} on {{time}}.",
     "notif_processing_user_title": "Status Update: {{id}}",
