@@ -1,4 +1,4 @@
-name: CI/CD Deploy E-Care to Hostinger
+name: Deploy to Hostinger via SSH
 
 on:
   push:
@@ -6,83 +6,44 @@ on:
       - main
 
 jobs:
-  build-and-deploy:
+  deploy:
+    name: Deploy API and Frontend
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Deploy to Hostinger via SSH
+        uses: appleboy/ssh-action@master
         with:
-          node-version: '20'
-
-      # 1. BUILD FRONTEND
-      - name: Install Frontend Dependencies
-        working-directory: ./frontend
-        run: npm ci
-
-      - name: Build Frontend
-        working-directory: ./frontend
-        env:
-          VITE_API_URL: "https://api.ptas.my/api"
-          VITE_GOOGLE_CLIENT_ID: "385770142030-f7hgo133gh1rgr89ml4770fllp1hrrl4.apps.googleusercontent.com"
-        run: npm run build
-
-      # 2. BUILD BACKEND
-      - name: Install Backend Dependencies
-        working-directory: ./backend
-        run: npm ci
-
-      - name: Build Backend (TypeScript)
-        working-directory: ./backend
-        run: npm run build
-
-      # 3. PREPARE BACKEND FILES FOR FTP
-      # Copy package.json to dist so we can upload it easily along with compiled code
-      - name: Prepare Backend Dist
-        run: |
-          cp backend/package.json backend/dist/
-          cp backend/package-lock.json backend/dist/
-          
-      # 4. UPLOAD FRONTEND VIA FTP
-      - name: Deploy Frontend via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./frontend/dist/
-          # UBAH INI KEPADA FOLDER SEBENAR DI HOSTINGER (Contoh: ./domains/ecare.ptas.my/public_html/)
-          server-dir: ./domains/ptas.my/public_html/
-          
-      # 5. UPLOAD BACKEND VIA FTP
-      - name: Deploy Backend via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./backend/dist/
-          # UBAH INI KEPADA FOLDER SEBENAR DI HOSTINGER (Berdasarkan ftp_script.txt anda)
-          server-dir: ./domains/api.ptas.my/nodejs/
-          exclude: |
-            **/.env
-            **/node_modules/**
-            **/uploads/**
-            uploads/**
-          
-      # 6. TRIGGER HOSTINGER NODE.JS RESTART
-      - name: Create Restart File
-        run: |
-          mkdir -p tmp
-          echo "Restarting server at $(date)" > tmp/restart.txt
-          
-      - name: Deploy Restart File via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./tmp/
-          server-dir: ./domains/api.ptas.my/nodejs/tmp/
+          host: ${{ secrets.HOSTINGER_HOST }}
+          username: ${{ secrets.HOSTINGER_USERNAME }}
+          password: ${{ secrets.HOSTINGER_PASSWORD }}
+          port: ${{ secrets.HOSTINGER_PORT }}
+          script: |
+            # Masuk ke direktori utama projek
+            cd /home/u134652667/domains/api.ptas.my/nodejs
+            
+            # Tarik kod baru
+            git fetch origin
+            git reset --hard origin/main
+            
+            # Setup dan Compile Backend
+            echo "--- Membina Backend ---"
+            cd backend
+            npm install
+            chmod +x node_modules/.bin/tsc
+            export GOMAXPROCS=1
+            npm run build
+            
+            # Restart PM2
+            pm2 restart e-care-api
+            
+            # Setup dan Compile Frontend
+            echo "--- Membina Frontend ---"
+            cd ../frontend
+            npm install
+            chmod +x node_modules/.bin/vite
+            chmod +x node_modules/esbuild/lib/downloaded-@esbuild-linux-x64-esbuild
+            export GOMAXPROCS=1
+            npm run build
+            
+            echo "--- Deployment Berjaya! ---"
