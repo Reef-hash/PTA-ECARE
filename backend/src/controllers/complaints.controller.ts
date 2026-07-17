@@ -1106,6 +1106,7 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
         let updatesCount = 0;
         let payloadParts = [];
         payloadParts.push('Maklumat berikut:');
+        payloadParts.push(`~ Second technician : ${techExists.name}`);
         
         if (status) {
             updatesCount++;
@@ -1149,6 +1150,7 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
         const emailTemplateHtml = `maklumat aduan
 date create : ${createDate}
 First technician : ${firstTechName}
+second technician : ${techExists.name}
 customer name : ${complaint.full_name || 'Pelanggan'}
 subcategory : ${complaint.subcategory || '-'}
 brand : ${complaint.brand_name || '-'}
@@ -1167,7 +1169,7 @@ click to view details ...`;
 
             // 1. Email for Technician B
             if (techExists.email) {
-                const subjectTech = `MAINTECH HAS ASSIGN INCOMPLETE JOB ${complaint.report_number} TO ${techExists.name.toUpperCase()}`;
+                const subjectTech = `MAIN TECH HAS ASSIGN INCOMPLETE JOB ${complaint.report_number} TO ${techExists.name.toUpperCase()}`;
                 const techHtml = buildNotificationEmailHtml(techExists.name, subjectTech, emailTemplateHtml, trackReportPath, 'technician');
                 await sendEmail(techExists.email, subjectTech, techHtml);
             }
@@ -1197,6 +1199,7 @@ click to view details ...`;
         // User Bell: Detailed Forward Job
         if (status === 'in_process' || !status) {
             let userPayload = `Aduan ${complaint.report_number} telah diproses oleh ${techExists.name}.\n`;
+            userPayload += `\nSecond technician : ${techExists.name}`;
             if (complaint.cat_name) userPayload += `\nKategori: ${complaint.cat_name}`;
             if (complaint.brand_name) userPayload += `\nJenama: ${complaint.brand_name}`;
             if (complaint.details) userPayload += `\nKerosakan: ${complaint.details}`;
