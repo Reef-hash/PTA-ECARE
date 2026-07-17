@@ -831,20 +831,35 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                 }
 
                 // --- BATCH NOTIFICATION UNTUK LOCENG IN-APP ---
-                let updates = [];
-                if (remark) updates.push('Catatan (Remark)');
-                if (checking) updates.push('Penemuan Teknikal');
-                if (note_transport) updates.push('Logistik/Pengangkutan');
+                let updatesCount = 0;
+                let payloadParts = [];
+                payloadParts.push('Maklumat berikut:');
+                
                 if (status && status !== previousStatus) {
-                    if (status === 'in_process') updates.push('Status: Dalam Proses');
-                    else if (status === 'closed') updates.push('Status: Selesai');
-                    else if (status === 'incomplete') updates.push('Status: Incomplete');
+                    updatesCount++;
+                    let statusText = status;
+                    if (status === 'in_process') statusText = 'inproces';
+                    else if (status === 'closed') statusText = 'Selesai';
+                    else if (status === 'incomplete') statusText = 'Incomplete';
+                    else if (status === 'bawa_pulang') statusText = 'Bawa Pulang';
+                    payloadParts.push(`Status : ${statusText}`);
+                }
+                if (note_transport) {
+                    updatesCount++;
+                    payloadParts.push(`Transport Note : ${note_transport}`);
+                }
+                if (checking) {
+                    updatesCount++;
+                    payloadParts.push(`Checking : ${checking}`);
+                }
+                if (remark) {
+                    updatesCount++;
+                    payloadParts.push(`Remark : ${remark}`);
                 }
 
-                if (updates.length > 0) {
-                    const updateStr = updates.join(', ');
-                    const summaryTitle = status && status !== previousStatus ? `Kemaskini Status: ${reportNumber}` : `Job Update: ${reportNumber}`;
-                    const summaryPayload = `Juruteknik ${techName} telah mengemaskini maklumat berikut: ${updateStr}.`;
+                if (updatesCount > 0) {
+                    const summaryTitle = `Juruteknik ${techName} Telah mengemaskini Aduan ${reportNumber}`;
+                    const summaryPayload = payloadParts.join('\n');
                     
                     const [admins]: any = await pool.query('SELECT id FROM admins');
                     if (admins) {
@@ -966,20 +981,35 @@ export const updateRemark = async (req: Request, res: Response): Promise<void> =
             const techName = techRows[0]?.name || 'Technician';
 
             // --- BATCH NOTIFICATION UNTUK LOCENG IN-APP ---
-            let updates = [];
-            if (remark) updates.push('Catatan (Remark)');
-            if (checking) updates.push('Penemuan Teknikal');
-            if (note_transport) updates.push('Logistik/Pengangkutan');
+            let updatesCount = 0;
+            let payloadParts = [];
+            payloadParts.push('Maklumat berikut:');
+            
             if (status) {
-                if (status === 'in_process') updates.push('Status: Dalam Proses');
-                else if (status === 'closed') updates.push('Status: Selesai');
-                else if (status === 'incomplete') updates.push('Status: Incomplete');
+                updatesCount++;
+                let statusText = status;
+                if (status === 'in_process') statusText = 'inproces';
+                else if (status === 'closed') statusText = 'Selesai';
+                else if (status === 'incomplete') statusText = 'Incomplete';
+                else if (status === 'bawa_pulang') statusText = 'Bawa Pulang';
+                payloadParts.push(`Status : ${statusText}`);
+            }
+            if (note_transport) {
+                updatesCount++;
+                payloadParts.push(`Transport Note : ${note_transport}`);
+            }
+            if (checking) {
+                updatesCount++;
+                payloadParts.push(`Checking : ${checking}`);
+            }
+            if (remark) {
+                updatesCount++;
+                payloadParts.push(`Remark : ${remark}`);
             }
 
-            if (updates.length > 0) {
-                const updateStr = updates.join(', ');
-                const summaryTitle = status ? `Kemaskini Status: ${rNum}` : `Job Update: ${rNum}`;
-                const summaryPayload = `Juruteknik ${techName} telah mengemaskini maklumat berikut: ${updateStr}.`;
+            if (updatesCount > 0) {
+                const summaryTitle = `Juruteknik ${techName} Telah mengemaskini Aduan ${rNum}`;
+                const summaryPayload = payloadParts.join('\n');
                 
                 const [admins]: any = await pool.query('SELECT id FROM admins');
                 if (admins) {
@@ -1070,16 +1100,36 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
         await createNotification(technician_id, 'technician', `Job Assigned: ${complaint.report_number}`, `You have been assigned/forwarded a new job: ${complaint.report_number}`, 'assignment', id, true);
         
         // Bell 2: Combined Update Maklumat
-        let updates = [];
-        if (remark) updates.push('Catatan (Remark)');
-        if (checking) updates.push('Penemuan Teknikal');
-        if (note_transport) updates.push('Logistik/Pengangkutan');
-        if (status) updates.push(`Status: ${status}`);
+        let updatesCount = 0;
+        let payloadParts = [];
+        payloadParts.push('Maklumat berikut:');
+        
+        if (status) {
+            updatesCount++;
+            let statusText = status;
+            if (status === 'in_process') statusText = 'inproces';
+            else if (status === 'closed') statusText = 'Selesai';
+            else if (status === 'incomplete') statusText = 'Incomplete';
+            else if (status === 'bawa_pulang') statusText = 'Bawa Pulang';
+            payloadParts.push(`Status : ${statusText}`);
+        }
+        if (note_transport) {
+            updatesCount++;
+            payloadParts.push(`Transport Note : ${note_transport}`);
+        }
+        if (checking) {
+            updatesCount++;
+            payloadParts.push(`Checking : ${checking}`);
+        }
+        if (remark) {
+            updatesCount++;
+            payloadParts.push(`Remark : ${remark}`);
+        }
 
-        if (updates.length > 0) {
-            const updateStr = updates.join(', ');
-            const summaryPayload = `Kemaskini Maklumat: ${updateStr}.`;
-            await createNotification(technician_id, 'technician', `Job Update: ${complaint.report_number}`, summaryPayload, 'status_update_detailed', id, true);
+        if (updatesCount > 0) {
+            const summaryTitle = `Pihak Pengurusan Telah mengemaskini Aduan ${complaint.report_number}`;
+            const summaryPayload = payloadParts.join('\n');
+            await createNotification(technician_id, 'technician', summaryTitle, summaryPayload, 'status_update_detailed', id, true);
         }
 
         // Email 1: Combined Email for Technician (User gets 0 emails)
