@@ -1138,13 +1138,12 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
         // --- EMAILS ---
         const createDate = new Date(complaint.created_at).toLocaleDateString('en-GB'); // dd/mm/yyyy
         let firstTechName = 'Tidak Diketahui';
-        if (complaint.assigned_to) {
-            const [firstTechRows]: any = await pool.query('SELECT name FROM technicians WHERE id = ?', [complaint.assigned_to]);
-            if (firstTechRows && firstTechRows.length > 0) {
-                firstTechName = firstTechRows[0].name;
-            }
-        } else {
-            firstTechName = techExists.name;
+        const [firstHistoryRows]: any = await pool.query(
+            'SELECT t.name FROM forward_history fh JOIN technicians t ON fh.forward_to = t.id WHERE fh.complaint_id = ? ORDER BY fh.created_at ASC LIMIT 1',
+            [id]
+        );
+        if (firstHistoryRows && firstHistoryRows.length > 0) {
+            firstTechName = firstHistoryRows[0].name;
         }
 
         const emailTemplateHtml = `maklumat aduan<br>
