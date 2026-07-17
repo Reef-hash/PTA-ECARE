@@ -850,7 +850,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                         const [allTechs]: any = await pool.query('SELECT id FROM technicians');
                         if (allTechs) {
                             for (const tech of allTechs) {
-                                await createNotification(tech.id, 'main_technician', `Status Update: ${reportNumber}`, `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}.`, 'status_update_detailed', id, true);
+                                await createNotification(tech.id, 'main_technician', `Status Update: ${reportNumber}`, `${techName} telah update aduan ${reportNumber} incomplete/bring to workshop. Sila agih ke juruteknik untuk proses selanjutnya...`, 'status_update_detailed', id, true);
                             }
                         }
                     } catch (incompleteNotifErr) {
@@ -1026,7 +1026,7 @@ export const updateRemark = async (req: Request, res: Response): Promise<void> =
                         const [allTechs]: any = await pool.query('SELECT id FROM technicians');
                         if (allTechs) {
                             for (const tech of allTechs) {
-                                await createNotification(tech.id, 'main_technician', `Status Update: ${reportNumber}`, `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}.`, 'status_update_detailed', complaintId, true);
+                                await createNotification(tech.id, 'main_technician', `Status Update: ${reportNumber}`, `${techName} telah update aduan ${reportNumber} incomplete/bring to workshop. Sila agih ke juruteknik untuk proses selanjutnya...`, 'status_update_detailed', complaintId, true);
                             }
                         }
                     } catch (incompleteNotifErr) {
