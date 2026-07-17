@@ -753,7 +753,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                     const [admins]: any = await pool.query('SELECT id FROM admins');
                     if (admins) {
                         for (const admin of admins) {
-                            await createNotification(admin.id, 'admin', `Status Update: ${reportNumber}`, adminStatusPayload, 'status_update_detailed', id, false, 'technician');
+                            await createNotification(admin.id, 'admin', `Status Update: ${reportNumber}`, adminStatusPayload, 'status_update_detailed', id, true, 'technician');
                         }
                     }
                 }
