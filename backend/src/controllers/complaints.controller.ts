@@ -1075,7 +1075,7 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
 
         if (!complaint) { res.status(404).json({ error: 'Complaint not found' }); return; }
 
-        const [techRows]: any = await pool.query('SELECT id, name, email FROM technicians WHERE id = ?', [technician_id]);
+        const [techRows]: any = await pool.query('SELECT id, name, email, contact_number, department FROM technicians WHERE id = ?', [technician_id]);
         const techExists = techRows[0];
 
         if (!techExists) { res.status(400).json({ error: 'Invalid technician ID - User is not a technician' }); return; }
@@ -1139,13 +1139,30 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
         // --- EMAILS ---
         const createDate = new Date(complaint.created_at).toLocaleDateString('en-GB'); // dd/mm/yyyy
         let firstTechName = 'Tidak Diketahui';
+        let firstTechPhone = '-';
+        let firstTechUnit = '-';
         const [firstHistoryRows]: any = await pool.query(
-            'SELECT t.name FROM forward_history fh JOIN technicians t ON fh.forward_to = t.id WHERE fh.complaint_id = ? ORDER BY fh.created_at ASC LIMIT 1',
+            'SELECT t.name, t.contact_number, t.department FROM forward_history fh JOIN technicians t ON fh.forward_to = t.id WHERE fh.complaint_id = ? ORDER BY fh.created_at ASC LIMIT 1',
             [id]
         );
         if (firstHistoryRows && firstHistoryRows.length > 0) {
             firstTechName = firstHistoryRows[0].name;
+            firstTechPhone = firstHistoryRows[0].contact_number || '-';
+            firstTechUnit = firstHistoryRows[0].department || '-';
         }
+
+        const secondTechName = techExists.name;
+        const secondTechPhone = techExists.contact_number || '-';
+        const secondTechUnit = techExists.department || '-';
+
+        let statusLabel = status || '-';
+        let statusEmoji = '🔹';
+        if (status === 'incomplete') {
+            statusLabel = 'Incomplete / Bring to workshop';
+            statusEmoji = '⚠️';
+        }
+
+        const timestampStr = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kuala_Lumpur', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true });
 
         const emailTemplateHtml = `MAKLUMAT ADUAN ${complaint.report_number}
 date create : ${createDate}
@@ -1153,16 +1170,25 @@ customer name : ${complaint.full_name || 'Pelanggan'}
 subcategory : ${complaint.subcategory || '-'}
 brand : ${complaint.brand_name || '-'}
 defect details : ${complaint.details || '-'}
-MAKLMUAT ADUAN JURUTEKNIK YANG MENGURUSKAN ADUAN INI :
-First technician : ${firstTechName}
-second technician : ${techExists.name}
 
-REMARK UPDATE FROM MAINTECH
- (note: Maklumat ini di buat oleh maintechnician bukan mane2 technician atau admin)
-Status: ${status || '-'}
-transport note : ${note_transport || '-'}
-checking : ${checking || '-'}
-remark : ${remark || '-'}
+🛠️ Maklumat Juruteknik Bertanggungjawab:
+
+👤 [1] First Technician
+- Nama: ${firstTechName}
+- No. Telefon: ${firstTechPhone}
+- Unit/Jabatan: ${firstTechUnit}
+
+📌 Status Tindakan (${firstTechName}):
+- Status: ${statusEmoji} ${statusLabel}
+- Tarikh & Masa: ${timestampStr}
+- Transport Note: ${note_transport || '-'}
+- Checking: ${checking || '-'}
+- Remark: ${remark || '-'}
+
+👤 [2] Second Technician
+- Nama: ${secondTechName}
+- No. Telefon: ${secondTechPhone}
+- Unit/Jabatan: ${secondTechUnit}
 
 click to view details ...`;
 
