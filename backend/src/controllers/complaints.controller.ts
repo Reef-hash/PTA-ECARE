@@ -875,7 +875,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
 
             const [c]: any = await pool.query('SELECT assigned_to, report_number FROM complaints WHERE id = ?', [id]);
             if (c.length > 0 && c[0].assigned_to) {
-                await createNotification(c[0].assigned_to, 'technician', `Job Update: ${c[0].report_number}`, `Technician updated complaint ${c[0].report_number} to '${status}'.`, 'status_update', id);
+                await createNotification(c[0].assigned_to, 'technician', `Job Update: ${c[0].report_number}`, `Technician updated complaint ${c[0].report_number} to '${status}'.`, 'status_update', id, true);
             }
         }
         } catch (notifError) {
