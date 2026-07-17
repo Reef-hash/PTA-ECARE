@@ -99,6 +99,7 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode;
     return <>{children}</>;
 }
 
+// Trigger CI/CD Action
 function App() {
     return (
         <Routes>
