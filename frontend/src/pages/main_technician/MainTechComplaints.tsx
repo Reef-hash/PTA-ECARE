@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Wrench, AlertTriangle, ArrowRightCircle, Eye } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import MainTechLayout from '../../components/MainTechLayout';
 import api from '../../services/api';
 import { Complaint } from '../../types';
@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 export default function MainTechComplaints() {
     const { t } = useTranslation();
     const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
     const activeFilter = searchParams.get('status') || 'incomplete';
 
     const [complaints, setComplaints] = useState<Complaint[]>([]);
@@ -58,9 +59,11 @@ export default function MainTechComplaints() {
     };
 
     const handleForwardSuccess = useCallback(() => {
+        if (selectedComplaint) {
+            navigate(`/main-tech/complaint/${selectedComplaint.report_number}`);
+        }
         setSelectedComplaint(null);
-        loadComplaints();
-    }, [loadComplaints]);
+    }, [selectedComplaint, navigate]);
 
     const getTitle = () => {
         switch(activeFilter) {

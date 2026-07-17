@@ -38,6 +38,7 @@
     "note": "* Language selection will be applied to the system display."
   },
   "common": {
+    "selected": "selected",
     "date_created": "Date Created",
     "date": "Date",
     "loading": "Loading...",
