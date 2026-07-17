@@ -819,10 +819,10 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                     } catch (emailErr) {}
                     
                     if (isTransitionFromIncompleteToComplete) {
-                        const [mainTechs]: any = await pool.query('SELECT id FROM technicians WHERE username = "maintech"');
-                        if (mainTechs) {
-                            for (const mt of mainTechs) {
-                                await createNotification(mt.id, 'main_technician', `Status Update: ${reportNumber}`, `Juruteknik ${techName} telah menyiapkan aduan ${reportNumber} (sebelum ini bawa pulang / incomplete).`, 'status_update_detailed', id, true);
+                        const [allTechs]: any = await pool.query('SELECT id FROM technicians');
+                        if (allTechs) {
+                            for (const tech of allTechs) {
+                                await createNotification(tech.id, 'main_technician', `Status Update: ${reportNumber}`, `Juruteknik ${techName} telah menyiapkan aduan ${reportNumber} (sebelum ini bawa pulang / incomplete).`, 'status_update_detailed', id, true);
                             }
                         }
                     }
@@ -847,10 +847,10 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                             await sendEmail(customerData.email, subject, custHtml);
                         }
 
-                        const [mainTechs]: any = await pool.query('SELECT id FROM technicians WHERE username = "maintech"');
-                        if (mainTechs) {
-                            for (const mt of mainTechs) {
-                                await createNotification(mt.id, 'main_technician', `Status Update: ${reportNumber}`, `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}.`, 'status_update_detailed', id, true);
+                        const [allTechs]: any = await pool.query('SELECT id FROM technicians');
+                        if (allTechs) {
+                            for (const tech of allTechs) {
+                                await createNotification(tech.id, 'main_technician', `Status Update: ${reportNumber}`, `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}.`, 'status_update_detailed', id, true);
                             }
                         }
                     } catch (incompleteNotifErr) {
@@ -1023,10 +1023,10 @@ export const updateRemark = async (req: Request, res: Response): Promise<void> =
                             await sendEmail(customerData.email, subject, custHtml);
                         }
 
-                        const [mainTechs]: any = await pool.query('SELECT id FROM technicians WHERE username = "maintech"');
-                        if (mainTechs) {
-                            for (const mt of mainTechs) {
-                                await createNotification(mt.id, 'main_technician', `Status Update: ${reportNumber}`, `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}.`, 'status_update_detailed', complaintId, true);
+                        const [allTechs]: any = await pool.query('SELECT id FROM technicians');
+                        if (allTechs) {
+                            for (const tech of allTechs) {
+                                await createNotification(tech.id, 'main_technician', `Status Update: ${reportNumber}`, `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}.`, 'status_update_detailed', complaintId, true);
                             }
                         }
                     } catch (incompleteNotifErr) {
