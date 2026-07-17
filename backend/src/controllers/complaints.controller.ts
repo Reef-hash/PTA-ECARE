@@ -185,7 +185,28 @@ export const getComplaints = async (req: Request, res: Response): Promise<void> 
             `SELECT c.*, 
                 u.id as user_id_join, u.full_name as user_full_name, u.ic_number as user_ic_number, u.contact_no as user_contact_no, u.address as user_address,
                 cat.id as cat_id, cat.name as cat_name,
-                t.id as tech_id, t.name as tech_name, t.department as tech_department, t.username as tech_username
+                COALESCE(t.id, (
+                    SELECT tr.remark_by FROM technician_remarks tr 
+                    WHERE tr.complaint_id = c.id AND tr.status IN ('incomplete', 'bawa_pulang')
+                    ORDER BY tr.created_at DESC LIMIT 1
+                ), (
+                    SELECT fh.forward_to FROM forward_history fh 
+                    WHERE fh.complaint_id = c.id 
+                    ORDER BY fh.created_at DESC LIMIT 1
+                )) as tech_id, 
+                COALESCE(t.name, (
+                    SELECT t3.name FROM technician_remarks tr 
+                    JOIN technicians t3 ON tr.remark_by = t3.id 
+                    WHERE tr.complaint_id = c.id AND tr.status IN ('incomplete', 'bawa_pulang')
+                    ORDER BY tr.created_at DESC LIMIT 1
+                ), (
+                    SELECT t2.name FROM forward_history fh 
+                    JOIN technicians t2 ON fh.forward_to = t2.id 
+                    WHERE fh.complaint_id = c.id 
+                    ORDER BY fh.created_at DESC LIMIT 1
+                )) as tech_name, 
+                t.department as tech_department, 
+                t.username as tech_username
              FROM complaints c
              LEFT JOIN users u ON c.user_id = u.id
              LEFT JOIN categories cat ON c.category_id = cat.id
@@ -199,8 +220,13 @@ export const getComplaints = async (req: Request, res: Response): Promise<void> 
         // Fetch remarks and restructure response
         const mappedComplaints = await Promise.all(complaintsData.map(async (c: any) => {
             const [remarksData]: any = await pool.query(
-                'SELECT id, status, note_transport, checking, remark, remark_by, created_at FROM complaint_remarks WHERE complaint_id = ?',
-                [c.id]
+                `SELECT id, status, note_transport, checking, remark, remark_by, created_at, 'admin' as source 
+                 FROM complaint_remarks WHERE complaint_id = ?
+                 UNION ALL
+                 SELECT id, status, note_transport, checking, remark, remark_by, created_at, 'tech' as source 
+                 FROM technician_remarks WHERE complaint_id = ?
+                 ORDER BY created_at DESC`,
+                [c.id, c.id]
             );
 
             return {
@@ -738,8 +764,8 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                 const reportNumber = complaintData.report_number;
                 const formattedDate = formatNotificationDate(new Date());
                 const isTransitionFromInProcessToComplete = previousStatus === 'in_process' && status === 'closed';
-                const isTransitionToIncomplete = previousStatus !== 'incomplete' && status === 'incomplete';
-                const isTransitionFromIncompleteToComplete = previousStatus === 'incomplete' && status === 'closed';
+                const isTransitionToIncomplete = previousStatus !== 'incomplete' && previousStatus !== 'bawa_pulang' && (status === 'incomplete' || status === 'bawa_pulang');
+                const isTransitionFromIncompleteToComplete = (previousStatus === 'incomplete' || previousStatus === 'bawa_pulang') && status === 'closed';
 
                 const [customerRows]: any = await pool.query('SELECT full_name, email FROM users WHERE id = ?', [complaintData.user_id]);
                 const customerData = customerRows[0] || {};
@@ -914,20 +940,26 @@ export const updateRemark = async (req: Request, res: Response): Promise<void> =
 
         if (status) {
             const complaintId = existingRemark.complaint_id;
-            await pool.query('UPDATE complaints SET status = ?, updated_at = NOW() WHERE id = ?', [status, complaintId]);
+
+            // Fetch previous status BEFORE updating
+            let previousStatus = null;
+            const [oldStatusRows]: any = await pool.query('SELECT status FROM complaints WHERE id = ?', [complaintId]);
+            previousStatus = oldStatusRows[0]?.status;
+
+            if (status === 'incomplete' || status === 'bawa_pulang') {
+                await pool.query('UPDATE complaints SET status = ?, assigned_to = NULL, updated_at = NOW() WHERE id = ?', [status, complaintId]);
+            } else {
+                await pool.query('UPDATE complaints SET status = ?, updated_at = NOW() WHERE id = ?', [status, complaintId]);
+            }
 
             const [techRows]: any = await pool.query('SELECT name FROM technicians WHERE id = ?', [userId]);
             const techName = techRows[0]?.name || 'Technician';
 
-            const [cRows]: any = await pool.query('SELECT user_id, report_number FROM complaints WHERE id = ?', [complaintId]);
+            const [cRows]: any = await pool.query('SELECT user_id, report_number, subcategory FROM complaints WHERE id = ?', [complaintId]);
             if (cRows.length > 0) {
                 const complaintData = cRows[0];
                 const reportNumber = complaintData.report_number;
                 const formattedDate = formatNotificationDate(new Date());
-
-                let previousStatus = null;
-                const [oldStatusRows]: any = await pool.query('SELECT status FROM complaints WHERE id = ?', [complaintId]);
-                previousStatus = oldStatusRows[0]?.status;
 
                 const [customerRows]: any = await pool.query('SELECT full_name, email FROM users WHERE id = ?', [complaintData.user_id]);
                 const customerData = customerRows[0] || {};
@@ -935,6 +967,7 @@ export const updateRemark = async (req: Request, res: Response): Promise<void> =
 
                 // Check if status transitioned to closed
                 const isTransitionToComplete = previousStatus !== 'closed' && status === 'closed';
+                const isTransitionToIncomplete = previousStatus !== 'incomplete' && previousStatus !== 'bawa_pulang' && (status === 'incomplete' || status === 'bawa_pulang');
 
                 if (isTransitionToComplete) {
                     try {
@@ -969,6 +1002,36 @@ export const updateRemark = async (req: Request, res: Response): Promise<void> =
                             await sendEmail(customerData.email, subject, custHtml);
                         }
                     } catch (emailErr) {}
+                }
+
+                if (isTransitionToIncomplete) {
+                    try {
+                        const adminEmail = 'adminecare.ptasssb@gmail.com';
+                        const mainTechEmail = 'technicianasign@gmail.com';
+                        const subject = `Aduan Bawa Pulang (Incomplete): ${reportNumber}`;
+                        const adminSubject = `Juruteknik ${techName} update status : incomplete`;
+                        
+                        const adminHtml = buildNotificationEmailHtml('Administrator', adminSubject, `Juruteknik telah update status progress repair kerosakan untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'admin');
+                        await sendEmail(adminEmail, adminSubject, adminHtml);
+
+                        const mainTechHtml = buildNotificationEmailHtml('Main Technician', adminSubject, `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'main_technician');
+                        await sendEmail(mainTechEmail, adminSubject, mainTechHtml);
+
+                        if (customerData.email) {
+                            const subcategoryName = complaintData.subcategory || 'kerosakan';
+                            const custHtml = buildNotificationEmailHtml(customerName, subject, `${reportNumber} aduan anda telah update status progress repair kerosakan ${subcategoryName} oleh juruteknik kami (${techName}). Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'user');
+                            await sendEmail(customerData.email, subject, custHtml);
+                        }
+
+                        const [mainTechs]: any = await pool.query('SELECT id FROM technicians WHERE username = "maintech"');
+                        if (mainTechs) {
+                            for (const mt of mainTechs) {
+                                await createNotification(mt.id, 'main_technician', `Status Update: ${reportNumber}`, `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}.`, 'status_update_detailed', complaintId, true);
+                            }
+                        }
+                    } catch (incompleteNotifErr) {
+                        console.error('[updateRemark] Incomplete notification error (non-fatal):', incompleteNotifErr);
+                    }
                 }
             }
         }
