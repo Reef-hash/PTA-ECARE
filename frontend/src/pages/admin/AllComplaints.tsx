@@ -579,7 +579,7 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                     {selectedReports.length > 0 && (
                         <div className="flex items-center justify-between bg-red-50 p-3 rounded-lg border border-red-100">
                             <span className="text-sm text-red-700 font-medium">
-                                {selectedReports.length} {t('common.selected') || 'aduan dipilih'}
+                                {selectedReports.length} aduan dipilih
                             </span>
                             <button
                                 onClick={handleBulkDeleteClick}
@@ -855,7 +855,7 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                 isOpen={showBulkDeleteModal}
                 onClose={() => setShowBulkDeleteModal(false)}
                 onConfirm={confirmBulkDelete}
-                title="Pengesahan Padam Pukal"
+                title="Pengesahan Padam Aduan"
                 description={`Adakah anda pasti untuk memadam ${selectedReports.length} aduan yang dipilih? Tindakan ini tidak boleh diundurkan.`}
                 confirmLabel="Padam Terpilih"
                 cancelLabel="Batal"

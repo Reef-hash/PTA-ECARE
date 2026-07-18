@@ -185,7 +185,28 @@ export const getComplaints = async (req: Request, res: Response): Promise<void> 
             `SELECT c.*, 
                 u.id as user_id_join, u.full_name as user_full_name, u.ic_number as user_ic_number, u.contact_no as user_contact_no, u.address as user_address,
                 cat.id as cat_id, cat.name as cat_name,
-                t.id as tech_id, t.name as tech_name, t.department as tech_department, t.username as tech_username
+                COALESCE(t.id, (
+                    SELECT tr.remark_by FROM technician_remarks tr 
+                    WHERE tr.complaint_id = c.id AND tr.status IN ('incomplete', 'bawa_pulang')
+                    ORDER BY tr.created_at DESC LIMIT 1
+                ), (
+                    SELECT fh.forward_to FROM forward_history fh 
+                    WHERE fh.complaint_id = c.id 
+                    ORDER BY fh.created_at DESC LIMIT 1
+                )) as tech_id, 
+                COALESCE(t.name, (
+                    SELECT t3.name FROM technician_remarks tr 
+                    JOIN technicians t3 ON tr.remark_by = t3.id 
+                    WHERE tr.complaint_id = c.id AND tr.status IN ('incomplete', 'bawa_pulang')
+                    ORDER BY tr.created_at DESC LIMIT 1
+                ), (
+                    SELECT t2.name FROM forward_history fh 
+                    JOIN technicians t2 ON fh.forward_to = t2.id 
+                    WHERE fh.complaint_id = c.id 
+                    ORDER BY fh.created_at DESC LIMIT 1
+                )) as tech_name, 
+                t.department as tech_department, 
+                t.username as tech_username
              FROM complaints c
              LEFT JOIN users u ON c.user_id = u.id
              LEFT JOIN categories cat ON c.category_id = cat.id
@@ -199,8 +220,13 @@ export const getComplaints = async (req: Request, res: Response): Promise<void> 
         // Fetch remarks and restructure response
         const mappedComplaints = await Promise.all(complaintsData.map(async (c: any) => {
             const [remarksData]: any = await pool.query(
-                'SELECT id, status, note_transport, checking, remark, remark_by, created_at FROM complaint_remarks WHERE complaint_id = ?',
-                [c.id]
+                `SELECT id, status, note_transport, checking, remark, remark_by, created_at, 'admin' as source 
+                 FROM complaint_remarks WHERE complaint_id = ?
+                 UNION ALL
+                 SELECT id, status, note_transport, checking, remark, remark_by, created_at, 'tech' as source 
+                 FROM technician_remarks WHERE complaint_id = ?
+                 ORDER BY created_at DESC`,
+                [c.id, c.id]
             );
 
             return {
@@ -738,8 +764,8 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                 const reportNumber = complaintData.report_number;
                 const formattedDate = formatNotificationDate(new Date());
                 const isTransitionFromInProcessToComplete = previousStatus === 'in_process' && status === 'closed';
-                const isTransitionToIncomplete = previousStatus !== 'incomplete' && status === 'incomplete';
-                const isTransitionFromIncompleteToComplete = previousStatus === 'incomplete' && status === 'closed';
+                const isTransitionToIncomplete = previousStatus !== 'incomplete' && previousStatus !== 'bawa_pulang' && (status === 'incomplete' || status === 'bawa_pulang');
+                const isTransitionFromIncompleteToComplete = (previousStatus === 'incomplete' || previousStatus === 'bawa_pulang') && status === 'closed';
 
                 const [customerRows]: any = await pool.query('SELECT full_name, email FROM users WHERE id = ?', [complaintData.user_id]);
                 const customerData = customerRows[0] || {};
@@ -793,10 +819,10 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                     } catch (emailErr) {}
                     
                     if (isTransitionFromIncompleteToComplete) {
-                        const [mainTechs]: any = await pool.query('SELECT id FROM technicians WHERE username = "maintech"');
-                        if (mainTechs) {
-                            for (const mt of mainTechs) {
-                                await createNotification(mt.id, 'main_technician', `Status Update: ${reportNumber}`, `Juruteknik ${techName} telah menyiapkan aduan ${reportNumber} (sebelum ini bawa pulang / incomplete).`, 'status_update_detailed', id, true);
+                        const [allTechs]: any = await pool.query('SELECT id FROM technicians');
+                        if (allTechs) {
+                            for (const tech of allTechs) {
+                                await createNotification(tech.id, 'main_technician', `Status Update: ${reportNumber}`, `Juruteknik ${techName} telah menyiapkan aduan ${reportNumber} (sebelum ini bawa pulang / incomplete).`, 'status_update_detailed', id, true);
                             }
                         }
                     }
@@ -809,22 +835,30 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                         const subject = `Aduan Bawa Pulang (Incomplete): ${reportNumber}`;
                         const adminSubject = `Juruteknik ${techName} update status : incomplete`;
                         
-                        const adminHtml = buildNotificationEmailHtml('Administrator', adminSubject, `Juruteknik telah update status progress repair kerosakan untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'admin');
-                        await sendEmail(adminEmail, adminSubject, adminHtml);
+                        try {
+                            const adminHtml = buildNotificationEmailHtml('Administrator', adminSubject, `Juruteknik telah update status progress repair kerosakan untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'admin');
+                            await sendEmail(adminEmail, adminSubject, adminHtml);
 
-                        const mainTechHtml = buildNotificationEmailHtml('Main Technician', adminSubject, `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'main_technician');
-                        await sendEmail(mainTechEmail, adminSubject, mainTechHtml);
+                            const mainTechHtml = buildNotificationEmailHtml('Main Technician', adminSubject, `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'main_technician');
+                            await sendEmail(mainTechEmail, adminSubject, mainTechHtml);
 
-                        if (customerData.email) {
-                            const subcategoryName = complaintData.subcategory || 'kerosakan';
-                            const custHtml = buildNotificationEmailHtml(customerName, subject, `${reportNumber} aduan anda telah update status progress repair kerosakan ${subcategoryName} oleh juruteknik kami (${techName}). Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'user');
-                            await sendEmail(customerData.email, subject, custHtml);
+                            if (customerData.email) {
+                                const subcategoryName = complaintData.subcategory || 'kerosakan';
+                                const custHtml = buildNotificationEmailHtml(customerName, subject, `${reportNumber} aduan anda telah update status progress repair kerosakan ${subcategoryName} oleh juruteknik kami (${techName}). Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'user');
+                                await sendEmail(customerData.email, subject, custHtml);
+                            }
+                        } catch (emailErr) {
+                            console.error('[addRemark] Incomplete email notification error:', emailErr);
                         }
 
-                        const [mainTechs]: any = await pool.query('SELECT id FROM technicians WHERE username = "maintech"');
-                        if (mainTechs) {
-                            for (const mt of mainTechs) {
-                                await createNotification(mt.id, 'main_technician', `Status Update: ${reportNumber}`, `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}.`, 'status_update_detailed', id, true);
+                        const [allTechs]: any = await pool.query('SELECT id FROM technicians');
+                        if (allTechs) {
+                            const notifPayload = JSON.stringify({
+                                key: 'notif_incomplete_maintech_body',
+                                params: { techName, reportNumber }
+                            });
+                            for (const tech of allTechs) {
+                                await createNotification(tech.id, 'main_technician', `Status Update: ${reportNumber}`, notifPayload, 'status_update_detailed', id, true);
                             }
                         }
                     } catch (incompleteNotifErr) {
@@ -914,20 +948,26 @@ export const updateRemark = async (req: Request, res: Response): Promise<void> =
 
         if (status) {
             const complaintId = existingRemark.complaint_id;
-            await pool.query('UPDATE complaints SET status = ?, updated_at = NOW() WHERE id = ?', [status, complaintId]);
+
+            // Fetch previous status BEFORE updating
+            let previousStatus = null;
+            const [oldStatusRows]: any = await pool.query('SELECT status FROM complaints WHERE id = ?', [complaintId]);
+            previousStatus = oldStatusRows[0]?.status;
+
+            if (status === 'incomplete' || status === 'bawa_pulang') {
+                await pool.query('UPDATE complaints SET status = ?, assigned_to = NULL, updated_at = NOW() WHERE id = ?', [status, complaintId]);
+            } else {
+                await pool.query('UPDATE complaints SET status = ?, updated_at = NOW() WHERE id = ?', [status, complaintId]);
+            }
 
             const [techRows]: any = await pool.query('SELECT name FROM technicians WHERE id = ?', [userId]);
             const techName = techRows[0]?.name || 'Technician';
 
-            const [cRows]: any = await pool.query('SELECT user_id, report_number FROM complaints WHERE id = ?', [complaintId]);
+            const [cRows]: any = await pool.query('SELECT user_id, report_number, subcategory FROM complaints WHERE id = ?', [complaintId]);
             if (cRows.length > 0) {
                 const complaintData = cRows[0];
                 const reportNumber = complaintData.report_number;
                 const formattedDate = formatNotificationDate(new Date());
-
-                let previousStatus = null;
-                const [oldStatusRows]: any = await pool.query('SELECT status FROM complaints WHERE id = ?', [complaintId]);
-                previousStatus = oldStatusRows[0]?.status;
 
                 const [customerRows]: any = await pool.query('SELECT full_name, email FROM users WHERE id = ?', [complaintData.user_id]);
                 const customerData = customerRows[0] || {};
@@ -935,6 +975,7 @@ export const updateRemark = async (req: Request, res: Response): Promise<void> =
 
                 // Check if status transitioned to closed
                 const isTransitionToComplete = previousStatus !== 'closed' && status === 'closed';
+                const isTransitionToIncomplete = previousStatus !== 'incomplete' && previousStatus !== 'bawa_pulang' && (status === 'incomplete' || status === 'bawa_pulang');
 
                 if (isTransitionToComplete) {
                     try {
@@ -969,6 +1010,44 @@ export const updateRemark = async (req: Request, res: Response): Promise<void> =
                             await sendEmail(customerData.email, subject, custHtml);
                         }
                     } catch (emailErr) {}
+                }
+
+                if (isTransitionToIncomplete) {
+                    try {
+                        const adminEmail = 'adminecare.ptasssb@gmail.com';
+                        const mainTechEmail = 'technicianasign@gmail.com';
+                        const subject = `Aduan Bawa Pulang (Incomplete): ${reportNumber}`;
+                        const adminSubject = `Juruteknik ${techName} update status : incomplete`;
+                        
+                        try {
+                            const adminHtml = buildNotificationEmailHtml('Administrator', adminSubject, `Juruteknik telah update status progress repair kerosakan untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'admin');
+                            await sendEmail(adminEmail, adminSubject, adminHtml);
+
+                            const mainTechHtml = buildNotificationEmailHtml('Main Technician', adminSubject, `Terdapat satu aduan incomplete dihantar oleh juruteknik (${techName}) untuk aduan ${reportNumber}. Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'main_technician');
+                            await sendEmail(mainTechEmail, adminSubject, mainTechHtml);
+
+                            if (customerData.email) {
+                                const subcategoryName = complaintData.subcategory || 'kerosakan';
+                                const custHtml = buildNotificationEmailHtml(customerName, subject, `${reportNumber} aduan anda telah update status progress repair kerosakan ${subcategoryName} oleh juruteknik kami (${techName}). Sila tekan semak aduan untuk lihat lebih lanjut.`, reportNumber, 'user');
+                                await sendEmail(customerData.email, subject, custHtml);
+                            }
+                        } catch (emailErr) {
+                            console.error('[updateRemark] Incomplete email notification error:', emailErr);
+                        }
+
+                        const [allTechs]: any = await pool.query('SELECT id FROM technicians');
+                        if (allTechs) {
+                            const notifPayload = JSON.stringify({
+                                key: 'notif_incomplete_maintech_body',
+                                params: { techName, reportNumber }
+                            });
+                            for (const tech of allTechs) {
+                                await createNotification(tech.id, 'main_technician', `Status Update: ${reportNumber}`, notifPayload, 'status_update_detailed', complaintId, true);
+                            }
+                        }
+                    } catch (incompleteNotifErr) {
+                        console.error('[updateRemark] Incomplete notification error (non-fatal):', incompleteNotifErr);
+                    }
                 }
             }
         }
@@ -1075,7 +1154,7 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
 
         if (!complaint) { res.status(404).json({ error: 'Complaint not found' }); return; }
 
-        const [techRows]: any = await pool.query('SELECT id, name, email FROM technicians WHERE id = ?', [technician_id]);
+        const [techRows]: any = await pool.query('SELECT id, name, email, contact_number, department FROM technicians WHERE id = ?', [technician_id]);
         const techExists = techRows[0];
 
         if (!techExists) { res.status(400).json({ error: 'Invalid technician ID - User is not a technician' }); return; }
@@ -1098,14 +1177,17 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
             [id, status || 'pending', note_transport || null, checking || null, remarkText, adminId]
         );
 
+        const notifRole = techExists.email === 'technicianasign@gmail.com' ? 'main_technician' : 'technician';
+
         // --- TECHNICIAN NOTIFICATIONS ---
         // Bell 1: Forward Job
-        await createNotification(technician_id, 'technician', `Job Assigned: ${complaint.report_number}`, `You have been assigned/forwarded a new job: ${complaint.report_number}`, 'assignment', id, true);
+        await createNotification(technician_id, notifRole, `Job Assigned: ${complaint.report_number}`, `You have been assigned/forwarded a new job: ${complaint.report_number}`, 'assignment', id, true);
         
         // Bell 2: Combined Update Maklumat
         let updatesCount = 0;
         let payloadParts = [];
         payloadParts.push('Maklumat berikut:');
+        payloadParts.push(`~ Second technician : ${techExists.name}`);
         
         if (status) {
             updatesCount++;
@@ -1132,34 +1214,63 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
         if (updatesCount > 0) {
             const summaryTitle = `Pihak Pengurusan Telah mengemaskini Aduan ${complaint.report_number}`;
             const summaryPayload = payloadParts.join('\n');
-            await createNotification(technician_id, 'technician', summaryTitle, summaryPayload, 'status_update_detailed', id, true);
+            await createNotification(technician_id, notifRole, summaryTitle, summaryPayload, 'status_update_detailed', id, true);
         }
 
         // --- EMAILS ---
         const createDate = new Date(complaint.created_at).toLocaleDateString('en-GB'); // dd/mm/yyyy
         let firstTechName = 'Tidak Diketahui';
-        if (complaint.assigned_to) {
-            const [firstTechRows]: any = await pool.query('SELECT name FROM technicians WHERE id = ?', [complaint.assigned_to]);
-            if (firstTechRows && firstTechRows.length > 0) {
-                firstTechName = firstTechRows[0].name;
-            }
+        let firstTechPhone = '-';
+        let firstTechUnit = '-';
+        const [firstHistoryRows]: any = await pool.query(
+            'SELECT t.name, t.contact_number, t.department FROM forward_history fh JOIN technicians t ON fh.forward_to = t.id WHERE fh.complaint_id = ? ORDER BY fh.created_at ASC LIMIT 1',
+            [id]
+        );
+        if (firstHistoryRows && firstHistoryRows.length > 0) {
+            firstTechName = firstHistoryRows[0].name;
+            firstTechPhone = firstHistoryRows[0].contact_number || '-';
+            firstTechUnit = firstHistoryRows[0].department || '-';
         }
 
-        const emailTemplateHtml = `maklumat aduan<br>
-date create : ${createDate}<br>
-First technician : ${firstTechName}<br>
-customer name : ${complaint.full_name || 'Pelanggan'}<br>
-subcategory  : ${complaint.subcategory || '-'}<br>
-brand : ${complaint.brand_name || '-'}<br>
-defect details : ${complaint.details || '-'}<br>
-<br>
-<b>REMARK UPDATE</b> (note: Maklumat ini di buat oleh maintechnician bukan mane2 technician atau admin)<br>
-<br>
-Status: ${status || '-'}<br>
-transport note : ${note_transport || '-'}<br>
-checking : ${checking || '-'}<br>
-remark : ${remark || '-'}<br>
-<br>
+        const secondTechName = techExists.name;
+        const secondTechPhone = techExists.contact_number || '-';
+        const secondTechUnit = techExists.department || '-';
+
+        let statusLabel = status || '-';
+        let statusEmoji = '🔹';
+        if (status === 'incomplete') {
+            statusLabel = 'Incomplete / Bring to workshop';
+            statusEmoji = '⚠️';
+        }
+
+        const timestampStr = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kuala_Lumpur', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true });
+
+        const emailTemplateHtml = `MAKLUMAT ADUAN ${complaint.report_number}
+date create : ${createDate}
+customer name : ${complaint.full_name || 'Pelanggan'}
+subcategory : ${complaint.subcategory || '-'}
+brand : ${complaint.brand_name || '-'}
+defect details : ${complaint.details || '-'}
+
+🛠️ Maklumat Juruteknik Bertanggungjawab:
+
+👤 [1] First Technician
+- Nama: ${firstTechName}
+- No. Telefon: ${firstTechPhone}
+- Unit/Jabatan: ${firstTechUnit}
+
+📌 Status Tindakan (${firstTechName}):
+- Status: ${statusEmoji} ${statusLabel}
+- Tarikh & Masa: ${timestampStr}
+- Transport Note: ${note_transport || '-'}
+- Checking: ${checking || '-'}
+- Remark: ${remark || '-'}
+
+👤 [2] Second Technician
+- Nama: ${secondTechName}
+- No. Telefon: ${secondTechPhone}
+- Unit/Jabatan: ${secondTechUnit}
+
 click to view details ...`;
 
         try {
@@ -1167,7 +1278,7 @@ click to view details ...`;
 
             // 1. Email for Technician B
             if (techExists.email) {
-                const subjectTech = `MAINTECH HAS ASSIGN INCOMPLETE JOB ${complaint.report_number} TO ${techExists.name.toUpperCase()}`;
+                const subjectTech = `MAIN TECH HAS ASSIGN INCOMPLETE JOB ${complaint.report_number} TO ${techExists.name.toUpperCase()}`;
                 const techHtml = buildNotificationEmailHtml(techExists.name, subjectTech, emailTemplateHtml, trackReportPath, 'technician');
                 await sendEmail(techExists.email, subjectTech, techHtml);
             }
@@ -1197,6 +1308,7 @@ click to view details ...`;
         // User Bell: Detailed Forward Job
         if (status === 'in_process' || !status) {
             let userPayload = `Aduan ${complaint.report_number} telah diproses oleh ${techExists.name}.\n`;
+            userPayload += `\nSecond technician : ${techExists.name}`;
             if (complaint.cat_name) userPayload += `\nKategori: ${complaint.cat_name}`;
             if (complaint.brand_name) userPayload += `\nJenama: ${complaint.brand_name}`;
             if (complaint.details) userPayload += `\nKerosakan: ${complaint.details}`;

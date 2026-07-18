@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Wrench, AlertTriangle, ArrowRightCircle, Eye } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import MainTechLayout from '../../components/MainTechLayout';
 import api from '../../services/api';
 import { Complaint } from '../../types';
@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 export default function MainTechComplaints() {
     const { t } = useTranslation();
     const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
     const activeFilter = searchParams.get('status') || 'incomplete';
 
     const [complaints, setComplaints] = useState<Complaint[]>([]);
@@ -58,9 +59,11 @@ export default function MainTechComplaints() {
     };
 
     const handleForwardSuccess = useCallback(() => {
+        if (selectedComplaint) {
+            navigate(`/main-tech/complaint/${selectedComplaint.report_number}`);
+        }
         setSelectedComplaint(null);
-        loadComplaints();
-    }, [loadComplaints]);
+    }, [selectedComplaint, navigate]);
 
     const getTitle = () => {
         switch(activeFilter) {
@@ -153,13 +156,13 @@ export default function MainTechComplaints() {
                                             
                                             <div className="mt-3 pt-3 border-t border-gray-100">
                                                 {!complaint.assigned_to ? (
-                                                    <button
-                                                        onClick={() => setSelectedComplaint(complaint)}
+                                                    <Link
+                                                        to={`/main-tech/complaint/${complaint.report_number}`}
                                                         className="w-full inline-flex justify-center items-center gap-1.5 px-3 py-2 bg-primary-50 text-primary-700 hover:bg-primary-100 text-xs font-medium rounded-lg transition-colors border border-primary-100"
                                                     >
                                                         <ArrowRightCircle className="w-4 h-4" />
                                                         Forward Job
-                                                    </button>
+                                                    </Link>
                                                 ) : (
                                                     <Link
                                                         to={`/main-tech/complaint/${complaint.report_number}`}
@@ -248,13 +251,13 @@ export default function MainTechComplaints() {
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-center">
                                                         {!complaint.assigned_to ? (
-                                                            <button
-                                                                onClick={() => setSelectedComplaint(complaint)}
+                                                            <Link
+                                                                to={`/main-tech/complaint/${complaint.report_number}`}
                                                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded transition-colors shadow-sm"
                                                             >
                                                                 <ArrowRightCircle className="w-3.5 h-3.5" />
                                                                 Forward Job
-                                                            </button>
+                                                            </Link>
                                                         ) : (
                                                             <Link
                                                                 to={`/main-tech/complaint/${complaint.report_number}`}
