@@ -1142,6 +1142,7 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
         const { id: paramId } = req.params;
         const { technician_id, status, note_transport, checking, remark } = req.body;
         const adminId = req.user?.id;
+        const callerRole = req.user?.role;
 
         const id = await resolveComplaint(paramId);
         if (!id) { res.status(404).json({ error: 'Complaint not found' }); return; }
@@ -1276,9 +1277,23 @@ click to view details ...`;
         try {
             const trackReportPath = `${complaint.report_number}/track-repair`;
 
+            // Build role-appropriate email subjects
+            let subjectTech: string;
+            let subjectAdmin: string;
+            let subjectUser: string;
+
+            if (callerRole === 'admin') {
+                subjectTech = `New job ${complaint.report_number} assigned from admin`;
+                subjectAdmin = `New job ${complaint.report_number} assigned from admin`;
+                subjectUser = `New job assigned: ${complaint.report_number}`;
+            } else {
+                subjectTech = `MAIN TECH HAS ASSIGN INCOMPLETE JOB ${complaint.report_number} TO ${techExists.name.toUpperCase()}`;
+                subjectAdmin = `MAIN TECH HAS ASSIGN INCOMPLETE JOB ${complaint.report_number} TO ${techExists.name.toUpperCase()}`;
+                subjectUser = `MAIN TECH HAS ASSIGN YOUR INCOMPLETE COMPLAINT JOB ${complaint.report_number} TO ${techExists.name.toUpperCase()}`;
+            }
+
             // 1. Email for Technician B
             if (techExists.email) {
-                const subjectTech = `MAIN TECH HAS ASSIGN INCOMPLETE JOB ${complaint.report_number} TO ${techExists.name.toUpperCase()}`;
                 const techHtml = buildNotificationEmailHtml(techExists.name, subjectTech, emailTemplateHtml, trackReportPath, 'technician');
                 await sendEmail(techExists.email, subjectTech, techHtml);
             }
@@ -1287,7 +1302,6 @@ click to view details ...`;
             const [admins]: any = await pool.query('SELECT email FROM admins WHERE email IS NOT NULL');
             const adminEmails = admins.map((a: any) => a.email).filter(Boolean);
             if (adminEmails.length > 0) {
-                const subjectAdmin = `MAIN TECH HAS ASSIGN INCOMPLETE JOB ${complaint.report_number} TO ${techExists.name.toUpperCase()}`;
                 const adminHtml = buildNotificationEmailHtml('Admin', subjectAdmin, emailTemplateHtml, trackReportPath, 'admin');
                 for (const email of adminEmails) {
                     await sendEmail(email, subjectAdmin, adminHtml);
@@ -1296,7 +1310,6 @@ click to view details ...`;
 
             // 3. Email for User
             if (complaint.email) {
-                const subjectUser = `MAIN TECH HAS ASSIGN YOUR INCOMPLETE COMPLAINT JOB ${complaint.report_number} TO ${techExists.name.toUpperCase()}`;
                 const userHtml = buildNotificationEmailHtml(complaint.full_name || 'Pelanggan', subjectUser, emailTemplateHtml, trackReportPath, 'user');
                 await sendEmail(complaint.email, subjectUser, userHtml);
             }
