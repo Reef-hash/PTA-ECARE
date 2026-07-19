@@ -290,7 +290,7 @@ function App() {
             <Route
                 path="/admin/print/:id"
                 element={
-                    <ProtectedRoute allowedRoles={['admin', 'technician']}>
+                    <ProtectedRoute allowedRoles={['admin', 'technician', 'main_technician']}>
                         <PrintReceipt />
                     </ProtectedRoute>
                 }
