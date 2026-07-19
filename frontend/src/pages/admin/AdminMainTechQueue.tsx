@@ -87,10 +87,10 @@ export default function AdminMainTechQueue() {
     };
 
     const statCards = [
-        { label: t('main_tech.dashboard.cards.incomplete', 'Incomplete / Bawa Pulang'), value: stats.incomplete, icon: AlertCircle, color: 'orange', filter: 'incomplete' },
-        { label: t('main_tech.dashboard.cards.not_forwarded', 'Not Assigned'), value: stats.not_forwarded, icon: Clock, color: 'red', filter: 'not_forwarded' },
-        { label: t('main_tech.dashboard.cards.assigned', 'Job Assigned'), value: stats.assigned, icon: UserCheck, color: 'teal', filter: 'job_assigned' },
-        { label: t('main_tech.dashboard.cards.closed', 'Complete'), value: stats.closed, icon: CheckCircle, color: 'green', filter: 'closed' },
+        { label: t('main_tech.dashboard.cards.incomplete', 'Incomplete / Bawa Pulang'), value: stats.incomplete_total, icon: AlertCircle, color: 'orange', filter: 'incomplete' },
+        { label: t('main_tech.dashboard.cards.not_forwarded', 'Not Assigned'), value: stats.incomplete_not_assigned, icon: Clock, color: 'red', filter: 'incomplete_not_assigned' },
+        { label: t('main_tech.dashboard.cards.assigned', 'Job Assigned'), value: stats.incomplete_assigned, icon: UserCheck, color: 'teal', filter: 'incomplete_assigned' },
+        { label: t('main_tech.dashboard.cards.closed', 'Complete'), value: stats.incomplete_completed, icon: CheckCircle, color: 'green', filter: 'incomplete_completed' },
     ];
 
     const getColorClasses = (color: string) => {
