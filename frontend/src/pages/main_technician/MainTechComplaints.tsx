@@ -120,7 +120,7 @@ export default function MainTechComplaints() {
                             ) : (
                                 complaints.map((complaint) => {
                                     const details = getIncompleteDetails(complaint);
-                                    const isAssignedTo = complaint.technicians?.name || complaint.assigned_to || {t('common.unknown')};
+                                    const isAssignedTo = complaint.technicians?.name || complaint.assigned_to || t('common.unknown');
 
                                     return (
                                         <div key={complaint.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
@@ -214,7 +214,7 @@ export default function MainTechComplaints() {
                                     ) : (
                                         complaints.map((complaint) => {
                                             const details = getIncompleteDetails(complaint);
-                                            const isAssignedTo = complaint.technicians?.name || complaint.assigned_to || {t('common.unknown')};
+                                            const isAssignedTo = complaint.technicians?.name || complaint.assigned_to || t('common.unknown');
 
                                             return (
                                                 <tr key={complaint.id} className="hover:bg-gray-50 transition-colors">

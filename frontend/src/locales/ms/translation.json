@@ -577,14 +577,14 @@
   },
   "main_tech": {
     "dashboard": {
-      "title": "Pengurusan Mesin Bawa Pulang",
+      "title": "Pengurusan Mesin Tidak Lengkap",
       "subtitle": "Senarai aduan yang perlu diagihkan kepada juruteknik kedai",
       "list_title": "Senarai Menunggu Agihan",
       "empty": "Tiada tugas tertunggak",
       "cards": {
-        "incomplete": "Tidak Siap / Bawa Balik Bengkel",
-        "not_forwarded": "Belum Diagih",
-        "assigned": "Telah Diagih",
+        "incomplete": "Mesin Tidak Lengkap",
+        "not_forwarded": "Belum Diagihkan",
+        "assigned": "Telah Diagihkan",
         "closed": "Selesai"
       },
       "machine_count_one": "{{count}} Mesin",

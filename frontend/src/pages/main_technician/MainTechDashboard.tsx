@@ -146,7 +146,7 @@ export default function MainTechDashboard() {
                                             <span className="text-gray-500 text-[11px] uppercase tracking-wider mt-0.5">{t('table.original_technician', 'Juruteknik')}</span>
                                             <div>
                                                 <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700">
-                                                    {complaint.technicians?.name || complaint.assigned_to || {t('common.unknown')}}
+                                                    {complaint.technicians?.name || complaint.assigned_to || t('common.unknown')}
                                                 </span>
                                             </div>
                                         </div>
@@ -204,7 +204,7 @@ export default function MainTechDashboard() {
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-500">
                                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700">
-                                                    {complaint.technicians?.name || complaint.assigned_to || {t('common.unknown')}}
+                                                    {complaint.technicians?.name || complaint.assigned_to || t('common.unknown')}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">

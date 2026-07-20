@@ -87,10 +87,10 @@ export default function AdminMainTechQueue() {
     };
 
     const statCards = [
-        { label: t('main_tech.dashboard.cards.incomplete', 'Incomplete / Bawa Pulang'), value: stats.incomplete_total, icon: AlertCircle, color: 'orange', filter: 'incomplete' },
-        { label: t('main_tech.dashboard.cards.not_forwarded', 'Not Assigned'), value: stats.incomplete_not_assigned, icon: Clock, color: 'red', filter: 'incomplete_not_assigned' },
-        { label: t('main_tech.dashboard.cards.assigned', 'Job Assigned'), value: stats.incomplete_assigned, icon: UserCheck, color: 'teal', filter: 'incomplete_assigned' },
-        { label: t('main_tech.dashboard.cards.closed', 'Complete'), value: stats.incomplete_completed, icon: CheckCircle, color: 'green', filter: 'incomplete_completed' },
+        { label: t('main_tech.dashboard.cards.incomplete'), value: stats.incomplete_total, icon: AlertCircle, color: 'orange', filter: 'incomplete' },
+        { label: t('main_tech.dashboard.cards.not_forwarded'), value: stats.incomplete_not_assigned, icon: Clock, color: 'red', filter: 'incomplete_not_assigned' },
+        { label: t('main_tech.dashboard.cards.assigned'), value: stats.incomplete_assigned, icon: UserCheck, color: 'teal', filter: 'incomplete_assigned' },
+        { label: t('main_tech.dashboard.cards.closed'), value: stats.incomplete_completed, icon: CheckCircle, color: 'green', filter: 'incomplete_completed' },
     ];
 
     const getColorClasses = (color: string) => {
@@ -112,8 +112,8 @@ export default function AdminMainTechQueue() {
                             <Wrench className="w-6 h-6" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">{t('main_tech.dashboard.title', 'Pantauan Main Tech')}</h1>
-                            <p className="text-gray-500 mt-1">{t('main_tech.dashboard.subtitle', 'Pantauan senarai mesin di bawah pengurusan Main Technician')}</p>
+                            <h1 className="text-2xl font-bold text-gray-900">{t('main_tech.dashboard.title')}</h1>
+                            <p className="text-gray-500 mt-1">{t('main_tech.dashboard.subtitle')}</p>
                         </div>
                     </div>
                 </div>
@@ -176,7 +176,7 @@ export default function AdminMainTechQueue() {
                             ) : (
                                 complaints.map((complaint) => {
                                     const details = getIncompleteDetails(complaint);
-                                    const isAssignedTo = complaint.technicians?.name || complaint.assigned_to || {t('common.unknown')};
+                                    const isAssignedTo = complaint.technicians?.name || complaint.assigned_to || t('common.unknown');
 
                                     return (
                                         <div key={complaint.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
@@ -264,7 +264,7 @@ export default function AdminMainTechQueue() {
                                     ) : (
                                         complaints.map((complaint) => {
                                             const details = getIncompleteDetails(complaint);
-                                            const isAssignedTo = complaint.technicians?.name || complaint.assigned_to || {t('common.unknown')};
+                                            const isAssignedTo = complaint.technicians?.name || complaint.assigned_to || t('common.unknown');
 
                                             return (
                                                 <tr key={complaint.id} className="hover:bg-gray-50 transition-colors">
