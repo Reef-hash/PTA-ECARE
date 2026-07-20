@@ -396,45 +396,55 @@ export default function TechComplaintDetail() {
 
                     {/* Add Remark Form */}
                     <div className="card">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 pb-4 border-b border-gray-100 gap-2">
-                            <h3 className="text-lg font-semibold">{t('technician_dashboard.add_remark_title')}</h3>
-                            <div className="text-left sm:text-right">
-                                <p className="text-xs text-gray-500">{t('user_dashboard.label_date_updated')}</p>
-                                <p className="text-sm font-medium text-gray-800">{formatDate(complaint.updated_at)}</p>
-                            </div>
-                        </div>
-
                         {(() => {
                             // Check if escalated based on track history OR current DB status OR selected status
                             const isEscalated = (complaint.tracks && complaint.tracks.some(track => track.status === 'incomplete' || track.status === 'bawa_pulang')) || complaint.status === 'incomplete' || complaint.status === 'bawa_pulang' || remarkData.status === 'incomplete' || remarkData.status === 'bawa_pulang';
                             const maxRemarks = isEscalated ? 6 : 3;
                             const totalRemarks = adminRemarks.length + techRemarks.length;
+                            const remaining = maxRemarks - totalRemarks;
+                            const isQuotaFull = remaining <= 0 && !editingId;
                             const absoluteMax = 6;
                             // If the complaint is already marked as incomplete/bawa_pulang, the technician cannot update it anymore UNLESS it is currently assigned to them
                             const isAssignedToMe = complaint.assigned_to === user?.id;
                             if ((complaint.status === 'incomplete' || complaint.status === 'bawa_pulang') && !editingId && !isAssignedToMe) {
                                 return (
-                                    <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded relative mb-4" role="alert">
-                                        <strong className="font-bold">Perhatian: </strong>
-                                        <span className="block sm:inline">Aduan ini telah dikemaskini sebagai 'Incomplete / Bawa Pulang' dan telah diserahkan kembali kepada Main Technician. Anda tidak lagi boleh menambah komen atau menukar status.</span>
-                                    </div>
+                                    <>
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 pb-4 border-b border-gray-100 gap-2">
+                                            <h3 className="text-lg font-semibold">{t('technician_dashboard.add_remark_title')}</h3>
+                                            <div className="text-left sm:text-right">
+                                                <p className="text-xs text-gray-500">{t('user_dashboard.label_date_updated')}</p>
+                                                <p className="text-sm font-medium text-gray-800">{formatDate(complaint.updated_at)}</p>
+                                            </div>
+                                        </div>
+                                        <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded relative mb-4" role="alert">
+                                            <strong className="font-bold">Perhatian: </strong>
+                                            <span className="block sm:inline">Aduan ini telah dikemaskini sebagai 'Incomplete / Bawa Pulang' dan telah diserahkan kembali kepada Main Technician. Anda tidak lagi boleh menambah komen atau menukar status.</span>
+                                        </div>
+                                    </>
                                 );
                             }
 
-                            // If absolute max is reached, hide form completely
-                            if (totalRemarks >= absoluteMax && !editingId) {
-                                return (
-                                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                                        <strong className="font-bold">{t('technician_dashboard.limit_reached', 'Limit Reached')}: </strong>
-                                        <span className="block sm:inline">{t('admin_complaint_detail.remark_limit', { limit: absoluteMax })}</span>
-                                    </div>
-                                );
-                            }
-                            
                             // If current limit is reached based on selection, show warning but still render form so they can change selection
                             const currentLimitReached = totalRemarks >= maxRemarks && !editingId;
 
-                            return (
+                            return (<>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 pb-4 border-b border-gray-100 gap-2">
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-lg font-semibold">{t('technician_dashboard.add_remark_title')}</h3>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${
+                                        isQuotaFull
+                                            ? 'bg-red-50 text-red-600 border-red-200'
+                                            : 'bg-blue-50 text-blue-600 border-blue-200'
+                                    }`}>
+                                        {remaining}/{maxRemarks}{isQuotaFull ? ' (Penuh)' : ''}
+                                    </span>
+                                </div>
+                                <div className="text-left sm:text-right">
+                                    <p className="text-xs text-gray-500">{t('user_dashboard.label_date_updated')}</p>
+                                    <p className="text-sm font-medium text-gray-800">{formatDate(complaint.updated_at)}</p>
+                                </div>
+                            </div>
+
                             <form onSubmit={handleAddRemark} className="space-y-4">
                                 {currentLimitReached && (
                                     <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
@@ -489,19 +499,19 @@ export default function TechComplaintDetail() {
                                     />
                                 </div>
                                 <div className="flex gap-2">
-                                    <button type="submit" disabled={isSaving || currentLimitReached} className="btn-success flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <button type="submit" disabled={isSaving || currentLimitReached || isQuotaFull} className="btn-success flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                                         {isSaving ? (
                                             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                                         ) : (
                                             <>
                                                 <Save className="w-4 h-4" />
-                                                {editingId ? 'Kemaskini Catatan' : t('technician_dashboard.btn_save_remark')}
+                                                {editingId ? 'Kemaskini Catatan' : (isQuotaFull ? 'Kuota Penuh' : t('technician_dashboard.btn_save_remark'))}
                                             </>
                                         )}
                                     </button>
                                 </div>
                             </form>
-                            );
+                            </>);
                         })()}
                     </div>
 
