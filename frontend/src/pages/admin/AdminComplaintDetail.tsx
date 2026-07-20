@@ -513,10 +513,10 @@ export default function AdminComplaintDetail() {
                                                         <span className="text-sm font-medium text-gray-800">
                                                             {remark._source === 'admin'
                                                                 ? (remark.resolved_user?.name || 'Admin')
-                                                                : (remark.technicians?.name || 'Teknisi')}
+                                                                : (remark.technicians?.name || t('common.technician'))}
                                                         </span>
                                                         <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">
-                                                            {remark._source === 'admin' ? 'Admin' : 'Teknisi'}
+                                                            {remark._source === 'admin' ? 'Admin' : t('common.technician')}
                                                         </span>
                                                     </div>
                                                     <div className="flex items-center gap-2">

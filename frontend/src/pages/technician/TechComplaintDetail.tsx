@@ -409,9 +409,9 @@ export default function TechComplaintDetail() {
                                                 <div className="flex items-start justify-between gap-2 mb-2">
                                                     <div className="flex items-center gap-2 flex-wrap">
                                                         <span className="text-sm font-medium text-gray-800">
-                                                            {remark.technicians?.name || 'Teknisi'}
+                                                            {remark.technicians?.name || t('common.technician')}
                                                         </span>
-                                                        <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">Teknisi</span>
+                                                        <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">{t('common.technician')}</span>
                                                     </div>
                                                     <span className="text-xs text-gray-400">{formatDate(remark.created_at)}</span>
                                                 </div>
