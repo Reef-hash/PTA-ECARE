@@ -56,6 +56,7 @@
     "new_job": "New Job Assigned",
     "job_update": "Job Update",
     "customer": "Customer",
+    "admin": "Admin",
     "technician": "Technician",
     "main_technician": "Main Technician",
     "time_ago": {
