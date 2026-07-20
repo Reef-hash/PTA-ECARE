@@ -57,6 +57,7 @@
     "job_update": "Kemaskini Tugasan",
     "customer": "Pelanggan",
     "technician": "Juruteknik",
+    "main_technician": "Ketua Juruteknik",
     "time_ago": {
       "just_now": "terkini",
       "years_ago": "{{count}} tahun yang lalu",

@@ -512,11 +512,13 @@ export default function AdminComplaintDetail() {
                                                     <div className="flex items-center gap-2 flex-wrap">
                                                         <span className="text-sm font-medium text-gray-800">
                                                             {remark._source === 'admin'
-                                                                ? (remark.resolved_user?.name || 'Admin')
+                                                                ? (remark.resolved_user?.name || (remark.resolved_user?.role === 'main_technician' ? t('common.main_technician') : 'Admin'))
                                                                 : (remark.technicians?.name || t('common.technician'))}
                                                         </span>
                                                         <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">
-                                                            {remark._source === 'admin' ? 'Admin' : t('common.technician')}
+                                                            {remark._source === 'admin'
+                                                                ? (remark.resolved_user?.role === 'main_technician' ? t('common.main_technician') : 'Admin')
+                                                                : t('common.technician')}
                                                         </span>
                                                     </div>
                                                     <div className="flex items-center gap-2">
@@ -841,17 +843,23 @@ export default function AdminComplaintDetail() {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin_complaint_detail.status')}</label>
-                                <select
-                                    value={remarkData.status}
-                                    onChange={(e) => setRemarkData({ ...remarkData, status: e.target.value })}
-                                    className="input-field"
-                                >
-                                    <option value="">-- {t('admin_complaint_detail.select_status')} --</option>
-                                    {!isMainTech && <option value="pending">{t('admin_users.status_pending')}</option>}
-                                    <option value="in_process">{t('admin_users.status_in_process')}</option>
-                                    <option value="incomplete">{t('technician_dashboard.status_incomplete', 'Incomplete / Bawa Pulang')}</option>
-                                    <option value="closed">{t('admin_users.status_closed')}</option>
-                                </select>
+                                {isMainTech ? (
+                                    <div className="input-field bg-gray-50 flex items-center text-gray-700">
+                                        {t('technician_dashboard.status_incomplete', 'Incomplete / Bawa Pulang')}
+                                    </div>
+                                ) : (
+                                    <select
+                                        value={remarkData.status}
+                                        onChange={(e) => setRemarkData({ ...remarkData, status: e.target.value })}
+                                        className="input-field"
+                                    >
+                                        <option value="">-- {t('admin_complaint_detail.select_status')} --</option>
+                                        <option value="pending">{t('admin_users.status_pending')}</option>
+                                        <option value="in_process">{t('admin_users.status_in_process')}</option>
+                                        <option value="incomplete">{t('technician_dashboard.status_incomplete', 'Incomplete / Bawa Pulang')}</option>
+                                        <option value="closed">{t('admin_users.status_closed')}</option>
+                                    </select>
+                                )}
                             </div>
                         </div>
 
