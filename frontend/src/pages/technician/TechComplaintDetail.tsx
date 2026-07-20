@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, FileText, User, Wrench, Save, Printer, Eye, Download, ZoomIn, X } from 'lucide-react';
+import { ArrowLeft, FileText, User, Wrench, Save, Printer, Eye, Download, ZoomIn, X, Send } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
 import api, { getFileUrl } from '../../services/api';
 import { Complaint, ComplaintRemark, TechnicianRemark } from '../../types';
@@ -396,7 +396,38 @@ export default function TechComplaintDetail() {
 
                     {/* Add Remark & Remark List (satu card) */}
                     <div className="card">
-                        {/* Remark List - at top */}
+                        {/* Forward History - from admin remarks */}
+                        {adminRemarks.filter(r => r.remark?.includes('__FORWARD__')).length > 0 && (
+                            <div className="mb-6">
+                                <h4 className="font-semibold mb-3 flex items-center gap-2 text-indigo-700">
+                                    <Send className="w-4 h-4" />
+                                    Kerja Ditugaskan
+                                </h4>
+                                <div className="space-y-2">
+                                    {adminRemarks
+                                        .filter(r => r.remark?.includes('__FORWARD__'))
+                                        .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                                        .map(remark => {
+                                            const forwardParts = remark.remark.split('__FORWARD__');
+                                            const forwardText = forwardParts[1]?.trim();
+                                            const techName = forwardText?.replace('Complaint Forward to Technician : ', '').trim() || forwardText || '';
+                                            return (
+                                                <div key={`fwd-${remark.id}`} className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
+                                                    <div className="flex items-center gap-2 text-sm">
+                                                        <Send className="w-3.5 h-3.5 text-indigo-500" />
+                                                        <span className="text-indigo-700">
+                                                            Diagihkan kepada: <strong>{techName}</strong>
+                                                        </span>
+                                                        <span className="text-xs text-indigo-400 ml-auto">{formatDate(remark.created_at)}</span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Actual Remarks - own tech remarks */}
                         {techRemarks.filter((r: any) => r.remark_by === user?.id).length > 0 && (
                             <>
                                 <h3 className="text-lg font-semibold mb-4">Senarai Catatan</h3>
@@ -404,7 +435,10 @@ export default function TechComplaintDetail() {
                                     {techRemarks
                                         .filter((r: any) => r.remark_by === user?.id)
                                         .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-                                        .map((remark: any) => (
+                                        .map((remark: any) => {
+                                            const forwardParts = remark.remark?.split('__FORWARD__') || [];
+                                            const displayRemark = remark.remark?.includes('__FORWARD__') ? forwardParts[0]?.trim() || null : remark.remark;
+                                            return (
                                             <div key={remark.id} className="border rounded-lg p-4 hover:shadow-sm transition-shadow">
                                                 <div className="flex items-start justify-between gap-2 mb-2">
                                                     <div className="flex items-center gap-2 flex-wrap">
@@ -424,15 +458,15 @@ export default function TechComplaintDetail() {
                                                 {remark.checking && (
                                                     <p className="text-sm text-gray-600"><span className="font-medium">{t('technician_dashboard.label_checking')}:</span> {remark.checking}</p>
                                                 )}
-                                                {remark.remark && (
+                                                {displayRemark && (
                                                     <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">
-                                                        <span className="font-medium">{t('technician_dashboard.label_remark')}:</span> {remark.remark}
+                                                        <span className="font-medium">{t('technician_dashboard.label_remark')}:</span> {displayRemark}
                                                     </p>
                                                 )}
                                             </div>
-                                        ))}
+                                            );
+                                        })}
                                 </div>
-                                <div className="border-t border-gray-200 my-6" />
                             </>
                         )}
 

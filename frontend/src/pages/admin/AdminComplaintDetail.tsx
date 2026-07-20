@@ -497,82 +497,123 @@ export default function AdminComplaintDetail() {
                         </div>
                     </div>
 
-                    {/* Remark List - Show history of all remarks with Edit for own remarks */}
+                    {/* Remark List - Split forward history and actual remarks */}
                     {(adminRemarks.length > 0 || techRemarks.length > 0) && (
                         <div className="card">
-                            <h3 className="text-lg font-semibold mb-4">Senarai Catatan</h3>
-                            <div className="space-y-3">
-                                {[...adminRemarks.map((r: any) => ({ ...r, _source: 'admin' })), ...techRemarks.map((r: any) => ({ ...r, _source: 'tech' }))]
-                                    .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-                                    .map((remark: any) => {
-                                        const isOwn = remark.remark_by === user?.id;
-                                        return (
-                                            <div key={`${remark._source}-${remark.id}`} className="border rounded-lg p-4 hover:shadow-sm transition-shadow">
-                                                <div className="flex items-start justify-between gap-2 mb-2">
-                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                        <span className="text-sm font-medium text-gray-800">
-                                                            {remark._source === 'admin'
-                                                                ? (remark.resolved_user?.name || (remark.resolved_user?.role === 'main_technician' ? t('common.main_technician') : 'Admin'))
-                                                                : (remark.technicians?.name || t('common.technician'))}
-                                                        </span>
-                                                        <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">
-                                                            {remark._source === 'admin'
-                                                                ? (remark.resolved_user?.role === 'main_technician' ? t('common.main_technician') : 'Admin')
-                                                                : t('common.technician')}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-xs text-gray-400">{formatDate(remark.created_at)}</span>
-                                                        {isOwn && (
-                                                            <>
-                                                            <button
-                                                                onClick={() => handleEditRemark(remark)}
-                                                                className="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all"
-                                                                title={t('common_actions.edit')}
-                                                            >
-                                                                <Edit2 className="w-3.5 h-3.5" />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => setDeleteTarget(remark)}
-                                                                className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all"
-                                                                title={t('common_actions.delete')}
-                                                            >
-                                                                <Trash2 className="w-3.5 h-3.5" />
-                                                            </button>
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <div className="flex flex-wrap gap-1.5 mb-2">
-                                                    {remark.status && getStatusBadge(remark.status)}
-                                                </div>
-                                                {remark.note_transport && (
-                                                    <p className="text-sm text-gray-600"><span className="font-medium">{t('admin_complaint_detail.transport_note')}:</span> {remark.note_transport}</p>
-                                                )}
-                                                {remark.checking && (
-                                                    <p className="text-sm text-gray-600"><span className="font-medium">{t('admin_complaint_detail.checking')}:</span> {remark.checking}</p>
-                                                )}
-                                                {remark.remark && (() => {
-                                                    const forwardParts = remark.remark.split('__FORWARD__');
-                                                    const mainText = forwardParts[0]?.trim();
-                                                    const forwardText = forwardParts[1]?.trim();
+                            {(() => {
+                                const allRemarks = [
+                                    ...adminRemarks.map((r: any) => ({ ...r, _source: 'admin' })),
+                                    ...techRemarks.map((r: any) => ({ ...r, _source: 'tech' }))
+                                ].sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+                                const forwardEntries: Array<{ remark: any; forwardText: string }> = [];
+                                const remarkEntries: any[] = [];
+
+                                allRemarks.forEach(remark => {
+                                    const forwardParts = remark.remark?.split('__FORWARD__') || [];
+                                    const mainText = forwardParts[0]?.trim();
+                                    const forwardText = forwardParts[1]?.trim();
+                                    const hasContent = remark.note_transport || remark.checking || mainText;
+
+                                    if (forwardText) {
+                                        forwardEntries.push({ remark, forwardText });
+                                    }
+                                    if (hasContent) {
+                                        remarkEntries.push({ ...remark, _displayRemark: mainText || null });
+                                    }
+                                });
+
+                                return (<>
+                                    {forwardEntries.length > 0 && (
+                                        <div className="mb-6">
+                                            <h4 className="font-semibold mb-3 flex items-center gap-2 text-indigo-700">
+                                                <Forward className="w-4 h-4" />
+                                                Kerja Ditugaskan
+                                            </h4>
+                                            <div className="space-y-2">
+                                                {forwardEntries.map((entry) => {
+                                                    const techName = entry.forwardText.replace('Complaint Forward to Technician : ', '').trim();
                                                     return (
-                                                        <div className="mt-1 whitespace-pre-wrap text-sm">
-                                                            {mainText && (
-                                                                <p className="text-gray-700">
-                                                                    <span className="font-medium">{t('admin_complaint_detail.remark')}:</span> {mainText}
-                                                                </p>
+                                                        <div key={`fwd-${entry.remark._source}-${entry.remark.id}`} className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
+                                                            <div className="flex items-center gap-2 text-sm">
+                                                                <Forward className="w-3.5 h-3.5 text-indigo-500" />
+                                                                <span className="text-indigo-700">
+                                                                    Diagihkan kepada: <strong>{techName}</strong>
+                                                                </span>
+                                                                <span className="text-xs text-indigo-400 ml-auto">{formatDate(entry.remark.created_at)}</span>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {remarkEntries.length > 0 && (
+                                        <>
+                                            <h3 className="text-lg font-semibold mb-4">Senarai Catatan</h3>
+                                            <div className="space-y-3">
+                                                {remarkEntries.map((remark: any) => {
+                                                    const isOwn = remark.remark_by === user?.id;
+                                                    return (
+                                                        <div key={`rmk-${remark._source}-${remark.id}`} className="border rounded-lg p-4 hover:shadow-sm transition-shadow">
+                                                            <div className="flex items-start justify-between gap-2 mb-2">
+                                                                <div className="flex items-center gap-2 flex-wrap">
+                                                                    <span className="text-sm font-medium text-gray-800">
+                                                                        {remark._source === 'admin'
+                                                                            ? (remark.resolved_user?.name || (remark.resolved_user?.role === 'main_technician' ? t('common.main_technician') : 'Admin'))
+                                                                            : (remark.technicians?.name || t('common.technician'))}
+                                                                    </span>
+                                                                    <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">
+                                                                        {remark._source === 'admin'
+                                                                            ? (remark.resolved_user?.role === 'main_technician' ? t('common.main_technician') : 'Admin')
+                                                                            : t('common.technician')}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-xs text-gray-400">{formatDate(remark.created_at)}</span>
+                                                                    {isOwn && (
+                                                                        <>
+                                                                        <button
+                                                                            onClick={() => handleEditRemark(remark)}
+                                                                            className="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all"
+                                                                            title={t('common_actions.edit')}
+                                                                        >
+                                                                            <Edit2 className="w-3.5 h-3.5" />
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => setDeleteTarget(remark)}
+                                                                            className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all"
+                                                                            title={t('common_actions.delete')}
+                                                                        >
+                                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                                        </button>
+                                                                        </>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex flex-wrap gap-1.5 mb-2">
+                                                                {remark.status && getStatusBadge(remark.status)}
+                                                            </div>
+                                                            {remark.note_transport && (
+                                                                <p className="text-sm text-gray-600"><span className="font-medium">{t('admin_complaint_detail.transport_note')}:</span> {remark.note_transport}</p>
                                                             )}
-                                                            {forwardText && (
-                                                                <p className="text-blue-600 font-medium mt-1">{forwardText}</p>
+                                                            {remark.checking && (
+                                                                <p className="text-sm text-gray-600"><span className="font-medium">{t('admin_complaint_detail.checking')}:</span> {remark.checking}</p>
+                                                            )}
+                                                            {remark._displayRemark && (
+                                                                <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">
+                                                                    <span className="font-medium">{t('admin_complaint_detail.remark')}:</span> {remark._displayRemark}
+                                                                </p>
                                                             )}
                                                         </div>
                                                     );
-                                                })()}
+                                                })}
                                             </div>
-                                        );
-                                    })}
-                            </div>
+                                        </>
+                                    )}
+                                </>);
+                            })()}
                         </div>
                     )}
 
