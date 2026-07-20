@@ -9,6 +9,7 @@ import {
 import AdminLayout from '../../components/AdminLayout';
 import MainTechLayout from '../../components/MainTechLayout';
 import Modal from '../../components/Modal';
+import ForwardHistoryList from '../../components/ForwardHistoryList';
 import api, { getFileUrl } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { Complaint, ComplaintRemark, TechnicianRemark, Technician } from '../../types';
@@ -524,34 +525,12 @@ export default function AdminComplaintDetail() {
                                 });
 
                                 return (<>
-                                    {forwardEntries.length > 0 && (
-                                        <div className="mb-6">
-                                            <h4 className="font-semibold mb-3 flex items-center gap-2 text-indigo-700">
-                                                <Forward className="w-4 h-4" />
-                                                Kerja Ditugaskan
-                                            </h4>
-                                            <div className="space-y-2">
-                                                {forwardEntries.map((entry) => {
-                                                    const techName = entry.forwardText.replace('Complaint Forward to Technician : ', '').trim();
-                                                    const forwarderRole = entry.remark.resolved_user?.role === 'main_technician' ? t('common.main_technician') : t('common.admin');
-                                                    return (
-                                                        <div key={`fwd-${entry.remark._source}-${entry.remark.id}`} className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
-                                                            <div className="flex items-center gap-2 text-sm">
-                                                                <Forward className="w-3.5 h-3.5 text-indigo-500" />
-                                                                <span className="text-indigo-700">
-                                                                    Diagihkan kepada: <strong>{techName}</strong>
-                                                                </span>
-                                                                <span className="text-xs text-indigo-400 ml-auto">{formatDate(entry.remark.created_at)}</span>
-                                                            </div>
-                                                            <p className="text-xs text-indigo-400 mt-0.5 ml-6">
-                                                                oleh {forwarderRole}
-                                                            </p>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    )}
+                                    <ForwardHistoryList entries={forwardEntries.map(entry => ({
+                                        id: `fwd-${entry.remark._source}-${entry.remark.id}`,
+                                        techName: entry.forwardText.replace('Complaint Forward to Technician : ', '').trim(),
+                                        createdAt: formatDate(entry.remark.created_at),
+                                        forwardedByRole: entry.remark.resolved_user?.role || 'admin',
+                                    }))} />
 
                                     {remarkEntries.length > 0 && (
                                         <>

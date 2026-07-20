@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, FileText, User, Wrench, Save, Printer, Eye, Download, ZoomIn, X, Send } from 'lucide-react';
+import { ArrowLeft, FileText, User, Wrench, Save, Printer, Eye, Download, ZoomIn, X } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
 import api, { getFileUrl } from '../../services/api';
 import { Complaint, ComplaintRemark, TechnicianRemark } from '../../types';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import ForwardHistoryList from '../../components/ForwardHistoryList';
 import { useAuth } from '../../context/AuthContext';
 
 export default function TechComplaintDetail() {
@@ -396,40 +397,19 @@ export default function TechComplaintDetail() {
 
                     {/* Add Remark & Remark List (satu card) */}
                     <div className="card">
-                        {/* Forward History - from admin remarks */}
-                        {adminRemarks.filter(r => r.remark?.includes('__FORWARD__')).length > 0 && (
-                            <div className="mb-6">
-                                <h4 className="font-semibold mb-3 flex items-center gap-2 text-indigo-700">
-                                    <Send className="w-4 h-4" />
-                                    Kerja Ditugaskan
-                                </h4>
-                                <div className="space-y-2">
-                                    {adminRemarks
-                                        .filter(r => r.remark?.includes('__FORWARD__'))
-                                        .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-                                        .map(remark => {
-                                            const forwardParts = remark.remark.split('__FORWARD__');
-                                            const forwardText = forwardParts[1]?.trim();
-                                            const techName = forwardText?.replace('Complaint Forward to Technician : ', '').trim() || forwardText || '';
-                                            const forwarderRole = remark.resolved_user?.role === 'main_technician' ? t('common.main_technician') : t('common.admin');
-                                            return (
-                                                <div key={`fwd-${remark.id}`} className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
-                                                    <div className="flex items-center gap-2 text-sm">
-                                                        <Send className="w-3.5 h-3.5 text-indigo-500" />
-                                                        <span className="text-indigo-700">
-                                                            Diagihkan kepada: <strong>{techName}</strong>
-                                                        </span>
-                                                        <span className="text-xs text-indigo-400 ml-auto">{formatDate(remark.created_at)}</span>
-                                                    </div>
-                                                    <p className="text-xs text-indigo-400 mt-0.5 ml-6">
-                                                        oleh {forwarderRole}
-                                                    </p>
-                                                </div>
-                                            );
-                                        })}
-                                </div>
-                            </div>
-                        )}
+                        <ForwardHistoryList entries={adminRemarks
+                            .filter((r: any) => r.remark?.includes('__FORWARD__'))
+                            .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                            .map((remark: any) => {
+                                const forwardParts = remark.remark.split('__FORWARD__');
+                                const forwardText = forwardParts[1]?.trim();
+                                return {
+                                    id: `fwd-${remark.id}`,
+                                    techName: forwardText?.replace('Complaint Forward to Technician : ', '').trim() || forwardText || '',
+                                    createdAt: formatDate(remark.created_at),
+                                    forwardedByRole: remark.resolved_user?.role || 'admin',
+                                };
+                            })} />
 
                         {/* Actual Remarks - own tech remarks */}
                         {techRemarks.filter((r: any) => r.remark_by === user?.id).length > 0 && (
