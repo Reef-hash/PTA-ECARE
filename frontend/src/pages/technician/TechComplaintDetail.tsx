@@ -439,7 +439,7 @@ export default function TechComplaintDetail() {
                         {/* Add Remark Form - at bottom */}
                         {(() => {
                             const isEscalated = (complaint.tracks && complaint.tracks.some(track => track.status === 'incomplete' || track.status === 'bawa_pulang')) || complaint.status === 'incomplete' || complaint.status === 'bawa_pulang' || remarkData.status === 'incomplete' || remarkData.status === 'bawa_pulang';
-                            const myTechRemarks = techRemarks.filter((r: any) => r.remark_by === user?.id).length;
+                            const myTechRemarks = techRemarks.filter((r: any) => r.remark_by === user?.id && (r.note_transport || r.checking || (r.remark && !r.remark.startsWith('__FORWARD__')))).length;
                             const totalRemarks = myTechRemarks;
                             const maxRemarks = isEscalated ? 6 : 3;
                             const remaining = maxRemarks - totalRemarks;
