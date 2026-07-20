@@ -727,17 +727,24 @@ export default function AdminComplaintDetail() {
                                         ))}
                                     </select>
 
-                                    <select
-                                        value={forwardStatus}
-                                        onChange={(e) => setForwardStatus(e.target.value)}
-                                        className="input-field mb-3"
-                                    >
-                                        <option value="">-- {t('common.select_status')} --</option>
-                                        {!isMainTech && <option value="pending">{t('admin_users.status_pending')}</option>}
-                                        {!isMainTech && <option value="in_process">{t('admin_users.status_in_process')}</option>}
-                                        <option value="incomplete">{t('technician_dashboard.status_incomplete', 'Incomplete / Bawa Pulang')}</option>
-                                        {!isMainTech && <option value="closed">{t('admin_users.status_closed')}</option>}
-                                    </select>
+                                    {isMainTech ? (
+                                        <div className="input-field mb-3 bg-gray-50 flex items-center gap-2 text-gray-700">
+                                            <span className="text-xs text-gray-500">{t('common.select_status')}:</span>
+                                            <span className="font-medium text-sm">{t('technician_dashboard.status_incomplete', 'Incomplete / Bawa Pulang')}</span>
+                                        </div>
+                                    ) : (
+                                        <select
+                                            value={forwardStatus}
+                                            onChange={(e) => setForwardStatus(e.target.value)}
+                                            className="input-field mb-3"
+                                        >
+                                            <option value="">-- {t('common.select_status')} --</option>
+                                            <option value="pending">{t('admin_users.status_pending')}</option>
+                                            <option value="in_process">{t('admin_users.status_in_process')}</option>
+                                            <option value="incomplete">{t('technician_dashboard.status_incomplete', 'Incomplete / Bawa Pulang')}</option>
+                                            <option value="closed">{t('admin_users.status_closed')}</option>
+                                        </select>
+                                    )}
 
                                     <button
                                         onClick={handleForward}
