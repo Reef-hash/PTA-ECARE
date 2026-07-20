@@ -579,8 +579,9 @@ export default function AdminComplaintDetail() {
                         <div className="card">
                             {(() => {
                                 const isEscalated = (complaint.tracks && complaint.tracks.some(track => track.status === 'incomplete' || track.status === 'bawa_pulang')) || complaint.status === 'incomplete' || complaint.status === 'bawa_pulang';
+                                const myAdminRemarks = adminRemarks.filter(r => r.remark_by === user?.id).length;
+                                const totalRemarks = myAdminRemarks;
                                 const maxRemarks = isEscalated ? 6 : 3;
-                                const totalRemarks = adminRemarks.length + techRemarks.length;
                                 const remaining = maxRemarks - totalRemarks;
                                 const isQuotaFull = remaining <= 0;
 

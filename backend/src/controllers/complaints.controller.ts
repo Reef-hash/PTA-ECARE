@@ -675,8 +675,22 @@ export const updateComplaint = async (req: Request, res: Response): Promise<void
     }
 };
 
-// Utility: semak kuota remark sebelum insert (diguna shared oleh addRemark dan forwardComplaint)
-async function checkRemarkQuota(complaintId: number, checkStatus?: string): Promise<{ allowed: boolean; maxRemarks: number }> {
+// Utility: semak kuota remark PER-ROLE sebelum insert
+// - Admin (complaint_remarks): max 3 (6 jika incomplete workflow)
+// - Technician (technician_remarks): max 3 (6 jika incomplete workflow), dikira per-user
+// - Main Technician (complaint_remarks): max 1, tiada escalation
+async function checkRemarkQuota(
+    complaintId: number,
+    callerRole: string | undefined,
+    callerUserId: string | undefined,
+    checkStatus?: string
+): Promise<{ allowed: boolean; maxRemarks: number; remaining: number }> {
+    if (!callerRole || !callerUserId) return { allowed: false, maxRemarks: 0, remaining: 0 };
+    let baseMax: number;
+    if (callerRole === 'admin' || callerRole === 'technician') baseMax = 3;
+    else if (callerRole === 'main_technician') baseMax = 1;
+    else return { allowed: false, maxRemarks: 0, remaining: 0 };
+
     const [adminIncomplete]: any = await pool.query(
         `SELECT COUNT(*) as count FROM complaint_remarks WHERE complaint_id = ? AND status IN ('incomplete', 'bawa_pulang')`,
         [complaintId]
@@ -687,16 +701,17 @@ async function checkRemarkQuota(complaintId: number, checkStatus?: string): Prom
     );
     const isIncompleteHistory = adminIncomplete[0].count > 0 || techIncomplete[0].count > 0;
     const isCriticalWorkflow = isIncompleteHistory || checkStatus === 'incomplete' || checkStatus === 'bawa_pulang';
-    const MAX_REMARKS = isCriticalWorkflow ? 6 : 3;
+    const maxRemarks = (isCriticalWorkflow && callerRole !== 'main_technician') ? 6 : baseMax;
 
-    const [adminCountRow]: any = await pool.query('SELECT COUNT(*) as count FROM complaint_remarks WHERE complaint_id = ?', [complaintId]);
-    const [techCountRow]: any = await pool.query('SELECT COUNT(*) as count FROM technician_remarks WHERE complaint_id = ?', [complaintId]);
-    const totalRemarks = adminCountRow[0].count + techCountRow[0].count;
+    const table = callerRole === 'technician' ? 'technician_remarks' : 'complaint_remarks';
+    const [countRow]: any = await pool.query(
+        `SELECT COUNT(*) as count FROM ${table} WHERE complaint_id = ? AND remark_by = ?`,
+        [complaintId, callerUserId]
+    );
+    const existingCount = countRow[0].count;
+    const remaining = maxRemarks - existingCount;
 
-    if (totalRemarks >= MAX_REMARKS) {
-        return { allowed: false, maxRemarks: MAX_REMARKS };
-    }
-    return { allowed: true, maxRemarks: MAX_REMARKS };
+    return { allowed: remaining > 0, maxRemarks, remaining };
 }
 
 // Add remark to complaint (Admin)
@@ -711,7 +726,7 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
         if (!id) { res.status(404).json({ error: 'Complaint not found' }); return; }
 
         if (role === 'admin' || role === 'technician') {
-            const quota = await checkRemarkQuota(id, status);
+            const quota = await checkRemarkQuota(id, role, userId, status);
             if (!quota.allowed) {
                 res.status(400).json({ error: `Limit reached: Maximum ${quota.maxRemarks} remarks allowed per complaint.` });
                 return;
@@ -1223,7 +1238,7 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
         );
 
         // Check remark quota sebelum insert (route guard ensures only admin/main_technician reach here)
-        const quota = await checkRemarkQuota(id, status);
+        const quota = await checkRemarkQuota(id, callerRole, adminId, status);
         if (!quota.allowed) {
             res.status(400).json({ error: `Limit reached: Maximum ${quota.maxRemarks} remarks allowed per complaint.` });
             return;
