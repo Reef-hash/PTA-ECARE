@@ -548,7 +548,11 @@
     "success_remark": "Catatan berjaya ditambah",
     "success_forward": "Aduan berjaya diagihkan",
     "error_forward": "Gagal mengagihkan aduan",
-    "remark_limit": "Maksimum {{limit}} catatan dibenarkan untuk setiap aduan",
+    "remark_limit": "Anda telah mencapai had maksimum {{limit}} catatan",
+    "delete_remark_title": "Padam Catatan",
+    "delete_remark_confirm": "Adakah anda pasti mahu memadam catatan ini?",
+    "delete_remark_success": "Catatan berjaya dipadam",
+    "delete_remark_error": "Gagal memadam catatan",
     "cancelled_title": "Aduan Telah Dibatalkan",
     "cancelled_message": "{{userName}} telah membatalkan aduan ini pada {{date}}"
   },

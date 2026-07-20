@@ -45,7 +45,7 @@ router.get('/resolve-id/:id', resolveNumericId);
 
 // Update remark (admin, main_technician only — technician tidak dibenarkan edit)
 router.put('/remarks/:remarkId', requireRole('admin', 'main_technician'), validate(addRemarkSchema), updateRemark);
-router.delete('/remarks/:remarkId', requireRole('technician'), deleteRemark);
+router.delete('/remarks/:remarkId', requireRole('admin', 'main_technician'), deleteRemark);
 
 // Get single complaint (parameterized route - must come after specific routes)
 router.get('/:id', getComplaint);

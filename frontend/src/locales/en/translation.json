@@ -548,7 +548,11 @@
     "success_remark": "Remark added successfully",
     "success_forward": "Complaint forwarded successfully",
     "error_forward": "Failed to forward complaint",
-    "remark_limit": "Maximum {{limit}} remarks allowed per complaint",
+    "remark_limit": "Remark maximum reach — only {{limit}} remarks per complaint allowed",
+    "delete_remark_title": "Delete Remark",
+    "delete_remark_confirm": "Are you sure you want to delete this remark?",
+    "delete_remark_success": "Remark deleted successfully",
+    "delete_remark_error": "Failed to delete remark",
     "cancelled_title": "Complaint Cancelled",
     "cancelled_message": "{{userName}} cancelled this complaint on {{date}}"
   },

@@ -1153,15 +1153,33 @@ export const deleteRemark = async (req: Request, res: Response): Promise<void> =
         const userId = req.user?.id;
         const role = req.user?.role;
 
-        if (role !== 'technician') { res.status(403).json({ error: 'Access denied' }); return; }
+        // Technician tidak dibenarkan memadam remark (business rule)
+        if (role === 'technician') {
+            res.status(403).json({ error: 'Technician tidak dibenarkan memadam remark' });
+            return;
+        }
 
-        const [existingRemarkRows]: any = await pool.query('SELECT remark_by FROM technician_remarks WHERE id = ?', [remarkId]);
-        const existingRemark = existingRemarkRows[0];
+        // Cari remark dalam kedua-dua table
+        let sourceTable = '';
+        let found = false;
 
-        if (!existingRemark) { res.status(404).json({ error: 'Remark not found' }); return; }
-        if (existingRemark.remark_by !== userId) { res.status(403).json({ error: 'You can only delete your own remarks' }); return; }
+        const [adminRows]: any = await pool.query('SELECT id, remark_by FROM complaint_remarks WHERE id = ?', [remarkId]);
+        if (adminRows.length > 0) {
+            if (adminRows[0].remark_by !== userId) { res.status(403).json({ error: 'You can only delete your own remarks' }); return; }
+            sourceTable = 'complaint_remarks';
+            found = true;
+        } else {
+            const [techRows]: any = await pool.query('SELECT id, remark_by FROM technician_remarks WHERE id = ?', [remarkId]);
+            if (techRows.length > 0) {
+                if (techRows[0].remark_by !== userId) { res.status(403).json({ error: 'You can only delete your own remarks' }); return; }
+                sourceTable = 'technician_remarks';
+                found = true;
+            }
+        }
 
-        await pool.query('DELETE FROM technician_remarks WHERE id = ?', [remarkId]);
+        if (!found) { res.status(404).json({ error: 'Remark not found' }); return; }
+
+        await pool.query(`DELETE FROM ${sourceTable} WHERE id = ?`, [remarkId]);
 
         res.json({ message: 'Remark deleted successfully' });
     } catch (error) {

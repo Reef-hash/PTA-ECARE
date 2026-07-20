@@ -4,10 +4,11 @@ import {
     FileText, User,
     Forward, Send, Save, Printer, XCircle,
     Download, Eye, Wrench, ZoomIn, X, ShieldAlert, Info,
-    Edit2
+    Edit2, Trash2
 } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
 import MainTechLayout from '../../components/MainTechLayout';
+import Modal from '../../components/Modal';
 import api, { getFileUrl } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { Complaint, ComplaintRemark, TechnicianRemark, Technician } from '../../types';
@@ -27,6 +28,7 @@ export default function AdminComplaintDetail() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<any>(null);
     const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
     const [remarkData, setRemarkData] = useState({
@@ -126,6 +128,21 @@ export default function AdminComplaintDetail() {
     const handleCancelEdit = () => {
         setEditingId(null);
         setRemarkData({ status: '', note_transport: '', checking: '', remark: '' });
+    };
+
+    const handleDeleteRemark = async () => {
+        if (!deleteTarget) return;
+        setIsSaving(true);
+        try {
+            await api.delete(`/complaints/remarks/${deleteTarget.id}`);
+            toast.success(t('admin_complaint_detail.delete_remark_success'));
+            setDeleteTarget(null);
+            await loadComplaint();
+        } catch (error: any) {
+            toast.error(error.response?.data?.error || t('admin_complaint_detail.delete_remark_error'));
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handleSaveEdit = async () => {
@@ -505,13 +522,22 @@ export default function AdminComplaintDetail() {
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-xs text-gray-400">{formatDate(remark.created_at)}</span>
                                                         {isOwn && (
+                                                            <>
                                                             <button
                                                                 onClick={() => handleEditRemark(remark)}
                                                                 className="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all"
-                                                                title="Edit catatan"
+                                                                title={t('common_actions.edit')}
                                                             >
                                                                 <Edit2 className="w-3.5 h-3.5" />
                                                             </button>
+                                                            <button
+                                                                onClick={() => setDeleteTarget(remark)}
+                                                                className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all"
+                                                                title={t('common_actions.delete')}
+                                                            >
+                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                            </button>
+                                                            </>
                                                         )}
                                                     </div>
                                                 </div>
@@ -721,6 +747,19 @@ export default function AdminComplaintDetail() {
 
                 </div>
             </div>
+
+            {/* Delete Remark Confirmation Modal */}
+            <Modal
+                isOpen={deleteTarget !== null}
+                onClose={() => setDeleteTarget(null)}
+                title={t('admin_complaint_detail.delete_remark_title')}
+                description={t('admin_complaint_detail.delete_remark_confirm')}
+                confirmLabel={t('common_actions.delete')}
+                cancelLabel={t('common_actions.cancel')}
+                onConfirm={handleDeleteRemark}
+                isLoading={isSaving}
+                variant="danger"
+            />
 
             {/* Edit Remark Modal */}
             {editingId !== null && (
