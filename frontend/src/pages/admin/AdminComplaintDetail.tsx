@@ -734,9 +734,9 @@ export default function AdminComplaintDetail() {
                                     >
                                         <option value="">-- {t('common.select_status')} --</option>
                                         {!isMainTech && <option value="pending">{t('admin_users.status_pending')}</option>}
-                                        <option value="in_process">{t('admin_users.status_in_process')}</option>
+                                        {!isMainTech && <option value="in_process">{t('admin_users.status_in_process')}</option>}
                                         <option value="incomplete">{t('technician_dashboard.status_incomplete', 'Incomplete / Bawa Pulang')}</option>
-                                        <option value="closed">{t('admin_users.status_closed')}</option>
+                                        {!isMainTech && <option value="closed">{t('admin_users.status_closed')}</option>}
                                     </select>
 
                                     <button
