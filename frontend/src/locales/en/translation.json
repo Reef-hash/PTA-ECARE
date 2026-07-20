@@ -586,6 +586,7 @@
     "error_password_fields": "Please fill all password fields"
   },
   "main_tech": {
+    "status_label": "Status:",
     "dashboard": {
       "title": "Incomplete Machines Management",
       "subtitle": "List of complaints that need to be distributed to shop technicians",

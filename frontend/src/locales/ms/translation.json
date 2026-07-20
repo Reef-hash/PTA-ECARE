@@ -586,6 +586,7 @@
     "error_password_fields": "Sila lengkapkan semua ruangan katalaluan"
   },
   "main_tech": {
+    "status_label": "Status:",
     "dashboard": {
       "title": "Pengurusan Mesin Tidak Lengkap",
       "subtitle": "Senarai aduan yang perlu diagihkan kepada juruteknik kedai",

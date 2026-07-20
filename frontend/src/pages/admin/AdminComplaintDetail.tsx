@@ -729,7 +729,7 @@ export default function AdminComplaintDetail() {
 
                                     {isMainTech ? (
                                         <div className="input-field mb-3 bg-gray-50 flex items-center gap-2 text-gray-700">
-                                            <span className="text-xs text-gray-500">{t('common.select_status')}:</span>
+                                            <span className="text-xs text-gray-500">{t('main_tech.status_label')}</span>
                                             <span className="font-medium text-sm">{t('technician_dashboard.status_incomplete', 'Incomplete / Bawa Pulang')}</span>
                                         </div>
                                     ) : (
