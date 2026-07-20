@@ -431,13 +431,15 @@ export default function TechComplaintDetail() {
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 pb-4 border-b border-gray-100 gap-2">
                                 <div className="flex items-center gap-2">
                                     <h3 className="text-lg font-semibold">{t('technician_dashboard.add_remark_title')}</h3>
-                                    <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${
-                                        isQuotaFull
-                                            ? 'bg-red-50 text-red-600 border-red-200'
-                                            : 'bg-blue-50 text-blue-600 border-blue-200'
-                                    }`}>
-                                        {remaining}/{maxRemarks}{isQuotaFull ? ' (Penuh)' : ''}
-                                    </span>
+                                    {isQuotaFull ? (
+                                        <span className="text-xs px-2 py-0.5 rounded-full border font-medium bg-red-50 text-red-600 border-red-200">
+                                            {t('admin_complaint_detail.remark_limit', { limit: maxRemarks })}
+                                        </span>
+                                    ) : (
+                                        <span className="text-xs px-2 py-0.5 rounded-full border font-medium bg-blue-50 text-blue-600 border-blue-200">
+                                            {t('admin_complaint_detail.remark_counter_badge', { remaining, max: maxRemarks })}
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="text-left sm:text-right">
                                     <p className="text-xs text-gray-500">{t('user_dashboard.label_date_updated')}</p>
@@ -446,12 +448,6 @@ export default function TechComplaintDetail() {
                             </div>
 
                             <form onSubmit={handleAddRemark} className="space-y-4">
-                                {currentLimitReached && (
-                                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                                        <strong className="font-bold">{t('technician_dashboard.limit_reached', 'Limit Reached')}: </strong>
-                                        <span className="block sm:inline">{t('admin_complaint_detail.remark_limit', { limit: maxRemarks })}</span>
-                                    </div>
-                                )}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">{t('common_actions.status')}</label>

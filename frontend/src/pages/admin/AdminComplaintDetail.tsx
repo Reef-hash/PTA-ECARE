@@ -576,13 +576,15 @@ export default function AdminComplaintDetail() {
                             <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-2">
                                 <h3 className="text-lg font-semibold">{t('admin_complaint_detail.add_remark')}</h3>
                                 <div className="flex items-center gap-2">
-                                    <span className={`text-xs px-2.5 py-1 rounded-full border font-medium ${
-                                        isQuotaFull
-                                            ? 'bg-red-50 text-red-600 border-red-200'
-                                            : 'bg-blue-50 text-blue-600 border-blue-200'
-                                    }`}>
-                                        {t('admin_complaint_detail.remark_counter_badge', { remaining, max: maxRemarks })}{isQuotaFull ? ` ${t('admin_complaint_detail.remark_quota_full_suffix')}` : ''}
-                                    </span>
+                                    {isQuotaFull ? (
+                                        <span className="text-xs px-2.5 py-1 rounded-full border font-medium bg-red-50 text-red-600 border-red-200">
+                                            {t('admin_complaint_detail.remark_limit', { limit: maxRemarks })}
+                                        </span>
+                                    ) : (
+                                        <span className="text-xs px-2.5 py-1 rounded-full border font-medium bg-blue-50 text-blue-600 border-blue-200">
+                                            {t('admin_complaint_detail.remark_counter_badge', { remaining, max: maxRemarks })}
+                                        </span>
+                                    )}
                                     <div className="text-xs text-gray-500 bg-gray-50 px-2.5 py-1 rounded-full border border-gray-200">
                                         Last Updated: <span className="font-medium">{formatDate(complaint.updated_at)}</span>
                                     </div>
