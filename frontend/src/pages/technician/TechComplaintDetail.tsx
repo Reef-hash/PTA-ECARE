@@ -411,6 +411,7 @@ export default function TechComplaintDetail() {
                                             const forwardParts = remark.remark.split('__FORWARD__');
                                             const forwardText = forwardParts[1]?.trim();
                                             const techName = forwardText?.replace('Complaint Forward to Technician : ', '').trim() || forwardText || '';
+                                            const forwarderRole = remark.resolved_user?.role === 'main_technician' ? t('common.main_technician') : t('common.admin');
                                             return (
                                                 <div key={`fwd-${remark.id}`} className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
                                                     <div className="flex items-center gap-2 text-sm">
@@ -420,6 +421,9 @@ export default function TechComplaintDetail() {
                                                         </span>
                                                         <span className="text-xs text-indigo-400 ml-auto">{formatDate(remark.created_at)}</span>
                                                     </div>
+                                                    <p className="text-xs text-indigo-400 mt-0.5 ml-6">
+                                                        oleh {forwarderRole}
+                                                    </p>
                                                 </div>
                                             );
                                         })}

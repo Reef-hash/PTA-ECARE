@@ -533,6 +533,7 @@ export default function AdminComplaintDetail() {
                                             <div className="space-y-2">
                                                 {forwardEntries.map((entry) => {
                                                     const techName = entry.forwardText.replace('Complaint Forward to Technician : ', '').trim();
+                                                    const forwarderRole = entry.remark.resolved_user?.role === 'main_technician' ? t('common.main_technician') : t('common.admin');
                                                     return (
                                                         <div key={`fwd-${entry.remark._source}-${entry.remark.id}`} className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
                                                             <div className="flex items-center gap-2 text-sm">
@@ -542,6 +543,9 @@ export default function AdminComplaintDetail() {
                                                                 </span>
                                                                 <span className="text-xs text-indigo-400 ml-auto">{formatDate(entry.remark.created_at)}</span>
                                                             </div>
+                                                            <p className="text-xs text-indigo-400 mt-0.5 ml-6">
+                                                                oleh {forwarderRole}
+                                                            </p>
                                                         </div>
                                                     );
                                                 })}
