@@ -3,7 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import {
     FileText, User,
     Forward, Send, Save, Printer, XCircle,
-    Download, Eye, Wrench, ZoomIn, X, ShieldAlert, Info
+    Download, Eye, Wrench, ZoomIn, X, ShieldAlert, Info,
+    Edit2
 } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
 import MainTechLayout from '../../components/MainTechLayout';
@@ -15,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 
 export default function AdminComplaintDetail() {
     const { t, i18n } = useTranslation();
-    const { role } = useAuth();
+    const { user, role } = useAuth();
     const isMainTech = role === 'main_technician';
     const Layout = isMainTech ? MainTechLayout : AdminLayout;
     const { id } = useParams();
@@ -25,6 +26,7 @@ export default function AdminComplaintDetail() {
     const [technicians, setTechnicians] = useState<Technician[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [editingId, setEditingId] = useState<number | null>(null);
     const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
     const [remarkData, setRemarkData] = useState({
@@ -73,12 +75,18 @@ export default function AdminComplaintDetail() {
 
         setIsSaving(true);
         try {
-            await api.post(`/complaints/${id}/remark`, remarkData);
-            toast.success('Catatan berjaya ditambah');
+            if (editingId) {
+                await api.put(`/complaints/remarks/${editingId}`, remarkData);
+                toast.success('Catatan berjaya dikemaskini');
+            } else {
+                await api.post(`/complaints/${id}/remark`, remarkData);
+                toast.success('Catatan berjaya ditambah');
+            }
             setRemarkData({ status: '', note_transport: '', checking: '', remark: '' });
+            setEditingId(null);
             await loadComplaint();
         } catch (error: any) {
-            toast.error(error.response?.data?.error || 'Gagal menambah catatan');
+            toast.error(error.response?.data?.error || 'Gagal menyimpan catatan');
         } finally {
             setIsSaving(false);
         }
@@ -109,6 +117,21 @@ export default function AdminComplaintDetail() {
         } finally {
             setIsSaving(false);
         }
+    };
+
+    const handleEditRemark = (remark: any) => {
+        setEditingId(remark.id);
+        setRemarkData({
+            status: remark.status || '',
+            note_transport: remark.note_transport || '',
+            checking: remark.checking || '',
+            remark: (remark.remark || '').replace(/__FORWARD__.*$/, '').trim(),
+        });
+    };
+
+    const handleCancelEdit = () => {
+        setEditingId(null);
+        setRemarkData({ status: '', note_transport: '', checking: '', remark: '' });
     };
 
     const getStatusBadge = (status: string) => {
@@ -444,6 +467,62 @@ export default function AdminComplaintDetail() {
                         </div>
                     </div>
 
+                    {/* Remark List - Show history of all remarks with Edit for own remarks */}
+                    {(adminRemarks.length > 0 || techRemarks.length > 0) && (
+                        <div className="card">
+                            <h3 className="text-lg font-semibold mb-4">Senarai Catatan</h3>
+                            <div className="space-y-3">
+                                {[...adminRemarks.map((r: any) => ({ ...r, _source: 'admin' })), ...techRemarks.map((r: any) => ({ ...r, _source: 'tech' }))]
+                                    .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                                    .map((remark: any) => {
+                                        const isOwn = remark.remark_by === user?.id;
+                                        return (
+                                            <div key={`${remark._source}-${remark.id}`} className="border rounded-lg p-4 hover:shadow-sm transition-shadow">
+                                                <div className="flex items-start justify-between gap-2 mb-2">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <span className="text-sm font-medium text-gray-800">
+                                                            {remark._source === 'admin'
+                                                                ? (remark.resolved_user?.name || 'Admin')
+                                                                : (remark.technicians?.name || 'Teknisi')}
+                                                        </span>
+                                                        <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">
+                                                            {remark._source === 'admin' ? 'Admin' : 'Teknisi'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs text-gray-400">{formatDate(remark.created_at)}</span>
+                                                        {isOwn && (
+                                                            <button
+                                                                onClick={() => handleEditRemark(remark)}
+                                                                className="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all"
+                                                                title="Edit catatan"
+                                                            >
+                                                                <Edit2 className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-wrap gap-1.5 mb-2">
+                                                    {remark.status && getStatusBadge(remark.status)}
+                                                </div>
+                                                {remark.note_transport && (
+                                                    <p className="text-sm text-gray-600"><span className="font-medium">Transport:</span> {remark.note_transport}</p>
+                                                )}
+                                                {remark.checking && (
+                                                    <p className="text-sm text-gray-600"><span className="font-medium">Checking:</span> {remark.checking}</p>
+                                                )}
+                                                {remark.remark && (
+                                                    <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">
+                                                        {remark.remark.replace(/__FORWARD__.*$/, '').trim() || remark.remark}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Add Remark Form - Hide for cancelled complaints */}
                     {complaint.status !== 'cancelled' && (
                         <div className="card">
@@ -549,16 +628,24 @@ export default function AdminComplaintDetail() {
                                                 placeholder="Catatan tambahan..."
                                             />
                                         </div>
-                                        <button type="submit" disabled={isSaving} className="btn-primary flex items-center gap-2">
-                                            {isSaving ? (
-                                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                            ) : (
-                                                <>
-                                                    <Save className="w-4 h-4" />
-                                                    {t('admin_complaint_detail.save_remark')}
-                                                </>
+                                        <div className="flex items-center gap-2">
+                                            {editingId && (
+                                                <button type="button" onClick={handleCancelEdit} className="btn-secondary flex items-center gap-2">
+                                                    <X className="w-4 h-4" />
+                                                    Batal
+                                                </button>
                                             )}
-                                        </button>
+                                            <button type="submit" disabled={isSaving} className="btn-primary flex items-center gap-2">
+                                                {isSaving ? (
+                                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                ) : (
+                                                    <>
+                                                        <Save className="w-4 h-4" />
+                                                        {editingId ? 'Kemaskini Catatan' : t('admin_complaint_detail.save_remark')}
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
                                     </form>
                                 );
                             })()}
