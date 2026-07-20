@@ -690,9 +690,9 @@ export const updateComplaint = async (req: Request, res: Response): Promise<void
 };
 
 // Utility: semak kuota remark PER-ROLE sebelum insert
-// - Admin (complaint_remarks): max 3 (6 jika incomplete workflow)
-// - Technician (technician_remarks): max 3 (6 jika incomplete workflow), dikira per-user
-// - Main Technician (complaint_remarks): max 1, tiada escalation
+// - Admin (complaint_remarks): max 3, tiada escalation
+// - Technician (technician_remarks): max 3, dikira per-user, tiada escalation
+// - Main Technician (complaint_remarks): max 1
 async function checkRemarkQuota(
     complaintId: number,
     callerRole: string | undefined,
@@ -705,17 +705,7 @@ async function checkRemarkQuota(
     else if (callerRole === 'main_technician') baseMax = 1;
     else return { allowed: false, maxRemarks: 0, remaining: 0 };
 
-    const [adminIncomplete]: any = await pool.query(
-        `SELECT COUNT(*) as count FROM complaint_remarks WHERE complaint_id = ? AND status IN ('incomplete', 'bawa_pulang')`,
-        [complaintId]
-    );
-    const [techIncomplete]: any = await pool.query(
-        `SELECT COUNT(*) as count FROM technician_remarks WHERE complaint_id = ? AND status IN ('incomplete', 'bawa_pulang')`,
-        [complaintId]
-    );
-    const isIncompleteHistory = adminIncomplete[0].count > 0 || techIncomplete[0].count > 0;
-    const isCriticalWorkflow = isIncompleteHistory || checkStatus === 'incomplete' || checkStatus === 'bawa_pulang';
-    const maxRemarks = (isCriticalWorkflow && callerRole !== 'main_technician') ? 6 : baseMax;
+    const maxRemarks = baseMax;
 
     const table = callerRole === 'technician' ? 'technician_remarks' : 'complaint_remarks';
     const [countRow]: any = await pool.query(
