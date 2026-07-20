@@ -43,8 +43,8 @@ router.post('/', requireRole('user'), uploadComplaintFiles, createComplaint);
 // Resolve numeric ID to report_number (for notification navigation)
 router.get('/resolve-id/:id', resolveNumericId);
 
-// Update/Delete remark (technician only)
-router.put('/remarks/:remarkId', requireRole('technician'), validate(addRemarkSchema), updateRemark);
+// Update remark (admin, main_technician only — technician tidak dibenarkan edit)
+router.put('/remarks/:remarkId', requireRole('admin', 'main_technician'), validate(addRemarkSchema), updateRemark);
 router.delete('/remarks/:remarkId', requireRole('technician'), deleteRemark);
 
 // Get single complaint (parameterized route - must come after specific routes)

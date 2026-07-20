@@ -675,6 +675,30 @@ export const updateComplaint = async (req: Request, res: Response): Promise<void
     }
 };
 
+// Utility: semak kuota remark sebelum insert (diguna shared oleh addRemark dan forwardComplaint)
+async function checkRemarkQuota(complaintId: number, checkStatus?: string): Promise<{ allowed: boolean; maxRemarks: number }> {
+    const [adminIncomplete]: any = await pool.query(
+        `SELECT COUNT(*) as count FROM complaint_remarks WHERE complaint_id = ? AND status IN ('incomplete', 'bawa_pulang')`,
+        [complaintId]
+    );
+    const [techIncomplete]: any = await pool.query(
+        `SELECT COUNT(*) as count FROM technician_remarks WHERE complaint_id = ? AND status IN ('incomplete', 'bawa_pulang')`,
+        [complaintId]
+    );
+    const isIncompleteHistory = adminIncomplete[0].count > 0 || techIncomplete[0].count > 0;
+    const isCriticalWorkflow = isIncompleteHistory || checkStatus === 'incomplete' || checkStatus === 'bawa_pulang';
+    const MAX_REMARKS = isCriticalWorkflow ? 6 : 3;
+
+    const [adminCountRow]: any = await pool.query('SELECT COUNT(*) as count FROM complaint_remarks WHERE complaint_id = ?', [complaintId]);
+    const [techCountRow]: any = await pool.query('SELECT COUNT(*) as count FROM technician_remarks WHERE complaint_id = ?', [complaintId]);
+    const totalRemarks = adminCountRow[0].count + techCountRow[0].count;
+
+    if (totalRemarks >= MAX_REMARKS) {
+        return { allowed: false, maxRemarks: MAX_REMARKS };
+    }
+    return { allowed: true, maxRemarks: MAX_REMARKS };
+}
+
 // Add remark to complaint (Admin)
 export const addRemark = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -687,24 +711,9 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
         if (!id) { res.status(404).json({ error: 'Complaint not found' }); return; }
 
         if (role === 'admin' || role === 'technician') {
-            const [adminIncomplete]: any = await pool.query(
-                `SELECT COUNT(*) as count FROM complaint_remarks WHERE complaint_id = ? AND status IN ('incomplete', 'bawa_pulang')`,
-                [id]
-            );
-            const [techIncomplete]: any = await pool.query(
-                `SELECT COUNT(*) as count FROM technician_remarks WHERE complaint_id = ? AND status IN ('incomplete', 'bawa_pulang')`,
-                [id]
-            );
-            const isIncompleteHistory = adminIncomplete[0].count > 0 || techIncomplete[0].count > 0;
-            const isCriticalWorkflow = isIncompleteHistory || status === 'incomplete' || status === 'bawa_pulang';
-            const MAX_REMARKS = isCriticalWorkflow ? 6 : 3;
-
-            const [adminCountRow]: any = await pool.query('SELECT COUNT(*) as count FROM complaint_remarks WHERE complaint_id = ?', [id]);
-            const [techCountRow]: any = await pool.query('SELECT COUNT(*) as count FROM technician_remarks WHERE complaint_id = ?', [id]);
-            const totalRemarks = adminCountRow[0].count + techCountRow[0].count;
-
-            if (totalRemarks >= MAX_REMARKS) {
-                res.status(400).json({ error: `Limit reached: Maximum ${MAX_REMARKS} remarks allowed per complaint.` });
+            const quota = await checkRemarkQuota(id, status);
+            if (!quota.allowed) {
+                res.status(400).json({ error: `Limit reached: Maximum ${quota.maxRemarks} remarks allowed per complaint.` });
                 return;
             }
         }
@@ -933,18 +942,43 @@ export const updateRemark = async (req: Request, res: Response): Promise<void> =
         const userId = req.user?.id;
         const role = req.user?.role;
 
-        if (role !== 'technician') { res.status(403).json({ error: 'Access denied' }); return; }
+        // Technician tidak dibenarkan mengedit remark yang telah dihantar (business rule)
+        if (role === 'technician') {
+            res.status(403).json({ error: 'Technician tidak dibenarkan mengedit remark yang telah dihantar' });
+            return;
+        }
 
-        const [existingRemarkRows]: any = await pool.query('SELECT remark_by, complaint_id FROM technician_remarks WHERE id = ?', [remarkId]);
-        const existingRemark = existingRemarkRows[0];
+        // Cari remark dalam kedua-dua table (admin/main_tech → complaint_remarks, technician → technician_remarks)
+        let existingRemark: any = null;
+        let sourceTable = '';
+
+        const [adminRows]: any = await pool.query('SELECT id, remark_by, complaint_id, note_transport, checking, remark, status FROM complaint_remarks WHERE id = ?', [remarkId]);
+        if (adminRows.length > 0) {
+            existingRemark = adminRows[0];
+            sourceTable = 'complaint_remarks';
+        } else {
+            const [techRows]: any = await pool.query('SELECT id, remark_by, complaint_id, note_transport, checking, remark, status FROM technician_remarks WHERE id = ?', [remarkId]);
+            if (techRows.length > 0) {
+                existingRemark = techRows[0];
+                sourceTable = 'technician_remarks';
+            }
+        }
 
         if (!existingRemark) { res.status(404).json({ error: 'Remark not found' }); return; }
         if (existingRemark.remark_by !== userId) { res.status(403).json({ error: 'You can only edit your own remarks' }); return; }
 
-        await pool.query(
-            'UPDATE technician_remarks SET note_transport = ?, checking = ?, remark = ?, status = ? WHERE id = ?',
-            [note_transport || null, checking || null, remark || null, status || null, remarkId]
-        );
+        // Update remark dalam table yang betul
+        if (sourceTable === 'complaint_remarks') {
+            await pool.query(
+                'UPDATE complaint_remarks SET note_transport = ?, checking = ?, remark = ?, status = ? WHERE id = ?',
+                [note_transport || null, checking || null, remark || null, status || null, remarkId]
+            );
+        } else {
+            await pool.query(
+                'UPDATE technician_remarks SET note_transport = ?, checking = ?, remark = ?, status = ? WHERE id = ?',
+                [note_transport || null, checking || null, remark || null, status || null, remarkId]
+            );
+        }
 
         if (status) {
             const complaintId = existingRemark.complaint_id;
@@ -1169,6 +1203,13 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
             'INSERT INTO forward_history (complaint_id, forward_from, forward_to) VALUES (?, ?, ?)',
             [id, complaint.assigned_to || adminId, technician_id]
         );
+
+        // Check remark quota sebelum insert (route guard ensures only admin/main_technician reach here)
+        const quota = await checkRemarkQuota(id, status);
+        if (!quota.allowed) {
+            res.status(400).json({ error: `Limit reached: Maximum ${quota.maxRemarks} remarks allowed per complaint.` });
+            return;
+        }
 
         const forwardSuffix = `Complaint Forward to Technician : ${techExists.name}`;
         const remarkText = remark ? `${remark}\n__FORWARD__${forwardSuffix}` : `__FORWARD__${forwardSuffix}`;

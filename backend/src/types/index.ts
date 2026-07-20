@@ -197,7 +197,7 @@ export interface ForwardComplaintRequest {
 }
 export interface JwtPayload {
     id: string;
-    role: 'user' | 'admin' | 'technician';
+    role: 'user' | 'admin' | 'technician' | 'main_technician';
     username?: string;
     ic_number?: string;
 }
