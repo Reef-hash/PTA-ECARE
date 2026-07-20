@@ -560,6 +560,7 @@
     "delete_remark_confirm": "Are you sure you want to delete this remark?",
     "delete_remark_success": "Remark deleted successfully",
     "delete_remark_error": "Failed to delete remark",
+    "forward_history_title": "Forward History",
     "cancelled_title": "Complaint Cancelled",
     "cancelled_message": "{{userName}} cancelled this complaint on {{date}}"
   },

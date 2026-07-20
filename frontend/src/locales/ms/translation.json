@@ -560,6 +560,7 @@
     "delete_remark_confirm": "Adakah anda pasti mahu memadam catatan ini?",
     "delete_remark_success": "Catatan berjaya dipadam",
     "delete_remark_error": "Gagal memadam catatan",
+    "forward_history_title": "Kerja Ditugaskan",
     "cancelled_title": "Aduan Telah Dibatalkan",
     "cancelled_message": "{{userName}} telah membatalkan aduan ini pada {{date}}"
   },

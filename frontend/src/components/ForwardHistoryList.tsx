@@ -21,7 +21,7 @@ export default function ForwardHistoryList({ entries }: ForwardHistoryListProps)
         <div className="mb-6">
             <h4 className="font-semibold mb-3 flex items-center gap-2 text-indigo-700">
                 <Forward className="w-4 h-4" />
-                Kerja Ditugaskan
+                {t('admin_complaint_detail.forward_history_title')}
             </h4>
             <div className="space-y-2">
                 {entries.map(entry => {
@@ -31,12 +31,12 @@ export default function ForwardHistoryList({ entries }: ForwardHistoryListProps)
                             <div className="flex items-center gap-2 text-sm">
                                 <Forward className="w-3.5 h-3.5 text-indigo-500" />
                                 <span className="text-indigo-700">
-                                    Diagihkan kepada: <strong>{entry.techName}</strong>
+                                    {t('status_msg.assigned_to')}: <strong>{entry.techName}</strong>
                                 </span>
                                 <span className="text-xs text-indigo-400 ml-auto">{entry.createdAt}</span>
                             </div>
                             <p className="text-xs text-indigo-400 mt-0.5 ml-6">
-                                oleh {roleLabel}
+                                {t('common.by')} {roleLabel}
                             </p>
                         </div>
                     );
