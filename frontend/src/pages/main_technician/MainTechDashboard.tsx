@@ -143,7 +143,7 @@ export default function MainTechDashboard() {
                                                 })}
                                             </span>
 
-                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider mt-0.5">{t('table.original_technician', 'Juruteknik Asal')}</span>
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider mt-0.5">{t('table.original_technician', 'Juruteknik')}</span>
                                             <div>
                                                 <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700">
                                                     {complaint.technicians?.name || complaint.assigned_to || 'Tidak Diketahui'}
@@ -171,7 +171,7 @@ export default function MainTechDashboard() {
                                     <tr>
                                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{t('admin_users.report_no', 'No. Laporan')}</th>
                                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{t('admin_complaint_detail.date_created', 'Tarikh Dicipta')}</th>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('table.original_technician', 'Juruteknik Asal')}</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('table.original_technician', 'Juruteknik')}</th>
                                         <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common_actions.action', 'Tindakan')}</th>
                                     </tr>
                                 </thead>

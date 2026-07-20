@@ -164,8 +164,8 @@
     "date": "Tarikh",
     "assigned": "Diagihkan",
     "report_number": "No Laporan",
-    "original_technician": "Juruteknik Asal",
-    "incomplete_reason": "Tidak Siap / Bawa Balik Bengkel"
+    "original_technician": "Juruteknik",
+    "incomplete_reason": "Defect Details"
   },
   "complaint_form": {
     "defect_details": "Kerosakan",

@@ -165,7 +165,7 @@
     "assigned": "Assigned",
     "report_number": "Report No",
     "original_technician": "Original Technician",
-    "incomplete_reason": "Incomplete Reason"
+    "incomplete_reason": "Defect Details"
   },
   "complaint_form": {
     "defect_details": "Damage Details",
