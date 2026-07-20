@@ -506,10 +506,10 @@ export default function AdminComplaintDetail() {
                                                     {remark.status && getStatusBadge(remark.status)}
                                                 </div>
                                                 {remark.note_transport && (
-                                                    <p className="text-sm text-gray-600"><span className="font-medium">Transport:</span> {remark.note_transport}</p>
+                                                    <p className="text-sm text-gray-600"><span className="font-medium">{t('admin_complaint_detail.transport_note')}:</span> {remark.note_transport}</p>
                                                 )}
                                                 {remark.checking && (
-                                                    <p className="text-sm text-gray-600"><span className="font-medium">Checking:</span> {remark.checking}</p>
+                                                    <p className="text-sm text-gray-600"><span className="font-medium">{t('admin_complaint_detail.checking')}:</span> {remark.checking}</p>
                                                 )}
                                                 {remark.remark && (
                                                     <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">
