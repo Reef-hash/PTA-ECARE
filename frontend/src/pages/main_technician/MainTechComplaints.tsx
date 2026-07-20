@@ -85,7 +85,7 @@ export default function MainTechComplaints() {
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">{getTitle()}</h1>
-                            <p className="text-gray-500 mt-1">Senarai aduan untuk kategori ini</p>
+                            <p className="text-gray-500 mt-1">{t('main_tech.dashboard.subtitle_complaints')}</p>
                         </div>
                     </div>
                 </div>
@@ -120,7 +120,7 @@ export default function MainTechComplaints() {
                             ) : (
                                 complaints.map((complaint) => {
                                     const details = getIncompleteDetails(complaint);
-                                    const isAssignedTo = complaint.technicians?.name || complaint.assigned_to || 'Tidak Diketahui';
+                                    const isAssignedTo = complaint.technicians?.name || complaint.assigned_to || {t('common.unknown')};
 
                                     return (
                                         <div key={complaint.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
@@ -161,14 +161,14 @@ export default function MainTechComplaints() {
                                                         className="w-full inline-flex justify-center items-center gap-1.5 px-3 py-2 bg-primary-50 text-primary-700 hover:bg-primary-100 text-xs font-medium rounded-lg transition-colors border border-primary-100"
                                                     >
                                                         <ArrowRightCircle className="w-4 h-4" />
-                                                        Forward Job
+                                                        {t('main_tech.dashboard.forward_job')}
                                                     </Link>
                                                 ) : (
                                                     <Link
                                                         to={`/main-tech/complaint/${complaint.report_number}`}
                                                         className="w-full inline-flex justify-center items-center gap-1.5 px-3 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-medium rounded-lg transition-colors border border-indigo-100"
                                                     >
-                                                        <Eye className="w-4 h-4" />{t('user_dashboard.view_track_repair', 'UPDATE REPAIR PROGRESS')}</Link>
+                                                        <Eye className="w-4 h-4" />{t('user_dashboard.view_track_repair', 'TRACK REPAIR PROGRESS')}</Link>
                                                 )}
                                             </div>
                                         </div>
@@ -214,7 +214,7 @@ export default function MainTechComplaints() {
                                     ) : (
                                         complaints.map((complaint) => {
                                             const details = getIncompleteDetails(complaint);
-                                            const isAssignedTo = complaint.technicians?.name || complaint.assigned_to || 'Tidak Diketahui';
+                                            const isAssignedTo = complaint.technicians?.name || complaint.assigned_to || {t('common.unknown')};
 
                                             return (
                                                 <tr key={complaint.id} className="hover:bg-gray-50 transition-colors">
@@ -256,7 +256,7 @@ export default function MainTechComplaints() {
                                                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded transition-colors shadow-sm"
                                                             >
                                                                 <ArrowRightCircle className="w-3.5 h-3.5" />
-                                                                Forward Job
+                                                                {t('main_tech.dashboard.forward_job')}
                                                             </Link>
                                                         ) : (
                                                             <Link

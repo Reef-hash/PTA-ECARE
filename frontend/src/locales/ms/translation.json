@@ -80,7 +80,8 @@
     "waiting": "Menunggu...",
     "waiting_next_step": "Menunggu langkah seterusnya...",
     "name": "Nama",
-    "department": "Jabatan"
+    "department": "Jabatan",
+    "unknown": "Tidak Diketahui"
   },
   "status_msg": {
     "cancelled_by": "Aduan telah dibatalkan oleh",
@@ -165,7 +166,12 @@
     "assigned": "Diagihkan",
     "report_number": "No Laporan",
     "original_technician": "Juruteknik",
-    "incomplete_reason": "Butiran Kerosakan"
+    "incomplete_reason": "Butiran Kerosakan",
+    "report_no_date": "No. Laporan / Tarikh",
+    "transport_distance": "Jarak Transport",
+    "reason": "Sebab",
+    "distance": "Jarak",
+    "no_records": "Tiada rekod dijumpai"
   },
   "complaint_form": {
     "defect_details": "Kerosakan",
@@ -580,7 +586,11 @@
         "not_forwarded": "Belum Diagih",
         "assigned": "Telah Diagih",
         "closed": "Selesai"
-      }
+      },
+      "machine_count_one": "{{count}} Mesin",
+      "machine_count_other": "{{count}} Mesin",
+      "forward_job": "Forward Job",
+      "subtitle_complaints": "Senarai aduan untuk kategori ini"
     },
     "layout": {
       "sidebar": {

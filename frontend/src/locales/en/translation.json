@@ -80,7 +80,8 @@
     "waiting": "Waiting...",
     "waiting_next_step": "Waiting for next step...",
     "name": "Name",
-    "department": "Department"
+    "department": "Department",
+    "unknown": "Unknown"
   },
   "status_msg": {
     "cancelled_by": "Complaint cancelled by",
@@ -165,7 +166,12 @@
     "assigned": "Assigned",
     "report_number": "Report No",
     "original_technician": "Technician",
-    "incomplete_reason": "Defect Details"
+    "incomplete_reason": "Defect Details",
+    "report_no_date": "Report No. / Date",
+    "transport_distance": "Transport Distance",
+    "reason": "Reason",
+    "distance": "Distance",
+    "no_records": "No records found"
   },
   "complaint_form": {
     "defect_details": "Damage Details",
@@ -580,7 +586,11 @@
         "not_forwarded": "Not Assigned",
         "assigned": "Assigned",
         "closed": "Completed"
-      }
+      },
+      "machine_count_one": "{{count}} Machine",
+      "machine_count_other": "{{count}} Machines",
+      "forward_job": "Forward Job",
+      "subtitle_complaints": "List of complaints for this category"
     },
     "layout": {
       "sidebar": {
