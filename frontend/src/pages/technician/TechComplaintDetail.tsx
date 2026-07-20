@@ -505,7 +505,7 @@ export default function TechComplaintDetail() {
                                         ) : (
                                             <>
                                                 <Save className="w-4 h-4" />
-                                                {editingId ? 'Kemaskini Catatan' : (isQuotaFull ? 'Kuota Penuh' : t('technician_dashboard.btn_save_remark'))}
+                                                {editingId ? t('technician_dashboard.btn_update_remark') : (isQuotaFull ? t('admin_complaint_detail.remark_quota_full_btn') : t('technician_dashboard.btn_save_remark'))}
                                             </>
                                         )}
                                     </button>

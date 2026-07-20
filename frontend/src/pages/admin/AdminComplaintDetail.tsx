@@ -581,7 +581,7 @@ export default function AdminComplaintDetail() {
                                             ? 'bg-red-50 text-red-600 border-red-200'
                                             : 'bg-blue-50 text-blue-600 border-blue-200'
                                     }`}>
-                                        Baki Catatan: {remaining}/{maxRemarks}{isQuotaFull ? ' (Kuota Penuh)' : ''}
+                                        {t('admin_complaint_detail.remark_counter_badge', { remaining, max: maxRemarks })}{isQuotaFull ? ` ${t('admin_complaint_detail.remark_quota_full_suffix')}` : ''}
                                     </span>
                                     <div className="text-xs text-gray-500 bg-gray-50 px-2.5 py-1 rounded-full border border-gray-200">
                                         Last Updated: <span className="font-medium">{formatDate(complaint.updated_at)}</span>
@@ -676,7 +676,7 @@ export default function AdminComplaintDetail() {
                                         ) : (
                                             <>
                                                 <Save className="w-4 h-4" />
-                                                {isQuotaFull ? 'Kuota Catatan Penuh' : t('admin_complaint_detail.save_remark')}
+                                                {isQuotaFull ? t('admin_complaint_detail.remark_quota_full_btn') : t('admin_complaint_detail.save_remark')}
                                             </>
                                         )}
                                     </button>
