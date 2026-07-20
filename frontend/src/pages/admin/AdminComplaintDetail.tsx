@@ -75,15 +75,9 @@ export default function AdminComplaintDetail() {
 
         setIsSaving(true);
         try {
-            if (editingId) {
-                await api.put(`/complaints/remarks/${editingId}`, remarkData);
-                toast.success('Catatan berjaya dikemaskini');
-            } else {
-                await api.post(`/complaints/${id}/remark`, remarkData);
-                toast.success('Catatan berjaya ditambah');
-            }
+            await api.post(`/complaints/${id}/remark`, remarkData);
+            toast.success('Catatan berjaya ditambah');
             setRemarkData({ status: '', note_transport: '', checking: '', remark: '' });
-            setEditingId(null);
             await loadComplaint();
         } catch (error: any) {
             toast.error(error.response?.data?.error || 'Gagal menyimpan catatan');
@@ -132,6 +126,25 @@ export default function AdminComplaintDetail() {
     const handleCancelEdit = () => {
         setEditingId(null);
         setRemarkData({ status: '', note_transport: '', checking: '', remark: '' });
+    };
+
+    const handleSaveEdit = async () => {
+        if (!remarkData.remark && !remarkData.status) {
+            toast.error('Sila masukkan catatan atau status');
+            return;
+        }
+        setIsSaving(true);
+        try {
+            await api.put(`/complaints/remarks/${editingId}`, remarkData);
+            toast.success('Catatan berjaya dikemaskini');
+            setEditingId(null);
+            setRemarkData({ status: '', note_transport: '', checking: '', remark: '' });
+            await loadComplaint();
+        } catch (error: any) {
+            toast.error(error.response?.data?.error || 'Gagal menyimpan catatan');
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const getStatusBadge = (status: string) => {
@@ -513,7 +526,7 @@ export default function AdminComplaintDetail() {
                                                 )}
                                                 {remark.remark && (
                                                     <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">
-                                                        {remark.remark.replace(/__FORWARD__.*$/, '').trim() || remark.remark}
+                                                        <span className="font-medium">{t('admin_complaint_detail.remark')}:</span> {remark.remark.replace(/__FORWARD__.*$/, '').trim() || remark.remark}
                                                     </p>
                                                 )}
                                             </div>
@@ -628,24 +641,16 @@ export default function AdminComplaintDetail() {
                                                 placeholder="Catatan tambahan..."
                                             />
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            {editingId && (
-                                                <button type="button" onClick={handleCancelEdit} className="btn-secondary flex items-center gap-2">
-                                                    <X className="w-4 h-4" />
-                                                    Batal
-                                                </button>
+                                        <button type="submit" disabled={isSaving} className="btn-primary flex items-center gap-2">
+                                            {isSaving ? (
+                                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                            ) : (
+                                                <>
+                                                    <Save className="w-4 h-4" />
+                                                    {t('admin_complaint_detail.save_remark')}
+                                                </>
                                             )}
-                                            <button type="submit" disabled={isSaving} className="btn-primary flex items-center gap-2">
-                                                {isSaving ? (
-                                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                                ) : (
-                                                    <>
-                                                        <Save className="w-4 h-4" />
-                                                        {editingId ? 'Kemaskini Catatan' : t('admin_complaint_detail.save_remark')}
-                                                    </>
-                                                )}
-                                            </button>
-                                        </div>
+                                        </button>
                                     </form>
                                 );
                             })()}
@@ -714,6 +719,102 @@ export default function AdminComplaintDetail() {
 
                 </div>
             </div>
+
+            {/* Edit Remark Modal */}
+            {editingId !== null && (
+                <div
+                    className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+                    onClick={handleCancelEdit}
+                >
+                    <div
+                        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg transform transition-all duration-300 scale-100 border border-gray-200"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="p-6 pb-2 flex items-start justify-between">
+                            <h3 className="text-xl font-bold text-gray-900">{t('admin_complaint_detail.edit_remark') || 'Edit Catatan'}</h3>
+                            <button
+                                onClick={handleCancelEdit}
+                                className="text-gray-400 hover:text-gray-500 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+                                disabled={isSaving}
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-6 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin_complaint_detail.transport_note')}</label>
+                                    <input
+                                        type="text"
+                                        value={remarkData.note_transport}
+                                        onChange={(e) => setRemarkData({ ...remarkData, note_transport: e.target.value })}
+                                        className="input-field"
+                                        placeholder={t('admin_complaint_detail.transport_note')}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin_complaint_detail.checking')}</label>
+                                    <input
+                                        type="text"
+                                        value={remarkData.checking}
+                                        onChange={(e) => setRemarkData({ ...remarkData, checking: e.target.value })}
+                                        className="input-field"
+                                        placeholder={t('admin_complaint_detail.checking')}
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin_complaint_detail.remark')}</label>
+                                <textarea
+                                    value={remarkData.remark}
+                                    onChange={(e) => setRemarkData({ ...remarkData, remark: e.target.value })}
+                                    rows={3}
+                                    className="input-field resize-none"
+                                    placeholder={t('admin_complaint_detail.remark')}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">{t('admin_complaint_detail.status')}</label>
+                                <select
+                                    value={remarkData.status}
+                                    onChange={(e) => setRemarkData({ ...remarkData, status: e.target.value })}
+                                    className="input-field"
+                                >
+                                    <option value="">-- {t('admin_complaint_detail.select_status')} --</option>
+                                    {!isMainTech && <option value="pending">{t('admin_users.status_pending')}</option>}
+                                    <option value="in_process">{t('admin_users.status_in_process')}</option>
+                                    <option value="incomplete">{t('technician_dashboard.status_incomplete', 'Incomplete / Bawa Pulang')}</option>
+                                    <option value="closed">{t('admin_users.status_closed')}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="p-6 pt-2 flex items-center justify-end gap-3">
+                            <button
+                                onClick={handleCancelEdit}
+                                disabled={isSaving}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                            >
+                                {t('common_actions.cancel')}
+                            </button>
+                            <button
+                                onClick={handleSaveEdit}
+                                disabled={isSaving}
+                                className="px-4 py-2 text-sm font-medium text-white rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all flex items-center gap-2 disabled:opacity-70"
+                            >
+                                {isSaving && (
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                )}
+                                {t('admin_complaint_detail.save_remark')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Lightbox Modal */}
             {lightboxUrl && (
