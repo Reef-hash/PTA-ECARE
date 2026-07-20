@@ -40,7 +40,7 @@ export default function AdminMainTechQueue() {
             const response = await api.get(`/complaints?status=${activeFilter}`);
             setComplaints(response.data.complaints || []);
         } catch (error) {
-            toast.error('Gagal memuatkan data');
+            toast.error(t('common.error_load'));
         } finally {
             setIsLoading(false);
         }
@@ -87,10 +87,10 @@ export default function AdminMainTechQueue() {
     };
 
     const statCards = [
-        { label: t('main_tech.dashboard.cards.incomplete', 'Incomplete / Bawa Pulang'), value: stats.incomplete, icon: AlertCircle, color: 'orange', filter: 'incomplete' },
-        { label: t('main_tech.dashboard.cards.not_forwarded', 'Not Assigned'), value: stats.not_forwarded, icon: Clock, color: 'red', filter: 'not_forwarded' },
-        { label: t('main_tech.dashboard.cards.assigned', 'Job Assigned'), value: stats.assigned, icon: UserCheck, color: 'teal', filter: 'job_assigned' },
-        { label: t('main_tech.dashboard.cards.closed', 'Complete'), value: stats.closed, icon: CheckCircle, color: 'green', filter: 'closed' },
+        { label: t('main_tech.dashboard.cards.incomplete'), value: stats.incomplete_total, icon: AlertCircle, color: 'orange', filter: 'incomplete' },
+        { label: t('main_tech.dashboard.cards.not_forwarded'), value: stats.incomplete_not_assigned, icon: Clock, color: 'red', filter: 'incomplete_not_assigned' },
+        { label: t('main_tech.dashboard.cards.assigned'), value: stats.incomplete_assigned, icon: UserCheck, color: 'teal', filter: 'incomplete_assigned' },
+        { label: t('main_tech.dashboard.cards.closed'), value: stats.incomplete_completed, icon: CheckCircle, color: 'green', filter: 'incomplete_completed' },
     ];
 
     const getColorClasses = (color: string) => {
@@ -112,8 +112,8 @@ export default function AdminMainTechQueue() {
                             <Wrench className="w-6 h-6" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">{t('main_tech.dashboard.title', 'Pantauan Main Tech')}</h1>
-                            <p className="text-gray-500 mt-1">{t('main_tech.dashboard.subtitle', 'Pantauan senarai mesin di bawah pengurusan Main Technician')}</p>
+                            <h1 className="text-2xl font-bold text-gray-900">{t('main_tech.dashboard.title')}</h1>
+                            <p className="text-gray-500 mt-1">{t('main_tech.dashboard.subtitle')}</p>
                         </div>
                     </div>
                 </div>
@@ -152,7 +152,7 @@ export default function AdminMainTechQueue() {
                             {statCards.find(c => c.filter === activeFilter)?.label || t('main_tech.dashboard.list_title', 'Senarai Menunggu Tindakan Main Technician')}
                         </h2>
                         <span className={`badge font-medium px-3 py-1 ${getColorClasses(statCards.find(c => c.filter === activeFilter)?.color || 'orange').bg} ${getColorClasses(statCards.find(c => c.filter === activeFilter)?.color || 'orange').icon.replace('text-', 'text-')}`}>
-                            {complaints.length} Mesin
+                            {t('main_tech.dashboard.machine_count', { count: complaints.length })}
                         </span>
                     </div>
 
@@ -163,20 +163,20 @@ export default function AdminMainTechQueue() {
                                 <div className="p-8 text-center text-gray-500">
                                     <div className="flex justify-center items-center gap-3">
                                         <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-500 border-t-transparent"></div>
-                                        Memuatkan data...
+                                        {t('common.loading')}
                                     </div>
                                 </div>
                             ) : complaints.length === 0 ? (
                                 <div className="p-12 text-center">
                                     <div className="flex flex-col items-center justify-center text-gray-400">
                                         <AlertTriangle className="w-12 h-12 mb-3 text-gray-300" />
-                                        <p className="text-lg font-medium text-gray-600">Tiada rekod dijumpai</p>
+                                        <p className="text-lg font-medium text-gray-600">{t('table.no_records')}</p>
                                     </div>
                                 </div>
                             ) : (
                                 complaints.map((complaint) => {
                                     const details = getIncompleteDetails(complaint);
-                                    const isAssignedTo = complaint.technicians?.name || complaint.assigned_to || 'Tidak Diketahui';
+                                    const isAssignedTo = complaint.technicians?.name || complaint.assigned_to || t('common.unknown');
 
                                     return (
                                         <div key={complaint.id} className="bg-white border-b border-gray-200 p-4 last:border-b-0 hover:bg-gray-50 transition-colors">
@@ -193,32 +193,32 @@ export default function AdminMainTechQueue() {
                                                 <Link
                                                     to={`/admin/complaint/${complaint.report_number}`}
                                                     className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-indigo-100"
-                                                    title="Lihat"
+                                                    title={t('complaint_list.view')}
                                                 >
                                                     <Eye className="w-4 h-4" />
                                                 </Link>
                                             </div>
                                             
                                             <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm mt-3 items-center">
-                                                <span className="text-gray-500 text-[11px] uppercase tracking-wider">Pelanggan</span>
+                                                <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('common.customer')}</span>
                                                 <div>
                                                     <div className="text-gray-900 font-medium text-xs">{complaint.users?.full_name || '-'}</div>
                                                     <div className="text-xs text-gray-500 line-clamp-1">{complaint.users?.address || '-'}</div>
                                                 </div>
 
-                                                <span className="text-gray-500 text-[11px] uppercase tracking-wider">Juruteknik</span>
+                                                <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('common.technician')}</span>
                                                 <div>
                                                     <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700">
                                                         {isAssignedTo}
                                                     </span>
                                                 </div>
 
-                                                <span className="text-gray-500 text-[11px] uppercase tracking-wider">Sebab</span>
+                                                <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('table.reason')}</span>
                                                 <span className="text-gray-900 text-xs line-clamp-2">
                                                     {activeFilter === 'incomplete' ? details.remark : complaint.details}
                                                 </span>
 
-                                                <span className="text-gray-500 text-[11px] uppercase tracking-wider">Jarak</span>
+                                                <span className="text-gray-500 text-[11px] uppercase tracking-wider">{t('table.distance')}</span>
                                                 <span className="text-gray-900 text-xs font-medium">
                                                     {activeFilter === 'incomplete' ? details.transport : '-'}
                                                 </span>
@@ -234,12 +234,12 @@ export default function AdminMainTechQueue() {
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">No. Laporan / Tarikh</th>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Pelanggan</th>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Juruteknik Asal</th>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Sebab Bawa Pulang</th>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Jarak Transport</th>
-                                        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Tindakan</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('table.report_no_date')}</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.customer')}</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.technician')}</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('table.incomplete_reason')}</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('table.transport_distance')}</th>
+                                        <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common_actions.action')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
@@ -248,7 +248,7 @@ export default function AdminMainTechQueue() {
                                             <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
                                                 <div className="flex justify-center items-center gap-3">
                                                     <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-500 border-t-transparent"></div>
-                                                    Memuatkan data...
+                                                    {t('common.loading')}
                                                 </div>
                                             </td>
                                         </tr>
@@ -257,14 +257,14 @@ export default function AdminMainTechQueue() {
                                             <td colSpan={6} className="px-6 py-12 text-center">
                                                 <div className="flex flex-col items-center justify-center text-gray-400">
                                                     <AlertTriangle className="w-12 h-12 mb-3 text-gray-300" />
-                                                    <p className="text-lg font-medium text-gray-600">Tiada rekod dijumpai</p>
+                                                    <p className="text-lg font-medium text-gray-600">{t('table.no_records')}</p>
                                                 </div>
                                             </td>
                                         </tr>
                                     ) : (
                                         complaints.map((complaint) => {
                                             const details = getIncompleteDetails(complaint);
-                                            const isAssignedTo = complaint.technicians?.name || complaint.assigned_to || 'Tidak Diketahui';
+                                            const isAssignedTo = complaint.technicians?.name || complaint.assigned_to || t('common.unknown');
 
                                             return (
                                                 <tr key={complaint.id} className="hover:bg-gray-50 transition-colors">
@@ -312,7 +312,7 @@ export default function AdminMainTechQueue() {
                                                             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium rounded transition-colors shadow-sm"
                                                         >
                                                             <Eye className="w-3.5 h-3.5" />
-                                                            Lihat
+                                                            {t('complaint_list.view')}
                                                         </Link>
                                                     </td>
                                                 </tr>

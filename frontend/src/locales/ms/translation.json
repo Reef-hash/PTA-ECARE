@@ -80,7 +80,8 @@
     "waiting": "Menunggu...",
     "waiting_next_step": "Menunggu langkah seterusnya...",
     "name": "Nama",
-    "department": "Jabatan"
+    "department": "Jabatan",
+    "unknown": "Tidak Diketahui"
   },
   "status_msg": {
     "cancelled_by": "Aduan telah dibatalkan oleh",
@@ -164,8 +165,13 @@
     "date": "Tarikh",
     "assigned": "Diagihkan",
     "report_number": "No Laporan",
-    "original_technician": "Juruteknik Asal",
-    "incomplete_reason": "Tidak Siap / Bawa Balik Bengkel"
+    "original_technician": "Juruteknik",
+    "incomplete_reason": "Butiran Kerosakan",
+    "report_no_date": "No. Laporan / Tarikh",
+    "transport_distance": "Jarak Transport",
+    "reason": "Sebab",
+    "distance": "Jarak",
+    "no_records": "Tiada rekod dijumpai"
   },
   "complaint_form": {
     "defect_details": "Kerosakan",
@@ -571,16 +577,20 @@
   },
   "main_tech": {
     "dashboard": {
-      "title": "Pengurusan Mesin Bawa Pulang",
+      "title": "Pengurusan Mesin Tidak Lengkap",
       "subtitle": "Senarai aduan yang perlu diagihkan kepada juruteknik kedai",
       "list_title": "Senarai Menunggu Agihan",
       "empty": "Tiada tugas tertunggak",
       "cards": {
-        "incomplete": "Tidak Siap / Bawa Balik Bengkel",
-        "not_forwarded": "Belum Diagih",
-        "assigned": "Telah Diagih",
+        "incomplete": "Mesin Tidak Lengkap",
+        "not_forwarded": "Belum Diagihkan",
+        "assigned": "Telah Diagihkan",
         "closed": "Selesai"
-      }
+      },
+      "machine_count_one": "{{count}} Mesin",
+      "machine_count_other": "{{count}} Mesin",
+      "forward_job": "Forward Job",
+      "subtitle_complaints": "Senarai aduan untuk kategori ini"
     },
     "layout": {
       "sidebar": {

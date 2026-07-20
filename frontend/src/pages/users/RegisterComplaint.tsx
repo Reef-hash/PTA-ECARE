@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Send, Upload, X } from 'lucide-react';
 import UserLayout from '../../components/UserLayout';
+import SearchableSelect from '../../components/SearchableSelect';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { Category, Subcategory, Brand, State } from '../../types';
@@ -218,17 +219,14 @@ export default function RegisterComplaint() {
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 {t('complaint_form.subcategory')} <span className="text-red-500">*</span>
                             </label>
-                            <select
+                            <SearchableSelect
                                 value={formData.subcategory}
-                                onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
-                                className="input-field border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                onChange={(value) => setFormData({ ...formData, subcategory: value })}
+                                options={subcategories.map(sub => ({ value: sub.name, label: sub.name }))}
+                                placeholder={`-- ${t('complaint_form.select_subcategory')} --`}
                                 disabled={!formData.category_id}
-                            >
-                                <option value="">-- {t('complaint_form.select_subcategory')} --</option>
-                                {subcategories.map((sub) => (
-                                    <option key={sub.id} value={sub.name}>{sub.name}</option>
-                                ))}
-                            </select>
+                                className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                            />
                         </div>
 
                         {/* Brand */}
@@ -236,16 +234,13 @@ export default function RegisterComplaint() {
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 {t('complaint_form.brand')} <span className="text-red-500">*</span>
                             </label>
-                            <select
+                            <SearchableSelect
                                 value={formData.brand_name}
-                                onChange={(e) => setFormData({ ...formData, brand_name: e.target.value })}
-                                className="input-field border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                            >
-                                <option value="">-- {t('complaint_form.select_brand')} --</option>
-                                {brands.map((brand) => (
-                                    <option key={brand.id} value={brand.name}>{brand.name}</option>
-                                ))}
-                            </select>
+                                onChange={(value) => setFormData({ ...formData, brand_name: value })}
+                                options={brands.map(brand => ({ value: brand.name, label: brand.name }))}
+                                placeholder={`-- ${t('complaint_form.select_brand')} --`}
+                                className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                            />
                         </div>
 
                         {/* State */}

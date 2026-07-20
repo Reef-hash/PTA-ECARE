@@ -124,7 +124,7 @@ export default function MainTechDashboard() {
                                 </div>
                             ) : recentComplaints.length === 0 ? (
                                 <div className="p-8 text-center text-gray-500">
-                                    Tiada aduan terkini
+                                    {t('main_tech.dashboard.empty')}
                                 </div>
                             ) : (
                                 recentComplaints.map((complaint) => (
@@ -143,10 +143,10 @@ export default function MainTechDashboard() {
                                                 })}
                                             </span>
 
-                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider mt-0.5">{t('table.original_technician', 'Juruteknik Asal')}</span>
+                                            <span className="text-gray-500 text-[11px] uppercase tracking-wider mt-0.5">{t('table.original_technician', 'Juruteknik')}</span>
                                             <div>
                                                 <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700">
-                                                    {complaint.technicians?.name || complaint.assigned_to || 'Tidak Diketahui'}
+                                                    {complaint.technicians?.name || complaint.assigned_to || t('common.unknown')}
                                                 </span>
                                             </div>
                                         </div>
@@ -171,7 +171,7 @@ export default function MainTechDashboard() {
                                     <tr>
                                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{t('admin_users.report_no', 'No. Laporan')}</th>
                                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">{t('admin_complaint_detail.date_created', 'Tarikh Dicipta')}</th>
-                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('table.original_technician', 'Juruteknik Asal')}</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('table.original_technician', 'Juruteknik')}</th>
                                         <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common_actions.action', 'Tindakan')}</th>
                                     </tr>
                                 </thead>
@@ -188,7 +188,7 @@ export default function MainTechDashboard() {
                                     ) : recentComplaints.length === 0 ? (
                                         <tr>
                                             <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
-                                                Tiada aduan terkini
+                                                {t('main_tech.dashboard.empty')}
                                             </td>
                                         </tr>
                                     ) : (
@@ -204,7 +204,7 @@ export default function MainTechDashboard() {
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-500">
                                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700">
-                                                    {complaint.technicians?.name || complaint.assigned_to || 'Tidak Diketahui'}
+                                                    {complaint.technicians?.name || complaint.assigned_to || t('common.unknown')}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
