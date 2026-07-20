@@ -609,10 +609,24 @@ export const updateComplaint = async (req: Request, res: Response): Promise<void
         }
 
         if (status === 'incomplete' || status === 'bawa_pulang') {
-            await pool.query(
-                'UPDATE complaints SET status = ?, assigned_to = NULL, updated_at = NOW() WHERE id = ?',
-                [status, complaintId]
+            const [currentRows]: any = await pool.query(
+                'SELECT status FROM complaints WHERE id = ?',
+                [complaintId]
             );
+            const currentStatus = currentRows[0]?.status;
+            const isAlreadyIncomplete = currentStatus === 'incomplete' || currentStatus === 'bawa_pulang';
+
+            if (isAlreadyIncomplete) {
+                await pool.query(
+                    'UPDATE complaints SET status = ?, updated_at = NOW() WHERE id = ?',
+                    [status, complaintId]
+                );
+            } else {
+                await pool.query(
+                    'UPDATE complaints SET status = ?, assigned_to = NULL, updated_at = NOW() WHERE id = ?',
+                    [status, complaintId]
+                );
+            }
         } else {
             await pool.query(
                 'UPDATE complaints SET status = ?, updated_at = NOW() WHERE id = ?',
@@ -705,7 +719,7 @@ async function checkRemarkQuota(
 
     const table = callerRole === 'technician' ? 'technician_remarks' : 'complaint_remarks';
     const [countRow]: any = await pool.query(
-        `SELECT COUNT(*) as count FROM ${table} WHERE complaint_id = ? AND remark_by = ?`,
+        `SELECT COUNT(*) as count FROM ${table} WHERE complaint_id = ? AND remark_by = ? AND (note_transport IS NOT NULL OR checking IS NOT NULL OR (remark IS NOT NULL AND remark NOT LIKE '__FORWARD__%'))`,
         [complaintId, callerUserId]
     );
     const existingCount = countRow[0].count;
@@ -739,7 +753,12 @@ export const addRemark = async (req: Request, res: Response): Promise<void> => {
                 const [complaintRows]: any = await pool.query('SELECT status FROM complaints WHERE id = ?', [id]);
                 previousStatus = complaintRows[0]?.status || null;
                 if (status === 'incomplete' || status === 'bawa_pulang') {
-                    await pool.query('UPDATE complaints SET status = ?, assigned_to = NULL, updated_at = NOW() WHERE id = ?', [status, id]);
+                    const isAlreadyIncomplete = previousStatus === 'incomplete' || previousStatus === 'bawa_pulang';
+                    if (isAlreadyIncomplete) {
+                        await pool.query('UPDATE complaints SET status = ?, updated_at = NOW() WHERE id = ?', [status, id]);
+                    } else {
+                        await pool.query('UPDATE complaints SET status = ?, assigned_to = NULL, updated_at = NOW() WHERE id = ?', [status, id]);
+                    }
                 } else {
                     await pool.query('UPDATE complaints SET status = ?, updated_at = NOW() WHERE id = ?', [status, id]);
                 }
@@ -1237,11 +1256,14 @@ export const forwardComplaint = async (req: Request, res: Response): Promise<voi
             [id, complaint.assigned_to || adminId, technician_id]
         );
 
-        // Check remark quota sebelum insert (route guard ensures only admin/main_technician reach here)
-        const quota = await checkRemarkQuota(id, callerRole, adminId, status);
-        if (!quota.allowed) {
-            res.status(400).json({ error: `Limit reached: Maximum ${quota.maxRemarks} remarks allowed per complaint.` });
-            return;
+        // Check remark quota SEBELUM insert — hanya jika forward ada remark content baharu
+        const hasRemarkContent = !!(note_transport || checking || remark);
+        if (hasRemarkContent) {
+            const quota = await checkRemarkQuota(id, callerRole, adminId, status);
+            if (!quota.allowed) {
+                res.status(400).json({ error: `Limit reached: Maximum ${quota.maxRemarks} remarks allowed per complaint.` });
+                return;
+            }
         }
 
         const forwardSuffix = `Complaint Forward to Technician : ${techExists.name}`;
