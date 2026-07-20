@@ -512,6 +512,44 @@ export default function TechComplaintDetail() {
                         })()}
                     </div>
 
+                    {/* Remark List - Show technician's own remarks only */}
+                    {techRemarks.filter((r: any) => r.remark_by === user?.id).length > 0 && (
+                        <div className="card">
+                            <h3 className="text-lg font-semibold mb-4">Senarai Catatan</h3>
+                            <div className="space-y-3">
+                                {techRemarks
+                                    .filter((r: any) => r.remark_by === user?.id)
+                                    .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                                    .map((remark: any) => (
+                                        <div key={remark.id} className="border rounded-lg p-4 hover:shadow-sm transition-shadow">
+                                            <div className="flex items-start justify-between gap-2 mb-2">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="text-sm font-medium text-gray-800">
+                                                        {remark.technicians?.name || 'Teknisi'}
+                                                    </span>
+                                                    <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">Teknisi</span>
+                                                </div>
+                                                <span className="text-xs text-gray-400">{formatDate(remark.created_at)}</span>
+                                            </div>
+                                            <div className="flex flex-wrap gap-1.5 mb-2">
+                                                {remark.status && getStatusBadge(remark.status)}
+                                            </div>
+                                            {remark.note_transport && (
+                                                <p className="text-sm text-gray-600"><span className="font-medium">{t('technician_dashboard.label_transport_note')}:</span> {remark.note_transport}</p>
+                                            )}
+                                            {remark.checking && (
+                                                <p className="text-sm text-gray-600"><span className="font-medium">{t('technician_dashboard.label_checking')}:</span> {remark.checking}</p>
+                                            )}
+                                            {remark.remark && (
+                                                <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">
+                                                    <span className="font-medium">{t('technician_dashboard.label_remark')}:</span> {remark.remark}
+                                                </p>
+                                            )}
+                                        </div>
+                                    ))}
+                            </div>
+                        </div>
+                    )}
 
                 </div>
 
