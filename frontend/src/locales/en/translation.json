@@ -553,6 +553,7 @@
     "remark_counter_badge": "Balance: {{remaining}}/{{max}}",
     "remark_quota_full_suffix": "(Full)",
     "remark_quota_full_btn": "Quota Full",
+    "forward_event_label": "Job Forwarded to {{name}}",
     "delete_remark_title": "Delete Remark",
     "delete_remark_confirm": "Are you sure you want to delete this remark?",
     "delete_remark_success": "Remark deleted successfully",

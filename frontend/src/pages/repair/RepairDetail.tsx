@@ -19,7 +19,7 @@ function mapComplaintStatus(status: string): RepairStatus {
     }
 }
 
-function buildTimelineEvents(remarks: any[], i18n: any): any[] {
+function buildTimelineEvents(remarks: any[], i18n: any, t: any): any[] {
     const statusMap: Record<string, RepairStatus> = {
         pending: 'PENDING',
         in_process: 'IN_PROCESS',
@@ -41,10 +41,17 @@ function buildTimelineEvents(remarks: any[], i18n: any): any[] {
         });
 
         // Map standard labels
-        let label = 'Pending';
-        if (repairStatus === 'IN_PROCESS') label = 'In Process';
-        if (repairStatus === 'IN_COMPLETE') label = 'In Complete / Bawa Pulang';
-        if (repairStatus === 'COMPLETE') label = 'Complete (Ready to Pickup)';
+        let label: string;
+        if (remark.remark?.includes('__FORWARD__')) {
+            const forwardText = remark.remark.split('__FORWARD__').pop() || '';
+            const techName = forwardText.replace(/^Complaint Forward to Technician\s*:\s*/, '').trim();
+            label = t('admin_complaint_detail.forward_event_label', { name: techName });
+        } else {
+            label = 'Pending';
+            if (repairStatus === 'IN_PROCESS') label = 'In Process';
+            if (repairStatus === 'IN_COMPLETE') label = 'In Complete / Bawa Pulang';
+            if (repairStatus === 'COMPLETE') label = 'Complete (Ready to Pickup)';
+        }
 
         return {
             status: repairStatus,
@@ -70,7 +77,7 @@ const STATUS_BADGE: Record<string, { label: string; class: string }> = {
 };
 
 export default function RepairDetail() {
-    const { i18n } = useTranslation();
+    const { i18n, t } = useTranslation();
     const { id } = useParams();
     const location = useLocation();
     const [complaint, setComplaint] = useState<Complaint | null>(null);
@@ -142,7 +149,7 @@ export default function RepairDetail() {
         ...techRemarks.map(r => ({ ...r, type: 'tech' as const }))
     ].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
-    const timelineEvents = buildTimelineEvents(allRemarks, i18n);
+    const timelineEvents = buildTimelineEvents(allRemarks, i18n, t);
     const isClosed = complaint.status === 'closed';
     return (
         <Layout title="Repair Detail" breadcrumb="Repair Detail">

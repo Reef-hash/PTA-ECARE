@@ -550,11 +550,23 @@ export default function AdminComplaintDetail() {
                                                 {remark.checking && (
                                                     <p className="text-sm text-gray-600"><span className="font-medium">{t('admin_complaint_detail.checking')}:</span> {remark.checking}</p>
                                                 )}
-                                                {remark.remark && (
-                                                    <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">
-                                                        <span className="font-medium">{t('admin_complaint_detail.remark')}:</span> {remark.remark.replace(/__FORWARD__.*$/, '').trim() || remark.remark}
-                                                    </p>
-                                                )}
+                                                {remark.remark && (() => {
+                                                    const forwardParts = remark.remark.split('__FORWARD__');
+                                                    const mainText = forwardParts[0]?.trim();
+                                                    const forwardText = forwardParts[1]?.trim();
+                                                    return (
+                                                        <div className="mt-1 whitespace-pre-wrap text-sm">
+                                                            {mainText && (
+                                                                <p className="text-gray-700">
+                                                                    <span className="font-medium">{t('admin_complaint_detail.remark')}:</span> {mainText}
+                                                                </p>
+                                                            )}
+                                                            {forwardText && (
+                                                                <p className="text-blue-600 font-medium mt-1">{forwardText}</p>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })()}
                                             </div>
                                         );
                                     })}

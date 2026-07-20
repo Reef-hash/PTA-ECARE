@@ -124,11 +124,18 @@ export default function TrackRepair() {
                 minute: '2-digit',
             });
 
-            // Map standard labels
-            let label = t('admin_users.status_pending') || 'Pending';
-            if (repairStatus === 'IN_PROCESS') label = t('admin_users.status_in_process') || 'In Process';
-            if (repairStatus === 'IN_COMPLETE') label = t('admin_users.status_incomplete') || 'In Complete / Bawa Pulang';
-            if (repairStatus === 'COMPLETE') label = (t('admin_users.status_closed') || 'Closed') + ' - Ready to Pickup';
+            // Detect forward remarks
+            let label: string;
+            if (remark.remark?.includes('__FORWARD__')) {
+                const forwardText = remark.remark.split('__FORWARD__').pop() || '';
+                const techName = forwardText.replace(/^Complaint Forward to Technician\s*:\s*/, '').trim();
+                label = t('admin_complaint_detail.forward_event_label', { name: techName });
+            } else {
+                label = t('admin_users.status_pending') || 'Pending';
+                if (repairStatus === 'IN_PROCESS') label = t('admin_users.status_in_process') || 'In Process';
+                if (repairStatus === 'IN_COMPLETE') label = t('admin_users.status_incomplete') || 'In Complete / Bawa Pulang';
+                if (repairStatus === 'COMPLETE') label = (t('admin_users.status_closed') || 'Closed') + ' - Ready to Pickup';
+            }
 
             return {
                 status: repairStatus,

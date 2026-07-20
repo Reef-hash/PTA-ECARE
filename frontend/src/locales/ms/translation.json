@@ -553,6 +553,7 @@
     "remark_counter_badge": "Baki Catatan: {{remaining}}/{{max}}",
     "remark_quota_full_suffix": "(Kuota Penuh)",
     "remark_quota_full_btn": "Kuota Catatan Penuh",
+    "forward_event_label": "Tugasan Diagihkan kepada {{name}}",
     "delete_remark_title": "Padam Catatan",
     "delete_remark_confirm": "Adakah anda pasti mahu memadam catatan ini?",
     "delete_remark_success": "Catatan berjaya dipadam",
