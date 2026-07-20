@@ -604,10 +604,8 @@ export default function AdminComplaintDetail() {
                     {complaint.status !== 'cancelled' && (
                         <div className="card">
                             {(() => {
-                                const isEscalated = (complaint.tracks && complaint.tracks.some(track => track.status === 'incomplete' || track.status === 'bawa_pulang')) || complaint.status === 'incomplete' || complaint.status === 'bawa_pulang';
-                                const myAdminRemarks = adminRemarks.filter(r => r.remark_by === user?.id && (r.note_transport || r.checking || (r.remark && !r.remark.startsWith('__FORWARD__')))).length;
-                                const totalRemarks = myAdminRemarks;
-                                const maxRemarks = role === 'main_technician' ? 1 : (isEscalated ? 6 : 3);
+                                const totalRemarks = adminRemarks.filter((r: any) => r._source === 'admin' && (r.note_transport || r.checking || (r.remark && !r.remark.startsWith('__FORWARD__')))).length;
+                                const maxRemarks = role === 'main_technician' ? 1 : 3;
                                 const remaining = maxRemarks - totalRemarks;
                                 const isQuotaFull = remaining <= 0;
 
