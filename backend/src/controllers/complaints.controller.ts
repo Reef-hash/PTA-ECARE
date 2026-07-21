@@ -989,7 +989,22 @@ export const updateRemark = async (req: Request, res: Response): Promise<void> =
         }
 
         if (!existingRemark) { res.status(404).json({ error: 'Remark not found' }); return; }
-        if (existingRemark.remark_by !== userId) { res.status(403).json({ error: 'You can only edit your own remarks' }); return; }
+
+        // Permission: owner sentiasa boleh edit
+        let canEdit = existingRemark.remark_by === userId;
+        // Admin override: boleh edit technician & main_technician remarks
+        if (!canEdit && role === 'admin') {
+            if (sourceTable === 'technician_remarks') {
+                canEdit = true;
+            } else {
+                const [authorTech]: any = await pool.query('SELECT id FROM technicians WHERE id = ?', [existingRemark.remark_by]);
+                canEdit = authorTech.length > 0;
+            }
+        }
+        if (!canEdit) {
+            res.status(403).json({ error: role === 'admin' ? 'Cannot edit another admin\'s remark' : 'You can only edit your own remarks' });
+            return;
+        }
 
         // Update remark dalam table yang betul
         if (sourceTable === 'complaint_remarks') {
@@ -1189,15 +1204,28 @@ export const deleteRemark = async (req: Request, res: Response): Promise<void> =
 
         const [adminRows]: any = await pool.query('SELECT id, remark_by FROM complaint_remarks WHERE id = ?', [remarkId]);
         if (adminRows.length > 0) {
-            if (adminRows[0].remark_by !== userId) { res.status(403).json({ error: 'You can only delete your own remarks' }); return; }
             sourceTable = 'complaint_remarks';
             found = true;
+            // Permission check
+            let canDelete = adminRows[0].remark_by === userId;
+            if (!canDelete && role === 'admin') {
+                const [authorTech]: any = await pool.query('SELECT id FROM technicians WHERE id = ?', [adminRows[0].remark_by]);
+                canDelete = authorTech.length > 0;
+            }
+            if (!canDelete) {
+                res.status(403).json({ error: role === 'admin' ? 'Cannot delete another admin\'s remark' : 'You can only delete your own remarks' });
+                return;
+            }
         } else {
             const [techRows]: any = await pool.query('SELECT id, remark_by FROM technician_remarks WHERE id = ?', [remarkId]);
             if (techRows.length > 0) {
-                if (techRows[0].remark_by !== userId) { res.status(403).json({ error: 'You can only delete your own remarks' }); return; }
                 sourceTable = 'technician_remarks';
                 found = true;
+                // Permission check: owner or admin override
+                if (techRows[0].remark_by !== userId && role !== 'admin') {
+                    res.status(403).json({ error: 'You can only delete your own remarks' });
+                    return;
+                }
             }
         }
 

@@ -538,6 +538,10 @@ export default function AdminComplaintDetail() {
                                             <div className="space-y-3">
                                                 {remarkEntries.map((remark: any) => {
                                                     const isOwn = remark.remark_by === user?.id;
+                                                    const isAdmin = role === 'admin';
+                                                    const isTechSource = remark._source === 'tech';
+                                                    const isMainTechSource = remark._source === 'admin' && remark.resolved_user?.role === 'main_technician';
+                                                    const canEdit = isOwn || (isAdmin && (isTechSource || isMainTechSource));
                                                     return (
                                                         <div key={`rmk-${remark._source}-${remark.id}`} className="border rounded-lg p-4 hover:shadow-sm transition-shadow">
                                                             <div className="flex items-start justify-between gap-2 mb-2">
@@ -555,7 +559,7 @@ export default function AdminComplaintDetail() {
                                                                 </div>
                                                                 <div className="flex items-center gap-2">
                                                                     <span className="text-xs text-gray-400">{formatDate(remark.created_at)}</span>
-                                                                    {isOwn && (
+                                                                    {canEdit && (
                                                                         <>
                                                                         <button
                                                                             onClick={() => handleEditRemark(remark)}
