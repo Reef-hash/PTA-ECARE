@@ -1,3 +1,5 @@
+import { randomUUID } from 'crypto';
+import path from 'path';
 import { Request, Response } from 'express';
 import pool from '../config/mysql.js';
 import { saveFile } from '../utils/storage.js';
@@ -229,6 +231,28 @@ export const getComplaints = async (req: Request, res: Response): Promise<void> 
                 [c.id, c.id]
             );
 
+            let userData = null;
+            if (c.user_id_join) {
+                if (role === 'admin') {
+                    userData = {
+                        id: c.user_id_join,
+                        full_name: c.user_full_name,
+                        ic_number: c.user_ic_number,
+                        contact_no: c.user_contact_no,
+                        address: c.user_address
+                    };
+                } else {
+                    const maskedContact = c.user_contact_no
+                        ? c.user_contact_no.slice(0, 3) + '***' + c.user_contact_no.slice(-3)
+                        : null;
+                    userData = {
+                        id: c.user_id_join,
+                        full_name: c.user_full_name,
+                        contact_no: maskedContact
+                    };
+                }
+            }
+
             return {
                 id: c.id,
                 user_id: c.user_id,
@@ -246,13 +270,7 @@ export const getComplaints = async (req: Request, res: Response): Promise<void> 
                 report_number: c.report_number,
                 created_at: c.created_at,
                 updated_at: c.updated_at,
-                users: c.user_id_join ? {
-                    id: c.user_id_join,
-                    full_name: c.user_full_name,
-                    ic_number: c.user_ic_number,
-                    contact_no: c.user_contact_no,
-                    address: c.user_address
-                } : null,
+                users: userData,
                 categories: c.cat_id ? {
                     id: c.cat_id,
                     name: c.cat_name
@@ -314,6 +332,31 @@ export const getComplaint = async (req: Request, res: Response): Promise<void> =
             return;
         }
 
+        let userData = null;
+        if (c.user_id_join) {
+            if (role === 'admin') {
+                userData = {
+                    id: c.user_id_join,
+                    full_name: c.user_full_name,
+                    ic_number: c.user_ic_number,
+                    contact_no: c.user_contact_no,
+                    contact_no_2: c.user_contact_no_2,
+                    email: c.user_email,
+                    address: c.user_address,
+                    state: c.user_state
+                };
+            } else {
+                const maskedContact = c.user_contact_no
+                    ? c.user_contact_no.slice(0, 3) + '***' + c.user_contact_no.slice(-3)
+                    : null;
+                userData = {
+                    id: c.user_id_join,
+                    full_name: c.user_full_name,
+                    contact_no: maskedContact
+                };
+            }
+        }
+
         const complaint = {
             id: c.id,
             user_id: c.user_id,
@@ -331,16 +374,7 @@ export const getComplaint = async (req: Request, res: Response): Promise<void> =
             report_number: c.report_number,
             created_at: c.created_at,
             updated_at: c.updated_at,
-            users: c.user_id_join ? {
-                id: c.user_id_join,
-                full_name: c.user_full_name,
-                ic_number: c.user_ic_number,
-                contact_no: c.user_contact_no,
-                contact_no_2: c.user_contact_no_2,
-                email: c.user_email,
-                address: c.user_address,
-                state: c.user_state
-            } : null,
+            users: userData,
             categories: c.cat_id ? { id: c.cat_id, name: c.cat_name } : null,
             technicians: c.tech_id ? { id: c.tech_id, name: c.tech_name, department: c.tech_department } : null
         };
@@ -459,7 +493,9 @@ export const createComplaint = async (req: Request, res: Response): Promise<void
 
         if (files?.warranty_file?.[0]) {
             const file = files.warranty_file[0];
-            const fileName = `${Date.now()}_${file.originalname}`;
+            const ext = path.extname(file.originalname).toLowerCase();
+            const safeExt = ['.jpg', '.jpeg', '.png', '.pdf', '.heic', '.heif'].includes(ext) ? ext : '.bin';
+            const fileName = `${randomUUID()}${safeExt}`;
             try {
                 const { publicUrl } = saveFile('warranty-docs', fileName, file.buffer);
                 warranty_file = publicUrl;
@@ -470,7 +506,9 @@ export const createComplaint = async (req: Request, res: Response): Promise<void
 
         if (files?.receipt_file?.[0]) {
             const file = files.receipt_file[0];
-            const fileName = `${Date.now()}_${file.originalname}`;
+            const ext = path.extname(file.originalname).toLowerCase();
+            const safeExt = ['.jpg', '.jpeg', '.png', '.pdf', '.heic', '.heif'].includes(ext) ? ext : '.bin';
+            const fileName = `${randomUUID()}${safeExt}`;
             try {
                 const { publicUrl } = saveFile('receipt-docs', fileName, file.buffer);
                 receipt_file = publicUrl;

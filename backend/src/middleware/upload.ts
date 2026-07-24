@@ -9,10 +9,12 @@ const fileFilter = (
     file: Express.Multer.File,
     cb: multer.FileFilterCallback
 ) => {
-    // Relaxed check to accommodate mobile browsers which might not send standard mime types
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf', 'image/heic', 'image/heif'];
+    // Stricter check: require BOTH valid MIME type AND file extension
+    // Magic-byte (real MIME) validation is done at the controller level before saveFile()
+    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf', 'image/heic', 'image/heif'];
+    const allowedExt = /\.(jpg|jpeg|png|pdf|heic|heif)$/i;
 
-    if (!file.mimetype || allowedTypes.includes(file.mimetype.toLowerCase()) || file.originalname.match(/\.(jpg|jpeg|png|pdf|heic|heif)$/i)) {
+    if (file.mimetype && allowedTypes.includes(file.mimetype.toLowerCase()) && file.originalname.match(allowedExt)) {
         cb(null, true);
     } else {
         cb(new Error('Only JPG, PNG, and PDF files are allowed'));

@@ -40,7 +40,7 @@ type VerifiedGoogleAccount = {
 const isActiveUser = (status?: string): boolean => !status || status === 'Active' || status === 'active';
 
 const createUserToken = (user: UserRow): string => jwt.sign(
-    { id: user.id, role: 'user', ic_number: user.ic_number },
+    { id: user.id, role: 'user' },
     JWT_SECRET,
     { expiresIn: JWT_EXPIRES_IN } as SignOptions
 );
@@ -281,14 +281,14 @@ export const verifyIC = async (req: Request, res: Response): Promise<void> => {
         const [data]: any = await pool.query('SELECT id, full_name, ic_number, contact_no, address, state FROM users WHERE ic_number = ?', [ic_number]);
 
         if (!data || data.length === 0) {
-            res.status(404).json({ registered: false, error: 'Maaf, maklumat anda belum didaftar. Sila daftar dahulu.' });
+            res.status(200).json({ registered: false });
             return;
         }
 
         const user = data[0];
-        const token = jwt.sign({ id: user.id, role: 'user', ic_number: user.ic_number }, JWT_SECRET, { expiresIn: '24h' } as SignOptions);
+        const token = jwt.sign({ id: user.id, role: 'user' }, JWT_SECRET, { expiresIn: '24h' } as SignOptions);
 
-        res.json({ registered: true, user, token });
+        res.json({ registered: true });
     } catch (error) {
         console.error('Verify IC error:', error);
 
@@ -371,7 +371,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
             res.status(200).json({
                 message: 'Pendaftaran berjaya! Sila semak e-mel anda untuk kod OTP pengesahan.',
-                user: stripPasswordHash(user),
                 requires_otp: true,
                 email: user.email
             });
@@ -400,14 +399,12 @@ export const register = async (req: Request, res: Response): Promise<void> => {
             // Auto-login since no email OTP is needed
             const tokenPayload = {
                 id: user.id,
-                role: 'user',
-                ic_number: user.ic_number
+                role: 'user'
             };
             const token = jwt.sign(tokenPayload, process.env.JWT_SECRET as string, { expiresIn: '24h' });
 
             res.status(200).json({
                 message: 'Pendaftaran berjaya! Akaun anda telah diaktifkan.',
-                user: stripPasswordHash(user),
                 requires_otp: false,
                 token
             });
@@ -475,7 +472,6 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
 
         res.json({
             message: 'Akaun berjaya disahkan dan diaktifkan!',
-            user: stripPasswordHash(user),
             token,
             role: 'user'
         });
@@ -711,7 +707,6 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
                 const token = createUserToken(newUser);
                 res.status(201).json({
                     message: 'Google registration successful',
-                    user: stripPasswordHash(newUser),
                     token,
                     role: 'user',
                     is_new_user: true,
@@ -750,7 +745,6 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
 
             res.status(201).json({
                 message: 'Google registration successful — OTP sent to your email',
-                user: stripPasswordHash(newUser),
                 requires_otp: true,
                 email: googleEmail,
                 role: 'user',
@@ -803,7 +797,6 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
 
             res.json({
                 message: 'Google login successful',
-                user: stripPasswordHash(activeUser),
                 token,
                 role: 'user',
                 is_new_user: false,
@@ -843,7 +836,6 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
             const token = createUserToken(activeUser);
             res.json({
                 message: 'Google login successful',
-                user: stripPasswordHash(activeUser),
                 token,
                 role: 'user',
                 is_new_user: false
@@ -888,7 +880,6 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
         const token = createUserToken(newUser);
         res.status(201).json({
             message: 'Google registration successful',
-            user: stripPasswordHash(newUser),
             token,
             role: 'user',
             is_new_user: true
@@ -915,20 +906,20 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             console.log(`[LOGIN] User query result: found=${data?.length}, error=none`);
             if (!data || data.length === 0) {
                 try { await pool.query('INSERT INTO user_logs (username, user_ip, success) VALUES (?, ?, ?)', [ic_number, clientIp, false]); } catch (e) { console.log('[LOGIN] user_logs insert error (ignored):', e); }
-                res.status(401).json({ error: 'Invalid IC number or password' }); return;
+                res.status(401).json({ error: 'Invalid credentials' }); return;
             }
             user = data[0];
-            tokenPayload = { id: user.id, role: 'user', ic_number: user.ic_number };
+            tokenPayload = { id: user.id, role: 'user' };
         } else if (role === 'admin') {
             if (!username) { res.status(400).json({ error: 'Username is required' }); return; }
             const [data]: any = await pool.query('SELECT * FROM admins WHERE LOWER(username) = LOWER(?)', [username]);
-            if (!data || data.length === 0) { res.status(401).json({ error: 'Invalid username or password' }); return; }
+            if (!data || data.length === 0) { res.status(401).json({ error: 'Invalid credentials' }); return; }
             user = data[0];
             tokenPayload = { id: user.id, role: 'admin', username: user.username };
         } else if (role === 'technician') {
             if (!username) { res.status(400).json({ error: 'Username is required' }); return; }
             const [data]: any = await pool.query('SELECT * FROM technicians WHERE LOWER(username) = LOWER(?)', [username]);
-            if (!data || data.length === 0) { res.status(401).json({ error: 'Invalid username or password' }); return; }
+            if (!data || data.length === 0) { res.status(401).json({ error: 'Invalid credentials' }); return; }
             user = data[0];
             tokenPayload = { id: user.id, role: 'technician', username: user.username };
         } else if (role === 'main_technician') {
@@ -1046,7 +1037,7 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
         }
         const user = data && data[0] ? data[0] : null;
 
-        if (!user) { res.status(404).json({ error: 'User not found' }); return; }
+        if (!user) { res.json({ message: 'If your account exists, an OTP has been sent to your registered email.' }); return; }
         if (!user.email) { res.status(400).json({ error: 'No email associated with this account' }); return; }
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -1069,7 +1060,7 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
         }
 
         console.log(`OTP email sent to ${user.email}`);
-        res.json({ message: 'OTP sent to your email', email: user.email.replace(/(.{2})(.*)(@.*)/, '$1***$3') });
+        res.json({ message: 'If your account exists, an OTP has been sent to your registered email.' });
     } catch (error) {
         console.error('Forgot password error:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -1152,8 +1143,21 @@ export const getProfile = async (req: Request, res: Response): Promise<void> => 
 
         if (!data || data.length === 0) { res.status(404).json({ error: 'User not found' }); return; }
 
-        const { password_hash, ...userWithoutPassword } = data[0];
-        res.json({ user: userWithoutPassword, role });
+        if (role === 'user') {
+            const safeUser = {
+                id: data[0].id,
+                full_name: data[0].full_name,
+                email: data[0].email,
+                state: data[0].state,
+                status: data[0].status,
+                created_at: data[0].created_at,
+                updated_at: data[0].updated_at
+            };
+            res.json({ user: safeUser, role });
+        } else {
+            const { password_hash, ...userWithoutPassword } = data[0];
+            res.json({ user: userWithoutPassword, role });
+        }
     } catch (error) {
         console.error('Get profile error:', error);
         res.status(500).json({ error: 'Internal server error' });
