@@ -1,10 +1,13 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import helmet from 'helmet';
 import path from 'path';
 import fs from 'fs';
 
 import authRoutes from './routes/auth.routes.js';
+import uploadsRoutes from './routes/uploads.routes.js';
+import { generalLimiter } from './middleware/rateLimit.js';
 // Forced restart check
 import usersRoutes from './routes/users.routes.js';
 // Forced restart check 2
@@ -68,6 +71,17 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.disable('x-powered-by');
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use((req, res, next) => {
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  next();
+});
+
 // Serve uploaded files - guna UPLOAD_DIR env var supaya fail selamat dari deployment
 const uploadsDir = process.env.UPLOAD_DIR 
     ? path.resolve(process.env.UPLOAD_DIR) 
@@ -75,7 +89,7 @@ const uploadsDir = process.env.UPLOAD_DIR
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
-app.use('/uploads', express.static(uploadsDir));
+// app.use('/uploads', express.static(uploadsDir)); // REMOVED — uploads now served via authenticated /api/uploads/:type/:filename
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -119,6 +133,8 @@ app.use('/api/complaints', complaintsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api', masterRoutes); // categories, subcategories, brands, states
+app.use('/api/uploads', uploadsRoutes);
+app.use(generalLimiter);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
