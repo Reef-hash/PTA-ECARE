@@ -1143,8 +1143,21 @@ export const getProfile = async (req: Request, res: Response): Promise<void> => 
 
         if (!data || data.length === 0) { res.status(404).json({ error: 'User not found' }); return; }
 
-        const { password_hash, ...userWithoutPassword } = data[0];
-        res.json({ user: userWithoutPassword, role });
+        if (role === 'user') {
+            const safeUser = {
+                id: data[0].id,
+                full_name: data[0].full_name,
+                email: data[0].email,
+                state: data[0].state,
+                status: data[0].status,
+                created_at: data[0].created_at,
+                updated_at: data[0].updated_at
+            };
+            res.json({ user: safeUser, role });
+        } else {
+            const { password_hash, ...userWithoutPassword } = data[0];
+            res.json({ user: userWithoutPassword, role });
+        }
     } catch (error) {
         console.error('Get profile error:', error);
         res.status(500).json({ error: 'Internal server error' });

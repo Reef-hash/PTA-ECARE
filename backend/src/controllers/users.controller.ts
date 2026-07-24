@@ -21,8 +21,16 @@ export const getProfile = async (req: Request, res: Response): Promise<void> => 
             return;
         }
 
-        const { password_hash, ...userWithoutPassword } = user;
-        res.json({ user: userWithoutPassword });
+        const safeUser = {
+            id: user.id,
+            full_name: user.full_name,
+            email: user.email,
+            state: user.state,
+            status: user.status,
+            created_at: user.created_at,
+            updated_at: user.updated_at
+        };
+        res.json({ user: safeUser });
     } catch (error) {
         console.error('Get profile error:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -169,8 +177,16 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
             return;
         }
 
-        const { password_hash, ...userWithoutPassword } = updatedUser;
-        res.json({ message: 'Profile updated', user: userWithoutPassword });
+        const safeUser = {
+            id: updatedUser.id,
+            full_name: updatedUser.full_name,
+            email: updatedUser.email,
+            state: updatedUser.state,
+            status: updatedUser.status,
+            created_at: updatedUser.created_at,
+            updated_at: updatedUser.updated_at
+        };
+        res.json({ message: 'Profile updated', user: safeUser });
     } catch (error: any) {
         console.error('Update profile error:', error);
         res.status(500).json({ error: `Ralat Sistem: ${error.message}` });
