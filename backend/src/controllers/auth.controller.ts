@@ -371,7 +371,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
             res.status(200).json({
                 message: 'Pendaftaran berjaya! Sila semak e-mel anda untuk kod OTP pengesahan.',
-                user: stripPasswordHash(user),
                 requires_otp: true,
                 email: user.email
             });
@@ -406,7 +405,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
             res.status(200).json({
                 message: 'Pendaftaran berjaya! Akaun anda telah diaktifkan.',
-                user: stripPasswordHash(user),
                 requires_otp: false,
                 token
             });
@@ -474,7 +472,6 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
 
         res.json({
             message: 'Akaun berjaya disahkan dan diaktifkan!',
-            user: stripPasswordHash(user),
             token,
             role: 'user'
         });
@@ -710,7 +707,6 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
                 const token = createUserToken(newUser);
                 res.status(201).json({
                     message: 'Google registration successful',
-                    user: stripPasswordHash(newUser),
                     token,
                     role: 'user',
                     is_new_user: true,
@@ -749,7 +745,6 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
 
             res.status(201).json({
                 message: 'Google registration successful — OTP sent to your email',
-                user: stripPasswordHash(newUser),
                 requires_otp: true,
                 email: googleEmail,
                 role: 'user',
@@ -802,7 +797,6 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
 
             res.json({
                 message: 'Google login successful',
-                user: stripPasswordHash(activeUser),
                 token,
                 role: 'user',
                 is_new_user: false,
@@ -842,7 +836,6 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
             const token = createUserToken(activeUser);
             res.json({
                 message: 'Google login successful',
-                user: stripPasswordHash(activeUser),
                 token,
                 role: 'user',
                 is_new_user: false
@@ -887,7 +880,6 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
         const token = createUserToken(newUser);
         res.status(201).json({
             message: 'Google registration successful',
-            user: stripPasswordHash(newUser),
             token,
             role: 'user',
             is_new_user: true
