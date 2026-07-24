@@ -1,5 +1,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Bell, ChevronDown, ChevronUp, Volume2, VolumeX } from 'lucide-react';
 import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
@@ -56,10 +57,12 @@ export default function NotificationBell() {
     const [unreadCount, setUnreadCount] = useState(0);
     const [isOpen, setIsOpen] = useState(false);
     const [isListExpanded, setIsListExpanded] = useState(false);
+    const bellRef = useRef<HTMLButtonElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const prevUnreadCountRef = useRef<number>(0);
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const isFirstLoadRef = useRef(true);
+    const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, transform: '' });
     const navigate = useNavigate();
     const { t, i18n } = useTranslation();
 
@@ -76,6 +79,41 @@ export default function NotificationBell() {
     };
 
     const lastNotificationIdRef = useRef<string | null>(null);
+
+    const DROPDOWN_WIDTH = 320;
+    const VIEWPORT_MARGIN = 8;
+
+    const updatePosition = useCallback(() => {
+        if (bellRef.current) {
+            const rect = bellRef.current.getBoundingClientRect();
+            const bellCenterX = rect.left + rect.width / 2;
+            let left = bellCenterX - DROPDOWN_WIDTH / 2;
+
+            if (left < VIEWPORT_MARGIN) {
+                left = VIEWPORT_MARGIN;
+            } else if (left + DROPDOWN_WIDTH > window.innerWidth - VIEWPORT_MARGIN) {
+                left = window.innerWidth - VIEWPORT_MARGIN - DROPDOWN_WIDTH;
+            }
+
+            setDropdownPos({
+                top: rect.bottom + 8,
+                left,
+                transform: '',
+            });
+        }
+    }, []);
+
+    useEffect(() => {
+        if (isOpen) {
+            updatePosition();
+            window.addEventListener('scroll', updatePosition, true);
+            window.addEventListener('resize', updatePosition);
+            return () => {
+                window.removeEventListener('scroll', updatePosition, true);
+                window.removeEventListener('resize', updatePosition);
+            };
+        }
+    }, [isOpen, updatePosition]);
 
     // Initialize audio on mount
     useEffect(() => {
@@ -398,19 +436,19 @@ export default function NotificationBell() {
         return () => clearInterval(interval);
     }, []);
 
-    // Close dropdown when clicking outside
+    // Close dropdown when clicking outside (covers both bell and portal dropdown)
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
+            const target = event.target as Node;
+            if (
+                bellRef.current && bellRef.current.contains(target)
+            ) {
+                return; // click was on the bell button itself, ignore
             }
-
-            // Unlock audio on first interaction
-            if (audioRef.current && audioRef.current.paused) {
-                // Just try to play and pause immediately to unlock AudioContext if needed
-                // But efficient way is just letting the user interaction 'bless' the audio element
-                // We'll trust the browser remembers the interaction for subsequent plays
+            if (dropdownRef.current && dropdownRef.current.contains(target)) {
+                return; // click was inside the dropdown, ignore
             }
+            setIsOpen(false);
         }
         document.addEventListener('mousedown', handleClickOutside);
 
@@ -543,9 +581,113 @@ export default function NotificationBell() {
         }
     };
 
+    const dropdownContent = isOpen ? createPortal(
+        <div
+            ref={dropdownRef}
+            className="fixed bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden z-[9999] animate-fade-in"
+            style={{ top: dropdownPos.top, left: dropdownPos.left, width: DROPDOWN_WIDTH, maxWidth: 'calc(100vw - 16px)' }}
+        >
+            <div className="p-3 border-b border-gray-100 flex items-center justify-between bg-gray-50 flex-wrap gap-2">
+                <h3 className="font-semibold text-gray-700 text-sm">{t('common.notifications')}</h3>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={toggleMute}
+                        className={`p-1 rounded-md transition-colors ${isMuted ? 'text-red-500 hover:bg-red-50' : 'text-indigo-600 hover:bg-indigo-50'}`}
+                        title={isMuted ? 'Unmute Sound' : 'Mute Sound'}
+                    >
+                        {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                    </button>
+                    <button
+                        onClick={handleMarkAllRead}
+                        disabled={unreadCount === 0}
+                        className={`text-xs font-medium ${unreadCount > 0 ? 'text-indigo-600 hover:text-indigo-800' : 'text-gray-400 cursor-not-allowed'}`}
+                    >
+                        {t('common.mark_all_read')}
+                    </button>
+                    <button
+                        onClick={handleClearAll}
+                        disabled={notifications.length === 0}
+                        className={`text-xs font-medium ${notifications.length > 0 ? 'text-red-600 hover:text-red-800' : 'text-gray-400 cursor-not-allowed'}`}
+                    >
+                        {i18n.language === 'ms' ? 'Padam Semua' : 'Clear All'}
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                {notifications.length === 0 ? (
+                    <div className="p-8 text-center text-gray-500 text-sm">
+                        <Bell className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                        {t('common.no_notifications')}
+                    </div>
+                ) : (
+                    <div className="divide-y divide-gray-50">
+                        {notifications.slice(0, 1).map((notification) => {
+                            const translated = getTranslatedNotification(notification);
+                            return (
+                                <div
+                                    key={notification.id}
+                                    onClick={() => handleClickNotification(notification)}
+                                    className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${!notification.is_read ? 'bg-blue-50/50' : ''}`}
+                                >
+                                    <div className="flex gap-3">
+                                        <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${!notification.is_read ? 'bg-indigo-500' : 'bg-transparent'}`} />
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex justify-between items-start gap-2">
+                                                <p className={`text-sm ${!notification.is_read ? 'font-semibold text-gray-800' : 'text-gray-600'} pr-4`}>
+                                                    {translated.title}
+                                                </p>
+                                            </div>
+                                            <div className="max-h-12 overflow-hidden">
+                                                <p className="text-xs text-gray-500 mt-1 whitespace-pre-wrap line-clamp-2">
+                                                    {translated.message}
+                                                </p>
+                                            </div>
+                                            
+                                            <p className="text-[10px] text-gray-400 mt-2">
+                                                {(() => {
+                                                    if (!notification.created_at) return '';
+                                                    return getRelativeTime(notification.created_at, i18n.language === 'ms');
+                                                })()}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+
+            {/* View All button */}
+            <div className="p-2 border-t border-gray-100 bg-gray-50 flex items-center justify-between gap-1">
+                <button
+                    onClick={() => {
+                        setIsOpen(false);
+                        const path = window.location.pathname;
+                        if (path.startsWith('/users')) {
+                            navigate('/users/notifications');
+                        } else if (path.startsWith('/admin/technician')) {
+                            navigate('/admin/technician/notifications');
+                        } else if (path.startsWith('/main-tech')) {
+                            navigate('/main-tech/notifications');
+                        } else {
+                            navigate('/admin/notifications');
+                        }
+                    }}
+                    className="flex-1 text-center text-sm text-indigo-600 hover:text-indigo-800 font-medium py-1.5 rounded hover:bg-indigo-50 transition-colors"
+                >
+                    {t('common.view_all')}
+                </button>
+            </div>
+        </div>,
+        document.body
+    ) : null;
+
     return (
-        <div className="relative" ref={dropdownRef}>
+        <div className="relative">
             <button
+                ref={bellRef}
                 onClick={() => setIsOpen(!isOpen)}
                 className="p-2 rounded-lg hover:bg-gray-100 relative transition-colors"
                 title="Notifications"
@@ -558,103 +700,7 @@ export default function NotificationBell() {
                 )}
             </button>
 
-            {isOpen && (
-                <div className="fixed inset-x-2 top-auto sm:absolute sm:inset-x-auto sm:top-full sm:right-0 mt-2 sm:w-80 bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden z-50 animate-fade-in">
-                    <div className="p-3 border-b border-gray-100 flex items-center justify-between bg-gray-50 flex-wrap gap-2">
-                        <h3 className="font-semibold text-gray-700 text-sm">{t('common.notifications')}</h3>
-                        <div className="flex items-center gap-3">
-                            <button
-                                onClick={toggleMute}
-                                className={`p-1 rounded-md transition-colors ${isMuted ? 'text-red-500 hover:bg-red-50' : 'text-indigo-600 hover:bg-indigo-50'}`}
-                                title={isMuted ? 'Unmute Sound' : 'Mute Sound'}
-                            >
-                                {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                            </button>
-                            <button
-                                onClick={handleMarkAllRead}
-                                disabled={unreadCount === 0}
-                                className={`text-xs font-medium ${unreadCount > 0 ? 'text-indigo-600 hover:text-indigo-800' : 'text-gray-400 cursor-not-allowed'}`}
-                            >
-                                {t('common.mark_all_read')}
-                            </button>
-                            <button
-                                onClick={handleClearAll}
-                                disabled={notifications.length === 0}
-                                className={`text-xs font-medium ${notifications.length > 0 ? 'text-red-600 hover:text-red-800' : 'text-gray-400 cursor-not-allowed'}`}
-                            >
-                                {i18n.language === 'ms' ? 'Padam Semua' : 'Clear All'}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div>
-                        {notifications.length === 0 ? (
-                            <div className="p-8 text-center text-gray-500 text-sm">
-                                <Bell className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                                {t('common.no_notifications')}
-                            </div>
-                        ) : (
-                            <div className="divide-y divide-gray-50">
-                                {notifications.slice(0, 1).map((notification) => {
-                                    const translated = getTranslatedNotification(notification);
-                                    return (
-                                        <div
-                                            key={notification.id}
-                                            onClick={() => handleClickNotification(notification)}
-                                            className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${!notification.is_read ? 'bg-blue-50/50' : ''}`}
-                                        >
-                                            <div className="flex gap-3">
-                                                <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${!notification.is_read ? 'bg-indigo-500' : 'bg-transparent'}`} />
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex justify-between items-start gap-2">
-                                                        <p className={`text-sm ${!notification.is_read ? 'font-semibold text-gray-800' : 'text-gray-600'} pr-4`}>
-                                                            {translated.title}
-                                                        </p>
-                                                    </div>
-                                                    <div className="max-h-12 overflow-hidden">
-                                                        <p className="text-xs text-gray-500 mt-1 whitespace-pre-wrap line-clamp-2">
-                                                            {translated.message}
-                                                        </p>
-                                                    </div>
-                                                    
-                                                    <p className="text-[10px] text-gray-400 mt-2">
-                                                        {(() => {
-                                                            if (!notification.created_at) return '';
-                                                            return getRelativeTime(notification.created_at, i18n.language === 'ms');
-                                                        })()}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* View All button */}
-                    <div className="p-2 border-t border-gray-100 bg-gray-50 flex items-center justify-between gap-1">
-                        <button
-                            onClick={() => {
-                                setIsOpen(false);
-                                const path = window.location.pathname;
-                                if (path.startsWith('/users')) {
-                                    navigate('/users/notifications');
-                                } else if (path.startsWith('/admin/technician')) {
-                                    navigate('/admin/technician/notifications');
-                                } else if (path.startsWith('/main-tech')) {
-                                    navigate('/main-tech/notifications');
-                                } else {
-                                    navigate('/admin/notifications');
-                                }
-                            }}
-                            className="flex-1 text-center text-sm text-indigo-600 hover:text-indigo-800 font-medium py-1.5 rounded hover:bg-indigo-50 transition-colors"
-                        >
-                            {t('common.view_all')}
-                        </button>
-                    </div>
-                </div>
-            )}
+            {dropdownContent}
         </div>
     );
 }
