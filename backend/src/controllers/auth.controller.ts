@@ -40,7 +40,7 @@ type VerifiedGoogleAccount = {
 const isActiveUser = (status?: string): boolean => !status || status === 'Active' || status === 'active';
 
 const createUserToken = (user: UserRow): string => jwt.sign(
-    { id: user.id, role: 'user', ic_number: user.ic_number },
+    { id: user.id, role: 'user' },
     JWT_SECRET,
     { expiresIn: JWT_EXPIRES_IN } as SignOptions
 );
@@ -286,7 +286,7 @@ export const verifyIC = async (req: Request, res: Response): Promise<void> => {
         }
 
         const user = data[0];
-        const token = jwt.sign({ id: user.id, role: 'user', ic_number: user.ic_number }, JWT_SECRET, { expiresIn: '24h' } as SignOptions);
+        const token = jwt.sign({ id: user.id, role: 'user' }, JWT_SECRET, { expiresIn: '24h' } as SignOptions);
 
         res.json({ registered: true, user, token });
     } catch (error) {
@@ -400,8 +400,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
             // Auto-login since no email OTP is needed
             const tokenPayload = {
                 id: user.id,
-                role: 'user',
-                ic_number: user.ic_number
+                role: 'user'
             };
             const token = jwt.sign(tokenPayload, process.env.JWT_SECRET as string, { expiresIn: '24h' });
 
@@ -918,7 +917,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
                 res.status(401).json({ error: 'Invalid IC number or password' }); return;
             }
             user = data[0];
-            tokenPayload = { id: user.id, role: 'user', ic_number: user.ic_number };
+            tokenPayload = { id: user.id, role: 'user' };
         } else if (role === 'admin') {
             if (!username) { res.status(400).json({ error: 'Username is required' }); return; }
             const [data]: any = await pool.query('SELECT * FROM admins WHERE LOWER(username) = LOWER(?)', [username]);
