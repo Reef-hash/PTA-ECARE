@@ -7,6 +7,7 @@
     "in_process": "In Process",
     "not_forwarded": "Job Not Assigned",
     "job_assigned": "Job Assigned",
+    "incomplete": "Incomplete / Bring to Workshop",
     "closed": "Completed",
     "cancelled": "Cancelled",
     "management": "Management",

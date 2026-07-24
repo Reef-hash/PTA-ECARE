@@ -74,13 +74,13 @@ export const getComplaints = async (req: Request, res: Response): Promise<void> 
                 whereClauses.push('(c.assigned_to = ? OR c.id IN (SELECT complaint_id FROM technician_remarks WHERE remark_by = ? AND status IN ("incomplete", "bawa_pulang")))');
                 queryParams.push(userId, userId);
             } else {
-                whereClauses.push('c.assigned_to = ?');
-                queryParams.push(userId);
+                whereClauses.push('(c.assigned_to = ? OR c.id IN (SELECT complaint_id FROM technician_remarks WHERE remark_by = ? AND status IN ("incomplete", "bawa_pulang")))');
+                queryParams.push(userId, userId);
             }
         } else if (role === 'admin') {
             if (assigned_to) {
-                whereClauses.push('c.assigned_to = ?');
-                queryParams.push(assigned_to);
+                whereClauses.push('(c.assigned_to = ? OR c.id IN (SELECT complaint_id FROM technician_remarks WHERE remark_by = ? AND status IN ("incomplete", "bawa_pulang")))');
+                queryParams.push(assigned_to, assigned_to);
             }
             if (user_id) {
                 whereClauses.push('c.user_id = ?');
@@ -93,7 +93,7 @@ export const getComplaints = async (req: Request, res: Response): Promise<void> 
             if (status === 'not_forwarded') {
                 whereClauses.push('c.status = "pending" AND c.assigned_to IS NULL');
             } else if (status === 'job_assigned') {
-                whereClauses.push('c.status = "pending" AND c.assigned_to IS NOT NULL');
+                whereClauses.push('c.assigned_to IS NOT NULL');
             } else if (status === 'incomplete') {
                 whereClauses.push('c.status = "incomplete"');
             } else if (status === 'incomplete_not_assigned') {

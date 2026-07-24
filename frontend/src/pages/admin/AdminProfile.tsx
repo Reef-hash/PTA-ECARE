@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
+import MainTechLayout from '../../components/MainTechLayout';
 import { User, Mail, Save, Eye, EyeOff, Edit2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +11,8 @@ export default function AdminProfilePage() {
     const { t } = useTranslation();
     const { role } = useAuth();
     const isTechnician = role === 'technician';
-    const pageTitle = isTechnician ? t('admin_profile.title_tech') : t('admin_profile.title');
+    const isMainTech = role === 'main_technician';
+    const pageTitle = isMainTech ? t('admin_profile.title_tech') : isTechnician ? t('admin_profile.title_tech') : t('admin_profile.title');
 
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -119,18 +121,20 @@ export default function AdminProfilePage() {
         }
     };
 
+    const Layout = isMainTech ? MainTechLayout : AdminLayout;
+
     if (isLoading) {
         return (
-            <AdminLayout title={pageTitle || 'Profile'} breadcrumb={pageTitle || 'Profile'}>
+            <Layout title={pageTitle || 'Profile'} breadcrumb={pageTitle || 'Profile'}>
                 <div className="flex justify-center items-center h-64">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
                 </div>
-            </AdminLayout>
+            </Layout>
         );
     }
 
     return (
-        <AdminLayout title={pageTitle || 'Profile'} breadcrumb={pageTitle || 'Profile'}>
+        <Layout title={pageTitle || 'Profile'} breadcrumb={pageTitle || 'Profile'}>
             <div className="max-w-2xl mx-auto space-y-6">
                 {/* Profile Info Card */}
                 <div className="card">
@@ -323,6 +327,6 @@ export default function AdminProfilePage() {
                     )}
                 </div>
             </div>
-        </AdminLayout>
+        </Layout>
     );
 }
