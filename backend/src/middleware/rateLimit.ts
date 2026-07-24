@@ -19,7 +19,7 @@ export const authModerateLimiter = rateLimit({
 export const generalLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: parseInt(process.env.RATE_LIMIT_GENERAL || '100', 10),
-  message: { error: 'Too many requests. Please try again later.' },
+  message: { error: 'WTF bro?, are you try hacking me?' },
   standardHeaders: true,
   legacyHeaders: false,
 });

@@ -1,3 +1,5 @@
+import { randomUUID } from 'crypto';
+import path from 'path';
 import { Request, Response } from 'express';
 import pool from '../config/mysql.js';
 import { saveFile } from '../utils/storage.js';
@@ -459,7 +461,9 @@ export const createComplaint = async (req: Request, res: Response): Promise<void
 
         if (files?.warranty_file?.[0]) {
             const file = files.warranty_file[0];
-            const fileName = `${Date.now()}_${file.originalname}`;
+            const ext = path.extname(file.originalname).toLowerCase();
+            const safeExt = ['.jpg', '.jpeg', '.png', '.pdf', '.heic', '.heif'].includes(ext) ? ext : '.bin';
+            const fileName = `${randomUUID()}${safeExt}`;
             try {
                 const { publicUrl } = saveFile('warranty-docs', fileName, file.buffer);
                 warranty_file = publicUrl;
@@ -470,7 +474,9 @@ export const createComplaint = async (req: Request, res: Response): Promise<void
 
         if (files?.receipt_file?.[0]) {
             const file = files.receipt_file[0];
-            const fileName = `${Date.now()}_${file.originalname}`;
+            const ext = path.extname(file.originalname).toLowerCase();
+            const safeExt = ['.jpg', '.jpeg', '.png', '.pdf', '.heic', '.heif'].includes(ext) ? ext : '.bin';
+            const fileName = `${randomUUID()}${safeExt}`;
             try {
                 const { publicUrl } = saveFile('receipt-docs', fileName, file.buffer);
                 receipt_file = publicUrl;

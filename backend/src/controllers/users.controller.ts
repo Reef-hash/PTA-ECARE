@@ -1,3 +1,5 @@
+import { randomUUID } from 'crypto';
+import path from 'path';
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import pool from '../config/mysql.js';
@@ -218,9 +220,9 @@ export const uploadAvatar = async (req: Request, res: Response): Promise<void> =
             return;
         }
 
-        const mimeExt: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp' };
-        const extension = mimeExt[file.mimetype] || 'jpg';
-        const fileName = `${userId}_${Date.now()}.${extension}`;
+        const ext = path.extname(file.originalname).toLowerCase();
+        const safeExt = ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext) ? ext : '.jpg';
+        const fileName = `${userId}_${randomUUID()}${safeExt}`;
 
         try {
             const { publicUrl } = saveFile('user-images', fileName, file.buffer);
