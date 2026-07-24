@@ -12,9 +12,9 @@ if (missingEnv.length > 0) {
 
 const pool = mysql.createPool({
     host: (process.env.DB_HOST === 'localhost') ? '127.0.0.1' : (process.env.DB_HOST || '127.0.0.1'),
-    user: process.env.DB_USER !== undefined ? process.env.DB_USER : 'u134652667_ecare',
-    password: process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : 'k5;FY3WxT',
-    database: process.env.DB_NAME !== undefined ? process.env.DB_NAME : 'u134652667_ecare_db',
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,

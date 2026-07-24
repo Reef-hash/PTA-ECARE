@@ -23,10 +23,13 @@ local-*.log
 
 # Local env files
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
 
 # Uploads (local file storage)
 uploads/
+
+# Credential/deploy scripts (never commit real host credentials)
+*.vbs
+ftp_script.txt
+dl.txt
