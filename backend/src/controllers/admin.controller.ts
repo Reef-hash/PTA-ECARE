@@ -63,7 +63,7 @@ export const getStats = async (req: Request, res: Response): Promise<void> => {
 // Get technician statistics
 export const getTechnicianStats = async (req: Request, res: Response): Promise<void> => {
     try {
-        const [technicians]: any = await pool.query('SELECT id, name, department FROM technicians WHERE is_active = 1');
+        const [technicians]: any = await pool.query('SELECT id, name, department FROM technicians WHERE is_active = 1 AND username != "maintech"');
 
         if (!technicians || technicians.length === 0) {
             res.json({ technicianStats: [] });
@@ -73,10 +73,11 @@ export const getTechnicianStats = async (req: Request, res: Response): Promise<v
         const technicianStats = await Promise.all(
             technicians.map(async (tech: any) => {
                 const [complaints]: any = await pool.query(
-                    `SELECT status FROM complaints 
-                     WHERE assigned_to = ? 
-                     OR id IN (SELECT complaint_id FROM technician_remarks WHERE remark_by = ? AND status IN ('incomplete', 'bawa_pulang'))`,
-                    [tech.id, tech.id]
+                    `SELECT c.status FROM complaints c
+                     WHERE c.assigned_to = ?
+                        OR c.id IN (SELECT complaint_id FROM forward_history WHERE forward_from = ?)
+                        OR c.id IN (SELECT complaint_id FROM technician_remarks WHERE remark_by = ?)`,
+                    [tech.id, tech.id, tech.id]
                 );
 
                 const stats = {

@@ -79,8 +79,8 @@ export const getComplaints = async (req: Request, res: Response): Promise<void> 
             }
         } else if (role === 'admin') {
             if (assigned_to) {
-                whereClauses.push('(c.assigned_to = ? OR c.id IN (SELECT complaint_id FROM technician_remarks WHERE remark_by = ? AND status IN ("incomplete", "bawa_pulang")))');
-                queryParams.push(assigned_to, assigned_to);
+                whereClauses.push('(c.assigned_to = ? OR c.id IN (SELECT complaint_id FROM forward_history WHERE forward_from = ?) OR c.id IN (SELECT complaint_id FROM technician_remarks WHERE remark_by = ?))');
+                queryParams.push(assigned_to, assigned_to, assigned_to);
             }
             if (user_id) {
                 whereClauses.push('c.user_id = ?');
