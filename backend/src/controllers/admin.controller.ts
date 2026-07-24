@@ -40,7 +40,7 @@ export const getStats = async (req: Request, res: Response): Promise<void> => {
             if (c.status === 'cancelled') stats.cancelled++;
             if (c.status === 'incomplete') stats.incomplete++;
             if (c.status === 'pending' && !c.assigned_to) stats.not_forwarded++;
-            if (c.status === 'pending' && c.assigned_to) stats.assigned++;
+            if (c.assigned_to) stats.assigned++;
 
             const isIncomplete = c.status === 'incomplete';
             if (isIncomplete) {
@@ -63,7 +63,7 @@ export const getStats = async (req: Request, res: Response): Promise<void> => {
 // Get technician statistics
 export const getTechnicianStats = async (req: Request, res: Response): Promise<void> => {
     try {
-        const [technicians]: any = await pool.query('SELECT id, name, department FROM technicians WHERE is_active = 1');
+        const [technicians]: any = await pool.query('SELECT id, name, department FROM technicians WHERE is_active = 1 AND username != "maintech"');
 
         if (!technicians || technicians.length === 0) {
             res.json({ technicianStats: [] });
@@ -72,7 +72,13 @@ export const getTechnicianStats = async (req: Request, res: Response): Promise<v
 
         const technicianStats = await Promise.all(
             technicians.map(async (tech: any) => {
-                const [complaints]: any = await pool.query('SELECT status FROM complaints WHERE assigned_to = ?', [tech.id]);
+                const [complaints]: any = await pool.query(
+                    `SELECT c.status FROM complaints c
+                     WHERE c.assigned_to = ?
+                        OR c.id IN (SELECT complaint_id FROM forward_history WHERE forward_from = ?)
+                        OR c.id IN (SELECT complaint_id FROM technician_remarks WHERE remark_by = ?)`,
+                    [tech.id, tech.id, tech.id]
+                );
 
                 const stats = {
                     technician_id: tech.id,
@@ -402,7 +408,7 @@ export const getAdminProfile = async (req: Request, res: Response): Promise<void
         const userId = (req as any).user.id;
         const role = (req as any).user.role;
 
-        const table = role === 'technician' ? 'technicians' : 'admins';
+        const table = (role === 'technician' || role === 'main_technician') ? 'technicians' : 'admins';
         console.log(`Fetching ${role} profile for ${userId}`);
 
         const [rows]: any = await pool.query(`SELECT * FROM ${table} WHERE id = ?`, [userId]);
@@ -438,7 +444,7 @@ export const updateAdminProfile = async (req: Request, res: Response): Promise<v
             return;
         }
 
-        const table = role === 'technician' ? 'technicians' : 'admins';
+        const table = (role === 'technician' || role === 'main_technician') ? 'technicians' : 'admins';
 
         const [existing]: any = await pool.query(
             `SELECT id FROM ${table} WHERE username = ? AND id != ?`,
@@ -482,10 +488,10 @@ export const updateAdminPassword = async (req: Request, res: Response): Promise<
             return;
         }
 
-        const table = role === 'technician' ? 'technicians' : 'admins';
+        const table = (role === 'technician' || role === 'main_technician') ? 'technicians' : 'admins';
 
         const [rows]: any = await pool.query(
-            `SELECT password_hash, email, ${role === 'technician' ? 'name' : 'admin_name as name'}, username FROM ${table} WHERE id = ?`,
+            `SELECT password_hash, email, ${(role === 'technician' || role === 'main_technician') ? 'name' : 'admin_name as name'}, username FROM ${table} WHERE id = ?`,
             [userId]
         );
         const userRow = rows[0];

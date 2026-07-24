@@ -60,6 +60,7 @@ export default function AdminLayout({ children, breadcrumb }: AdminLayoutProps) 
         { path: '/admin/in-progress', label: t('sidebar.in_process'), icon: AlertTriangle },
         { path: '/admin/not-forwarded', label: t('sidebar.not_forwarded'), icon: Forward },
         { path: '/admin/job-assigned', label: t('sidebar.job_assigned'), icon: UserCheck },
+        { path: '/admin/incomplete-bawa-pulang', label: t('sidebar.incomplete'), icon: AlertTriangle },
         { path: '/admin/closed', label: t('sidebar.closed'), icon: CheckCircle },
         { path: '/admin/cancelled', label: t('sidebar.cancelled'), icon: XCircle },
     ];

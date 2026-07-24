@@ -7,6 +7,7 @@
     "in_process": "Dalam Proses",
     "not_forwarded": "Job Belum Diagih",
     "job_assigned": "Job Sudah Diagih",
+    "incomplete": "Tidak Siap / Bawa Balik Bengkel",
     "closed": "Selesai",
     "cancelled": "Dibatalkan",
     "management": "Pengurusan",

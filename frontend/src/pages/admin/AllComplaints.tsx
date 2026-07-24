@@ -189,6 +189,8 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                 results = results.filter(c => c.status === 'pending' && c.assigned_to);
             } else if (filterStatus === 'not_assigned') {
                 results = results.filter(c => c.status === 'pending' && !c.assigned_to);
+            } else if (filterStatus === 'incomplete_in') {
+                results = results.filter(c => c.status === 'incomplete' || c.status === 'bawa_pulang');
             } else {
                 results = results.filter(c => c.status === filterStatus);
             }
@@ -468,6 +470,7 @@ export default function AllComplaints({ status = 'all' }: AllComplaintsProps) {
                                 <option value="assigned">{t('admin_users.status_assigned') || 'Assigned'}</option>
                                 <option value="not_assigned">{t('complaint_list.not_assigned') || 'Job Not Assigned'}</option>
                                 <option value="cancelled">{t('admin_users.status_cancelled') || 'Cancelled'}</option>
+                                <option value="incomplete_in">{t('admin_users.status_incomplete') || 'Incomplete / Bring to Workshop'}</option>
                             </select>
                         </div>
                         {/* Toggle Filter Button */}
