@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff, UserPlus, ArrowLeft, KeyRound, Mail, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -45,10 +45,12 @@ export default function UserRegister() {
     }, [cooldown]);
 
     // Check for email & otp parameters in URL for auto-verification
+    const autoVerifyRanRef = useRef(false);
     useEffect(() => {
         const emailParam = searchParams.get('email');
         const otpParam = searchParams.get('otp');
-        if (emailParam && otpParam) {
+        if (emailParam && otpParam && !autoVerifyRanRef.current) {
+            autoVerifyRanRef.current = true;
             setOtpEmail(emailParam);
             setOtp(otpParam);
             setRequiresOtp(true);
@@ -148,7 +150,7 @@ export default function UserRegister() {
             login(response.token, response.user, 'user');
             
             // For Google Auth cases where profile is incomplete
-            if (response.redirect_to_profile || response.profile_complete === false || (response.user.ic_number && response.user.ic_number.startsWith('G-'))) {
+            if (response.redirect_to_profile || response.profile_complete === false || (response.user?.ic_number && response.user.ic_number.startsWith('G-'))) {
                 toast.success('Pengesahan berjaya! Sila lengkapkan profil anda.');
                 navigate('/lengkapkan-profil', { replace: true });
             } else {

@@ -42,15 +42,16 @@ const PORT = Number(process.env.PORT) || 3000;
             console.log('Added missing notif_category column to notifications table.');
         }
 
-        // Fix corrupted auto_increment on notifications (Out of range value for column 'id')
-        const [tblStatus]: any = await pool.query("SHOW TABLE STATUS WHERE Name = 'notifications'");
-        const aiVal = Number(tblStatus[0]?.Auto_increment || 0);
-        if (aiVal === 0 || aiVal > 2147483647 || isNaN(aiVal)) {
-            const [maxRow]: any = await pool.query("SELECT COALESCE(MAX(id),0) as maxid FROM notifications");
-            const nextId = Number(maxRow[0].maxid) + 1;
-            await pool.query(`ALTER TABLE notifications AUTO_INCREMENT = ${nextId}`);
-            console.log(`Fixed notifications auto_increment to ${nextId}.`);
-        }
+        // Fix corrupted auto_increment on notifications (Out of range / Duplicate entry '0' for key 'PRIMARY')
+        // First, remove any rows with id <= 0 which corrupt auto-increment
+        await pool.query("DELETE FROM notifications WHERE id <= 0");
+        // Ensure id column is BIGINT to prevent INT overflow
+        await pool.query("ALTER TABLE notifications MODIFY COLUMN id BIGINT AUTO_INCREMENT");
+        // Reset auto_increment to max(id)+1
+        const [maxRow]: any = await pool.query("SELECT COALESCE(MAX(id),0) as maxid FROM notifications");
+        const nextId = Number(maxRow[0].maxid) + 1;
+        await pool.query(`ALTER TABLE notifications AUTO_INCREMENT = ${nextId}`);
+        console.log(`Fixed notifications auto_increment to ${nextId} and upgraded id to BIGINT.`);
     } catch (err: any) {
         console.error('Migration error (this may be safe to ignore if enum already exists):', err.message);
     }

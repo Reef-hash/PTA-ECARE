@@ -44,8 +44,9 @@ export default function GoogleCompleteProfile() {
     useEffect(() => {
         if (authLoading) return;
 
-        if (!isAuthenticated || !user) {
-            toast.error('Sila log masuk dahulu.');
+        if (!isAuthenticated || !user || !user.id) {
+            console.warn('[GoogleCompleteProfile] Redirecting to register because user state is invalid:', { isAuthenticated, user });
+            toast.error('Sila log masuk dahulu atau sesi anda tidak sah.');
             navigate('/users/register', { replace: true });
             return;
         }

@@ -45,6 +45,16 @@ const createUserToken = (user: UserRow): string => jwt.sign(
     { expiresIn: JWT_EXPIRES_IN } as SignOptions
 );
 
+const formatUserResponse = (user: UserRow) => ({
+    id: user.id,
+    full_name: user.full_name,
+    ic_number: user.ic_number,
+    email: user.email,
+    contact_no: user.contact_no,
+    role: 'user',
+    status: user.status,
+});
+
 const stripPasswordHash = (user: UserRow) => {
     const { password_hash, ...userWithoutPassword } = user;
     return userWithoutPassword;
@@ -344,7 +354,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         if (normalizedEmail) {
             // 4. Generate random 6-digit OTP
             const otp = Math.floor(100000 + Math.random() * 900000).toString();
-            const expires_at = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 mins
+            const nowMs = Date.now();
+            const expires_at = new Date(nowMs + 10 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' '); // 10 mins, MySQL-safe format
+            const generatedAt = new Date(nowMs).toISOString().slice(0, 19).replace('T', ' ');
+            console.log(`[OTP-GEN] email=${normalizedEmail} otp=${otp} generated_at=${generatedAt} expires_at=${expires_at} now_ms=${nowMs}`);
 
             // Clean up any existing OTP for this email
             await pool.query('DELETE FROM activation_otps WHERE email = ? AND role = ?', [normalizedEmail, 'user']);
@@ -376,10 +389,14 @@ export const register = async (req: Request, res: Response): Promise<void> => {
             });
         } else {
             // Notify user in their bell
-            await pool.query(
-                'INSERT INTO notifications (recipient_id, recipient_role, title, message, type, is_read) VALUES (?, ?, ?, ?, ?, ?)',
-                [user.id, 'user', 'Akaun Berjaya Didaftarkan', 'Akaun anda telah berjaya didaftarkan. Selamat Datang ke E-CARE!', 'NEW_USER_REGISTERED', false]
-            );
+            try {
+                await pool.query(
+                    'INSERT INTO notifications (recipient_id, recipient_role, title, message, type, is_read) VALUES (?, ?, ?, ?, ?, ?)',
+                    [user.id, 'user', 'Akaun Berjaya Didaftarkan', 'Akaun anda telah berjaya didaftarkan. Selamat Datang ke E-CARE!', 'NEW_USER_REGISTERED', false]
+                );
+            } catch (notifErr) {
+                console.error('[REGISTER] Failed to notify user:', notifErr);
+            }
 
             // Notify Admin in their bell (with NEW_USER_REGISTERED type to prevent email)
             try {
@@ -406,7 +423,8 @@ export const register = async (req: Request, res: Response): Promise<void> => {
             res.status(200).json({
                 message: 'Pendaftaran berjaya! Akaun anda telah diaktifkan.',
                 requires_otp: false,
-                token
+                token,
+                user: formatUserResponse(user)
             });
         }
     } catch (error: any) {
@@ -419,16 +437,36 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
     try {
         const { email, otp } = req.body;
         const normalizedEmail = email.trim().toLowerCase();
+        const trimmedOtp = otp.trim();
 
-        // 1. Verify OTP with custom activation_otps table
-        const [otpRecords]: any = await pool.query('SELECT * FROM activation_otps WHERE email = ? AND role = ? AND otp = ? AND expires_at >= ? ORDER BY created_at DESC LIMIT 1', [normalizedEmail, 'user', otp.trim(), new Date().toISOString()]);
+        // 1. First, check if ANY record exists for this email+role (without otp/expiry filter) for diagnostics
+        const [allRecords]: any = await pool.query('SELECT id, otp, expires_at, created_at FROM activation_otps WHERE email = ? AND role = ?', [normalizedEmail, 'user']);
+        const nowMs = Date.now();
+        const now = new Date(nowMs).toISOString().slice(0, 19).replace('T', ' ');
+        console.log(`[OTP-VERIFY] email=${normalizedEmail} input_otp=${trimmedOtp} now=${now} now_ms=${nowMs}`);
+        console.log(`[OTP-VERIFY] db_records_found=${allRecords.length}`, allRecords.map((r: any) => ({
+            id: r.id,
+            stored_otp: r.otp,
+            expires_at: r.expires_at,
+            created_at: r.created_at,
+            otp_match: r.otp === trimmedOtp,
+            not_expired: new Date(r.expires_at).getTime() > nowMs,
+            expires_at_ms: new Date(r.expires_at).getTime(),
+            remaining_sec: Math.round((new Date(r.expires_at).getTime() - nowMs) / 1000)
+        })));
+
+        // 2. Verify OTP with custom activation_otps table
+        const [otpRecords]: any = await pool.query('SELECT * FROM activation_otps WHERE email = ? AND role = ? AND otp = ? AND expires_at >= ? ORDER BY created_at DESC LIMIT 1', [normalizedEmail, 'user', trimmedOtp, now]);
+        console.log(`[OTP-VERIFY] query_result=${otpRecords.length > 0 ? 'MATCH' : 'NO_MATCH'}`);
 
         if (!otpRecords || otpRecords.length === 0) {
+            console.warn(`[OTP-VERIFY] FAILED — email=${normalizedEmail} otp=${trimmedOtp} now=${now}`);
             res.status(400).json({ error: 'Kod OTP tidak sah atau telah tamat tempoh' });
             return;
         }
 
         // 2. Activate user in public users table
+        console.log(`[OTP-VERIFY] SUCCESS — activating user email=${normalizedEmail} otp_id=${otpRecords[0].id}`);
         await pool.query('UPDATE users SET status = ?, email_verified = ?, updated_at = ? WHERE email = ?', ['Active', true, new Date().toISOString(), normalizedEmail]);
         const [updatedUsers]: any = await pool.query('SELECT * FROM users WHERE email = ?', [normalizedEmail]);
 
@@ -473,7 +511,8 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
         res.json({
             message: 'Akaun berjaya disahkan dan diaktifkan!',
             token,
-            role: 'user'
+            role: 'user',
+            user: formatUserResponse(user)
         });
     } catch (error: any) {
         console.error('Verify signup OTP error:', error);
@@ -496,7 +535,7 @@ export const resendSignupOtp = async (req: Request, res: Response): Promise<void
 
         // 2. Generate new OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const expires_at = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+        const expires_at = new Date(Date.now() + 10 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' '); // 10 mins, MySQL-safe format
 
         // 3. Insert into activation_otps
         const [otpInsertResult]: any = await pool.query('INSERT INTO activation_otps (email, otp, role, expires_at) VALUES (?, ?, ?, ?)', [normalizedEmail, otp, 'user', expires_at]);
@@ -542,7 +581,8 @@ export const verifyActivationOtp = async (req: Request, res: Response): Promise<
         const email = profile.email;
 
         // 2. Look up code in activation_otps
-        const [otpRecords]: any = await pool.query('SELECT * FROM activation_otps WHERE email = ? AND role = ? AND otp = ? AND expires_at >= ? ORDER BY created_at DESC LIMIT 1', [email, role, otp, new Date().toISOString()]);
+        const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+        const [otpRecords]: any = await pool.query('SELECT * FROM activation_otps WHERE email = ? AND role = ? AND otp = ? AND expires_at >= ? ORDER BY created_at DESC LIMIT 1', [email, role, otp, now]);
 
         if (!otpRecords || otpRecords.length === 0) {
             res.status(400).json({ error: 'Kod OTP tidak sah atau telah tamat tempoh' });
@@ -593,7 +633,7 @@ export const resendActivationOtp = async (req: Request, res: Response): Promise<
 
         // Generate new OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' '); // 24 hours, MySQL-safe format
 
         // Delete previous OTPs for this email and role
         await pool.query('DELETE FROM activation_otps WHERE email = ? AND role = ?', [email, role]);
@@ -729,7 +769,7 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
 
             // Generate OTP
             const otp = Math.floor(100000 + Math.random() * 900000).toString();
-            const expires_at = new Date(Date.now() + 15 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+            const expires_at = new Date(Date.now() + 10 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' '); // 10 mins, MySQL-safe format
 
             await pool.query('DELETE FROM activation_otps WHERE email = ? AND role = ?', [googleEmail, 'user']);
             await pool.query('INSERT INTO activation_otps (email, role, otp, expires_at) VALUES (?, ?, ?, ?)', [googleEmail, 'user', otp, expires_at]);
@@ -799,6 +839,7 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
                 message: 'Google login successful',
                 token,
                 role: 'user',
+                user: formatUserResponse(activeUser),
                 is_new_user: false,
                 profile_complete: profileComplete,
                 redirect_to_profile: !profileComplete
@@ -838,6 +879,7 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
                 message: 'Google login successful',
                 token,
                 role: 'user',
+                user: formatUserResponse(activeUser),
                 is_new_user: false
             });
             return;
@@ -994,7 +1036,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             // MySQL uses 0 for false in TINYINT(1). Null shouldn't block.
             if (user.status === 'Inactive' || user.status === 'Suspended') {
                 // Check if there's a pending activation OTP for this admin/technician
-                const [otpRecords]: any = await pool.query('SELECT * FROM activation_otps WHERE email = ? AND role = ? AND expires_at >= ? ORDER BY created_at DESC LIMIT 1', [user.email, role, new Date().toISOString()]);
+                const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+                const [otpRecords]: any = await pool.query('SELECT * FROM activation_otps WHERE email = ? AND role = ? AND expires_at >= ? ORDER BY created_at DESC LIMIT 1', [user.email, role, now]);
 
                 if (otpRecords && otpRecords.length > 0) {
                     res.status(403).json({
@@ -1041,7 +1084,7 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
         if (!user.email) { res.status(400).json({ error: 'No email associated with this account' }); return; }
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' '); // 10 mins, MySQL-safe format
 
         await pool.query('DELETE FROM password_resets WHERE user_id = ?', [user.id]);
         await pool.query('INSERT INTO password_resets (user_id, otp, expires_at) VALUES (?, ?, ?)', [user.id, otp, expiresAt]);
@@ -1087,7 +1130,8 @@ export const verifyOtp = async (req: Request, res: Response): Promise<void> => {
         const [resetRows]: any = await pool.query('SELECT * FROM password_resets WHERE user_id = ? AND otp = ?', [userId, otp]);
         if (!resetRows || resetRows.length === 0) { res.status(400).json({ error: 'Invalid OTP' }); return; }
 
-        if (new Date(resetRows[0].expires_at) < new Date()) { res.status(400).json({ error: 'OTP has expired' }); return; }
+        const expiresAtMs = new Date(resetRows[0].expires_at).getTime();
+        if (Date.now() > expiresAtMs) { res.status(400).json({ error: 'OTP has expired' }); return; }
         res.json({ message: 'OTP verified', valid: true });
     } catch (error) {
         console.error('Verify OTP error:', error);
@@ -1113,7 +1157,7 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
         if (!userId) { res.status(404).json({ error: 'User not found' }); return; }
 
         const [resetRows]: any = await pool.query('SELECT * FROM password_resets WHERE user_id = ? AND otp = ?', [userId, otp]);
-        if (!resetRows || resetRows.length === 0 || new Date(resetRows[0].expires_at) < new Date()) {
+        if (!resetRows || resetRows.length === 0 || Date.now() > new Date(resetRows[0].expires_at).getTime()) {
             res.status(400).json({ error: 'Invalid or expired OTP' }); return;
         }
 
