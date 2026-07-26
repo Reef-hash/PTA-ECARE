@@ -185,7 +185,7 @@ export const getComplaints = async (req: Request, res: Response): Promise<void> 
         const queryParamsWithPagination = [...queryParams, limitNum, offset];
         const [complaintsData]: any = await pool.query(
             `SELECT c.*, 
-                u.id as user_id_join, u.full_name as user_full_name, u.ic_number as user_ic_number, u.contact_no as user_contact_no, u.address as user_address,
+                u.id as user_id_join, u.full_name as user_full_name, u.ic_number as user_ic_number, u.contact_no as user_contact_no, u.contact_no_2 as user_contact_no_2, u.email as user_email, u.address as user_address, u.state as user_state,
                 cat.id as cat_id, cat.name as cat_name,
                 COALESCE(t.id, (
                     SELECT tr.remark_by FROM technician_remarks tr 
@@ -233,24 +233,16 @@ export const getComplaints = async (req: Request, res: Response): Promise<void> 
 
             let userData = null;
             if (c.user_id_join) {
-                if (role === 'admin') {
-                    userData = {
-                        id: c.user_id_join,
-                        full_name: c.user_full_name,
-                        ic_number: c.user_ic_number,
-                        contact_no: c.user_contact_no,
-                        address: c.user_address
-                    };
-                } else {
-                    const maskedContact = c.user_contact_no
-                        ? c.user_contact_no.slice(0, 3) + '***' + c.user_contact_no.slice(-3)
-                        : null;
-                    userData = {
-                        id: c.user_id_join,
-                        full_name: c.user_full_name,
-                        contact_no: maskedContact
-                    };
-                }
+                userData = {
+                    id: c.user_id_join,
+                    full_name: c.user_full_name,
+                    ic_number: c.user_ic_number,
+                    contact_no: c.user_contact_no,
+                    contact_no_2: c.user_contact_no_2 || null,
+                    email: c.user_email || null,
+                    address: c.user_address,
+                    state: c.user_state || null
+                };
             }
 
             return {
@@ -334,27 +326,16 @@ export const getComplaint = async (req: Request, res: Response): Promise<void> =
 
         let userData = null;
         if (c.user_id_join) {
-            if (role === 'admin') {
-                userData = {
-                    id: c.user_id_join,
-                    full_name: c.user_full_name,
-                    ic_number: c.user_ic_number,
-                    contact_no: c.user_contact_no,
-                    contact_no_2: c.user_contact_no_2,
-                    email: c.user_email,
-                    address: c.user_address,
-                    state: c.user_state
-                };
-            } else {
-                const maskedContact = c.user_contact_no
-                    ? c.user_contact_no.slice(0, 3) + '***' + c.user_contact_no.slice(-3)
-                    : null;
-                userData = {
-                    id: c.user_id_join,
-                    full_name: c.user_full_name,
-                    contact_no: maskedContact
-                };
-            }
+            userData = {
+                id: c.user_id_join,
+                full_name: c.user_full_name,
+                ic_number: c.user_ic_number,
+                contact_no: c.user_contact_no,
+                contact_no_2: c.user_contact_no_2 || null,
+                email: c.user_email || null,
+                address: c.user_address,
+                state: c.user_state || null
+            };
         }
 
         const complaint = {

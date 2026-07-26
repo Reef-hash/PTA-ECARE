@@ -21,7 +21,7 @@ import pool from './config/mysql.js';
 dotenv.config();
 
 const app = express();
-const PORT = Number(process.env.PORT) || 3000;
+const PORT = Number(process.env.PORT) || 3005;
 
 // Run auto-migration for ENUMs safely
 (async () => {
@@ -42,16 +42,20 @@ const PORT = Number(process.env.PORT) || 3000;
             console.log('Added missing notif_category column to notifications table.');
         }
 
-        // Fix corrupted auto_increment on notifications (Out of range / Duplicate entry '0' for key 'PRIMARY')
-        // First, remove any rows with id <= 0 which corrupt auto-increment
-        await pool.query("DELETE FROM notifications WHERE id <= 0");
-        // Ensure id column is BIGINT to prevent INT overflow
-        await pool.query("ALTER TABLE notifications MODIFY COLUMN id BIGINT AUTO_INCREMENT");
-        // Reset auto_increment to max(id)+1
-        const [maxRow]: any = await pool.query("SELECT COALESCE(MAX(id),0) as maxid FROM notifications");
-        const nextId = Number(maxRow[0].maxid) + 1;
-        await pool.query(`ALTER TABLE notifications AUTO_INCREMENT = ${nextId}`);
-        console.log(`Fixed notifications auto_increment to ${nextId} and upgraded id to BIGINT.`);
+        // Fix corrupted auto_increment on tables with INT/BIGINT id (Out of range / Duplicate entry '0' for key 'PRIMARY')
+        const tablesToFix = ['notifications', 'complaints', 'complaint_remarks', 'technician_remarks'];
+        for (const tableName of tablesToFix) {
+            try {
+                await pool.query(`DELETE FROM ${tableName} WHERE id <= 0`);
+                await pool.query(`ALTER TABLE ${tableName} MODIFY COLUMN id BIGINT AUTO_INCREMENT`);
+                const [maxRow]: any = await pool.query(`SELECT COALESCE(MAX(id),0) as maxid FROM ${tableName}`);
+                const nextId = Number(maxRow[0].maxid) + 1;
+                await pool.query(`ALTER TABLE ${tableName} AUTO_INCREMENT = ${nextId}`);
+                console.log(`Fixed ${tableName} auto_increment to ${nextId} and upgraded id to BIGINT.`);
+            } catch (tableErr: any) {
+                console.error(`Error fixing auto_increment for ${tableName}:`, tableErr.message);
+            }
+        }
     } catch (err: any) {
         console.error('Migration error (this may be safe to ignore if enum already exists):', err.message);
     }
