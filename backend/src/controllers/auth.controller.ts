@@ -288,7 +288,18 @@ export const verifyIC = async (req: Request, res: Response): Promise<void> => {
         const user = data[0];
         const token = jwt.sign({ id: user.id, role: 'user' }, JWT_SECRET, { expiresIn: '24h' } as SignOptions);
 
-        res.json({ registered: true });
+        res.json({
+            registered: true,
+            user: {
+                id: user.id,
+                full_name: user.full_name,
+                ic_number: user.ic_number,
+                contact_no: user.contact_no,
+                address: user.address,
+                state: user.state
+            },
+            token
+        });
     } catch (error) {
         console.error('Verify IC error:', error);
 
