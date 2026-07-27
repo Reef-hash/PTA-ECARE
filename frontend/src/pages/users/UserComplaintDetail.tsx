@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { FileText, User, Calendar, MapPin, Wrench, XCircle, Eye, Download, X, ZoomIn } from 'lucide-react';
 import UserLayout from '../../components/UserLayout';
 import api, { getFileUrl } from '../../services/api';
+import DocumentPreviewCard, { isPdfFile } from '../../components/DocumentPreviewCard';
 import { Complaint } from '../../types';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -292,68 +293,14 @@ export default function UserComplaintDetail() {
                                     )}
 
                                     {/* Purchase Receipt Preview */}
-                                    {complaint.receipt_file && (
-                                        <div className="group rounded-xl border border-green-200 bg-gradient-to-b from-green-50 to-white overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
-                                            <div className="px-4 py-3 bg-green-50 border-b border-green-100 flex items-center justify-between">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                                                        <FileText className="w-4 h-4 text-green-600" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-semibold text-green-800 text-sm">{t('user_dashboard.label_receipt')}</p>
-                                                        <p className="text-[10px] text-green-400 uppercase tracking-wider">Document</p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex gap-1">
-                                                    <button
-                                                        onClick={() => setLightboxUrl(getFileUrl(complaint.receipt_file)!)}
-                                                        className="p-1.5 text-green-500 hover:text-green-700 hover:bg-green-100 rounded-lg transition-all"
-                                                        title="Zoom"
-                                                    >
-                                                        <ZoomIn className="w-4 h-4" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDownload(getFileUrl(complaint.receipt_file)!, `Receipt-${complaint.report_number}.png`)}
-                                                        className="p-1.5 text-green-500 hover:text-green-600 hover:bg-green-100 rounded-lg transition-all"
-                                                        title="Download"
-                                                    >
-                                                        <Download className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            {/* Preview Area */}
-                                            <div
-                                                className="relative cursor-pointer"
-                                                onClick={() => setLightboxUrl(getFileUrl(complaint.receipt_file)!)}
-                                            >
-                                                {complaint.receipt_file.toLowerCase().endsWith('.pdf') ? (
-                                                    <div className="flex flex-col items-center justify-center py-10 gap-2 text-green-400">
-                                                        <FileText className="w-12 h-12" />
-                                                        <span className="text-xs font-medium">PDF Document</span>
-                                                    </div>
-                                                ) : (
-                                                    <div className="relative overflow-hidden">
-                                                        <img
-                                                            src={getFileUrl(complaint.receipt_file)}
-                                                            alt="Purchase Receipt"
-                                                            className="w-full h-48 object-contain bg-white p-2 group-hover:scale-105 transition-transform duration-500"
-                                                            onError={(e) => {
-                                                                (e.target as HTMLImageElement).style.display = 'none';
-                                                                (e.target as HTMLImageElement).parentElement!.innerHTML = '<div class="flex flex-col items-center justify-center py-10 gap-2 text-green-400"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg><span class="text-xs font-medium">Document</span></div>';
-                                                            }}
-                                                        />
-                                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center transition-all duration-300">
-                                                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                                                <div className="bg-white/90 backdrop-blur-sm rounded-full p-2 shadow-lg">
-                                                                    <ZoomIn className="w-5 h-5 text-green-600" />
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
+                                    <DocumentPreviewCard
+                                        file={complaint.receipt_file}
+                                        reportNumber={complaint.report_number}
+                                        title={t('user_dashboard.label_receipt')}
+                                        colorTheme="green"
+                                        defaultFilenamePrefix="Receipt"
+                                        onZoom={(url) => setLightboxUrl(url)}
+                                    />
                                 </div>
                             </div>
                         )}
@@ -399,7 +346,7 @@ export default function UserComplaintDetail() {
                         className="max-w-4xl max-h-[90vh] overflow-auto"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        {lightboxUrl.toLowerCase().endsWith('.pdf') ? (
+                        {isPdfFile(lightboxUrl) ? (
                             <iframe
                                 src={lightboxUrl}
                                 className="w-[90vw] max-w-4xl h-[85vh] rounded-lg bg-white"

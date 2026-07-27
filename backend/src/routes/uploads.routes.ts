@@ -15,6 +15,9 @@ router.get('/:type/:filename', (req, res) => {
     try {
         res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
         res.setHeader('Access-Control-Allow-Origin', '*');
+        res.removeHeader('X-Frame-Options');
+        res.removeHeader('x-frame-options');
+        res.setHeader('Content-Security-Policy', "frame-ancestors 'self' https://ptas.my https://www.ptas.my https://development.ptas.my http://localhost:* https://localhost:* *; upgrade-insecure-requests;");
 
         const { type, filename } = req.params;
 

@@ -102,7 +102,15 @@ const uploadsDir = process.env.UPLOAD_DIR
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
-app.use('/uploads', express.static(uploadsDir)); // Served directly to prevent 404 / NotSameOrigin errors on legacy and direct file preview URLs
+app.use('/uploads', express.static(uploadsDir, {
+    setHeaders: (res) => {
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.removeHeader('X-Frame-Options');
+        res.removeHeader('x-frame-options');
+        res.setHeader('Content-Security-Policy', "frame-ancestors 'self' https://ptas.my https://www.ptas.my https://development.ptas.my http://localhost:* https://localhost:* *; upgrade-insecure-requests;");
+    }
+})); // Served directly to prevent 404 / NotSameOrigin / X-Frame-Options errors on legacy and direct file preview URLs
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -115,7 +123,8 @@ app.get('/api/download', (req, res) => {
         res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.removeHeader('X-Frame-Options');
-        res.setHeader('Content-Security-Policy', "frame-ancestors 'self' https://ptas.my https://www.ptas.my https://development.ptas.my http://localhost:5173 http://localhost:5174;");
+        res.removeHeader('x-frame-options');
+        res.setHeader('Content-Security-Policy', "frame-ancestors 'self' https://ptas.my https://www.ptas.my https://development.ptas.my http://localhost:* https://localhost:* *; upgrade-insecure-requests;");
 
         const fileUrl = req.query.url as string;
         const filename = req.query.filename as string;
