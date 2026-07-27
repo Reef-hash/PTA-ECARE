@@ -37,6 +37,6 @@ export const saveFile = (
 
     // Gunakan API_URL supaya pautan menghala ke pelayan backend yang menyimpan fail sebenar.
     const base = (baseUrl || process.env.API_URL || 'https://api.ptas.my').replace(/\/$/, '');
-    const publicUrl = `${base}/uploads/${subdir}/${fileName}`;
+    const publicUrl = `${base}/api/uploads/${subdir}/${fileName}`;
     return { publicUrl, localPath: filePath };
 };

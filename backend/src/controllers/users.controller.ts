@@ -1,3 +1,5 @@
+import { randomUUID } from 'crypto';
+import path from 'path';
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import pool from '../config/mysql.js';
@@ -5,6 +7,22 @@ import { saveFile } from '../utils/storage.js';
 import { createNotification } from './notifications.controller.js';
 import { isEmailAllowed, sendEmail } from '../utils/email.js';
 import { buildUserSignupOtpEmailHtml } from './auth.controller.js';
+
+// Define a standardized response format for the user object to avoid missing fields
+const formatUserResponse = (user: any) => ({
+    id: user.id,
+    full_name: user.full_name,
+    ic_number: user.ic_number,
+    email: user.email,
+    contact_no: user.contact_no,
+    contact_no_2: user.contact_no_2,
+    address: user.address,
+    state: user.state,
+    status: user.status,
+    role: 'user',
+    created_at: user.created_at,
+    updated_at: user.updated_at
+});
 
 // Get user profile
 export const getProfile = async (req: Request, res: Response): Promise<void> => {
@@ -19,8 +37,8 @@ export const getProfile = async (req: Request, res: Response): Promise<void> => 
             return;
         }
 
-        const { password_hash, ...userWithoutPassword } = user;
-        res.json({ user: userWithoutPassword });
+        const safeUser = formatUserResponse(user);
+        res.json({ user: safeUser });
     } catch (error) {
         console.error('Get profile error:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -104,7 +122,7 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
 
         if (requiresOtp && emailToUse) {
             const otp = Math.floor(100000 + Math.random() * 900000).toString();
-            const expires_at = new Date(Date.now() + 15 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+            const expires_at = new Date(Date.now() + 10 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' '); // 10 mins, MySQL-safe format
 
             await pool.query('DELETE FROM activation_otps WHERE email = ? AND role = ?', [emailToUse, 'user']);
             await pool.query('INSERT INTO activation_otps (email, role, otp, expires_at) VALUES (?, ?, ?, ?)', [emailToUse, 'user', otp, expires_at]);
@@ -167,8 +185,8 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
             return;
         }
 
-        const { password_hash, ...userWithoutPassword } = updatedUser;
-        res.json({ message: 'Profile updated', user: userWithoutPassword });
+        const safeUser = formatUserResponse(updatedUser);
+        res.json({ message: 'Profile updated', user: safeUser });
     } catch (error: any) {
         console.error('Update profile error:', error);
         res.status(500).json({ error: `Ralat Sistem: ${error.message}` });
@@ -218,9 +236,9 @@ export const uploadAvatar = async (req: Request, res: Response): Promise<void> =
             return;
         }
 
-        const mimeExt: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp' };
-        const extension = mimeExt[file.mimetype] || 'jpg';
-        const fileName = `${userId}_${Date.now()}.${extension}`;
+        const ext = path.extname(file.originalname).toLowerCase();
+        const safeExt = ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext) ? ext : '.jpg';
+        const fileName = `${userId}_${randomUUID()}${safeExt}`;
 
         try {
             const { publicUrl } = saveFile('user-images', fileName, file.buffer);

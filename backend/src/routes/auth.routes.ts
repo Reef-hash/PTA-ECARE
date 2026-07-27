@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { validate } from '../middleware/validate.js';
+import { authStrictLimiter, authModerateLimiter } from '../middleware/rateLimit.js';
 import {
     registerSchema,
     loginSchema,
@@ -30,19 +31,19 @@ import { authenticateToken } from '../middleware/auth.js';
 const router = Router();
 
 // Public routes
-router.post('/register', validate(registerSchema), register);
-router.post('/login', validate(loginSchema), login);
-router.post('/google', validate(googleAuthSchema), googleAuth);
-router.post('/verify-ic', verifyIC);
-router.post('/forgot-password', validate(forgotPasswordSchema), forgotPassword);
-router.post('/verify-otp', validate(verifyOtpSchema), verifyOtp);
-router.post('/reset-password', validate(resetPasswordSchema), resetPassword);
+router.post('/register', authModerateLimiter, validate(registerSchema), register);
+router.post('/login', authModerateLimiter, validate(loginSchema), login);
+router.post('/google', authModerateLimiter, validate(googleAuthSchema), googleAuth);
+router.post('/verify-ic', authModerateLimiter, verifyIC);
+router.post('/forgot-password', authStrictLimiter, validate(forgotPasswordSchema), forgotPassword);
+router.post('/verify-otp', authStrictLimiter, validate(verifyOtpSchema), verifyOtp);
+router.post('/reset-password', authStrictLimiter, validate(resetPasswordSchema), resetPassword);
 
 // OTP Verification & Account Activation routes
-router.post('/verify-signup-otp', validate(verifySignupOtpSchema), verifySignupOtp);
-router.post('/resend-signup-otp', resendSignupOtp);
-router.post('/verify-activation-otp', validate(verifyActivationOtpSchema), verifyActivationOtp);
-router.post('/resend-activation-otp', validate(resendActivationOtpSchema), resendActivationOtp);
+router.post('/verify-signup-otp', authStrictLimiter, validate(verifySignupOtpSchema), verifySignupOtp);
+router.post('/resend-signup-otp', authStrictLimiter, resendSignupOtp);
+router.post('/verify-activation-otp', authStrictLimiter, validate(verifyActivationOtpSchema), verifyActivationOtp);
+router.post('/resend-activation-otp', authStrictLimiter, validate(resendActivationOtpSchema), resendActivationOtp);
 
 // Protected routes
 router.get('/profile', authenticateToken, getProfile);

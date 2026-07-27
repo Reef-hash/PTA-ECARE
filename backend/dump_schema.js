@@ -1,1 +1,15 @@
-const mysql = require('mysql2/promise'); async function run() { const c = await mysql.createConnection({host:'localhost',user:'u134652667_ecare',password:'4!8plFEVFy',database:'u134652667_ecare_db'}); const [r] = await c.query('DESCRIBE users'); console.log(r); c.end(); } run();
+const mysql = require('mysql2/promise');
+require('dotenv').config();
+
+async function run() {
+    const c = await mysql.createConnection({
+        host: process.env.DB_HOST,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+    });
+    const [r] = await c.query('DESCRIBE users');
+    console.log(r);
+    c.end();
+}
+run();

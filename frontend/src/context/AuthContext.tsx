@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { AuthUser } from '../types';
 import authService from '../services/auth.service';
 import i18n from '../i18n';
+import toast from 'react-hot-toast';
 
 interface AuthContextType {
     user: AuthUser | null;
@@ -42,13 +43,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const login = (newToken: string, newUser: AuthUser, newRole: string) => {
+        if (!newUser || !newUser.id) {
+            console.error('[AuthContext] login() dipanggil tanpa objek user yang sah:', { newToken, newUser, newRole });
+            toast.error('Ralat sistem: Data pengguna tidak ditemui semasa log masuk.');
+            throw new Error('Data pengguna tidak sah atau hilang dari respons pelayan.');
+        }
+
         authService.setAuth(newToken, newUser, newRole);
         setToken(newToken);
         setUser(newUser);
         setRole(newRole);
 
         // Load user language preference
-        const storedLang = localStorage.getItem(`lang_${newUser.id}`);
+        const storedLang = newUser?.id ? localStorage.getItem(`lang_${newUser.id}`) : null;
         if (storedLang) {
             i18n.changeLanguage(storedLang);
         } else {

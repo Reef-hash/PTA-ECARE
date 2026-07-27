@@ -1,10 +1,13 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import helmet from 'helmet';
 import path from 'path';
 import fs from 'fs';
 
 import authRoutes from './routes/auth.routes.js';
+import uploadsRoutes from './routes/uploads.routes.js';
+import { generalLimiter } from './middleware/rateLimit.js';
 // Forced restart check
 import usersRoutes from './routes/users.routes.js';
 // Forced restart check 2
@@ -18,7 +21,8 @@ import pool from './config/mysql.js';
 dotenv.config();
 
 const app = express();
-const PORT = Number(process.env.PORT) || 3000;
+app.set('trust proxy', 1);
+const PORT = Number(process.env.PORT) || 3005;
 
 // Run auto-migration for ENUMs safely
 (async () => {
@@ -39,14 +43,19 @@ const PORT = Number(process.env.PORT) || 3000;
             console.log('Added missing notif_category column to notifications table.');
         }
 
-        // Fix corrupted auto_increment on notifications (Out of range value for column 'id')
-        const [tblStatus]: any = await pool.query("SHOW TABLE STATUS WHERE Name = 'notifications'");
-        const aiVal = Number(tblStatus[0]?.Auto_increment || 0);
-        if (aiVal === 0 || aiVal > 2147483647 || isNaN(aiVal)) {
-            const [maxRow]: any = await pool.query("SELECT COALESCE(MAX(id),0) as maxid FROM notifications");
-            const nextId = Number(maxRow[0].maxid) + 1;
-            await pool.query(`ALTER TABLE notifications AUTO_INCREMENT = ${nextId}`);
-            console.log(`Fixed notifications auto_increment to ${nextId}.`);
+        // Fix corrupted auto_increment on tables with INT/BIGINT id (Out of range / Duplicate entry '0' for key 'PRIMARY')
+        const tablesToFix = ['notifications', 'complaints', 'complaint_remarks', 'technician_remarks'];
+        for (const tableName of tablesToFix) {
+            try {
+                await pool.query(`DELETE FROM ${tableName} WHERE id <= 0`);
+                await pool.query(`ALTER TABLE ${tableName} MODIFY COLUMN id BIGINT AUTO_INCREMENT`);
+                const [maxRow]: any = await pool.query(`SELECT COALESCE(MAX(id),0) as maxid FROM ${tableName}`);
+                const nextId = Number(maxRow[0].maxid) + 1;
+                await pool.query(`ALTER TABLE ${tableName} AUTO_INCREMENT = ${nextId}`);
+                console.log(`Fixed ${tableName} auto_increment to ${nextId} and upgraded id to BIGINT.`);
+            } catch (tableErr: any) {
+                console.error(`Error fixing auto_increment for ${tableName}:`, tableErr.message);
+            }
         }
     } catch (err: any) {
         console.error('Migration error (this may be safe to ignore if enum already exists):', err.message);
@@ -61,12 +70,30 @@ app.use(cors({
         'https://zszonetechnology.top',
         'https://api.zszonetechnology.top',
         'https://ptas.my',
-        'https://www.ptas.my'
+        'https://www.ptas.my',
+        'https://development.ptas.my',
+        'https://www.development.ptas.my'
     ],
     credentials: true,
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.disable('x-powered-by');
+app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginEmbedderPolicy: false,
+}));
+app.use((req, res, next) => {
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+});
 
 // Serve uploaded files - guna UPLOAD_DIR env var supaya fail selamat dari deployment
 const uploadsDir = process.env.UPLOAD_DIR 
@@ -75,7 +102,15 @@ const uploadsDir = process.env.UPLOAD_DIR
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
-app.use('/uploads', express.static(uploadsDir));
+app.use('/uploads', express.static(uploadsDir, {
+    setHeaders: (res) => {
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.removeHeader('X-Frame-Options');
+        res.removeHeader('x-frame-options');
+        res.setHeader('Content-Security-Policy', "frame-ancestors 'self' https://ptas.my https://www.ptas.my https://development.ptas.my http://localhost:* https://localhost:* *; upgrade-insecure-requests;");
+    }
+})); // Served directly to prevent 404 / NotSameOrigin / X-Frame-Options errors on legacy and direct file preview URLs
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -85,6 +120,12 @@ app.get('/api/health', (req, res) => {
 // Download endpoint to bypass CORS/Nginx issues for static files
 app.get('/api/download', (req, res) => {
     try {
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.removeHeader('X-Frame-Options');
+        res.removeHeader('x-frame-options');
+        res.setHeader('Content-Security-Policy', "frame-ancestors 'self' https://ptas.my https://www.ptas.my https://development.ptas.my http://localhost:* https://localhost:* *; upgrade-insecure-requests;");
+
         const fileUrl = req.query.url as string;
         const filename = req.query.filename as string;
         if (!fileUrl) {
@@ -92,18 +133,40 @@ app.get('/api/download', (req, res) => {
             return;
         }
         
-        const uploadIndex = fileUrl.indexOf('/uploads/');
+        const cleanUrl = fileUrl.split('?')[0].split('#')[0];
+        const uploadIndex = cleanUrl.indexOf('/uploads/');
         if (uploadIndex === -1) {
             res.status(400).send('Invalid file URL');
             return;
         }
         
-        const relativePath = fileUrl.substring(uploadIndex + 9);
+        const relativePath = cleanUrl.substring(uploadIndex + 9);
         const normalizedPath = path.normalize(relativePath).replace(/^(\.\.(\/|\\|$))+/, '');
-        const absolutePath = path.join(uploadsDir, normalizedPath);
         
-        if (fs.existsSync(absolutePath)) {
-            res.download(absolutePath, filename || path.basename(absolutePath));
+        const possibleRoots = [
+            uploadsDir,
+            process.env.UPLOAD_DIR ? path.resolve(process.env.UPLOAD_DIR) : null,
+            path.resolve(process.cwd(), 'uploads'),
+            path.resolve(process.cwd(), '../uploads'),
+            path.resolve(process.cwd(), '../../uploads'),
+            '/home/u134652667/uploads'
+        ].filter(Boolean) as string[];
+        
+        let absolutePath = '';
+        for (const root of possibleRoots) {
+            const candidate = path.join(root, normalizedPath);
+            if (fs.existsSync(candidate)) {
+                absolutePath = candidate;
+                break;
+            }
+        }
+        
+        if (absolutePath && fs.existsSync(absolutePath)) {
+            if (req.query.inline === 'true') {
+                res.sendFile(absolutePath);
+            } else {
+                res.download(absolutePath, filename || path.basename(absolutePath));
+            }
         } else {
             res.status(404).send('File not found');
         }
@@ -119,6 +182,8 @@ app.use('/api/complaints', complaintsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api', masterRoutes); // categories, subcategories, brands, states
+app.use('/api/uploads', uploadsRoutes);
+app.use(generalLimiter);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

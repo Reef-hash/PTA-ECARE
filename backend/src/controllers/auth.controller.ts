@@ -40,10 +40,20 @@ type VerifiedGoogleAccount = {
 const isActiveUser = (status?: string): boolean => !status || status === 'Active' || status === 'active';
 
 const createUserToken = (user: UserRow): string => jwt.sign(
-    { id: user.id, role: 'user', ic_number: user.ic_number },
+    { id: user.id, role: 'user' },
     JWT_SECRET,
     { expiresIn: JWT_EXPIRES_IN } as SignOptions
 );
+
+const formatUserResponse = (user: UserRow) => ({
+    id: user.id,
+    full_name: user.full_name,
+    ic_number: user.ic_number,
+    email: user.email,
+    contact_no: user.contact_no,
+    role: 'user',
+    status: user.status,
+});
 
 const stripPasswordHash = (user: UserRow) => {
     const { password_hash, ...userWithoutPassword } = user;
@@ -281,14 +291,14 @@ export const verifyIC = async (req: Request, res: Response): Promise<void> => {
         const [data]: any = await pool.query('SELECT id, full_name, ic_number, contact_no, address, state FROM users WHERE ic_number = ?', [ic_number]);
 
         if (!data || data.length === 0) {
-            res.status(404).json({ registered: false, error: 'Maaf, maklumat anda belum didaftar. Sila daftar dahulu.' });
+            res.status(200).json({ registered: false });
             return;
         }
 
         const user = data[0];
-        const token = jwt.sign({ id: user.id, role: 'user', ic_number: user.ic_number }, JWT_SECRET, { expiresIn: '24h' } as SignOptions);
+        const token = jwt.sign({ id: user.id, role: 'user' }, JWT_SECRET, { expiresIn: '24h' } as SignOptions);
 
-        res.json({ registered: true, user, token });
+        res.json({ registered: true });
     } catch (error) {
         console.error('Verify IC error:', error);
 
@@ -344,7 +354,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         if (normalizedEmail) {
             // 4. Generate random 6-digit OTP
             const otp = Math.floor(100000 + Math.random() * 900000).toString();
-            const expires_at = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 mins
+            const nowMs = Date.now();
+            const expires_at = new Date(nowMs + 10 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' '); // 10 mins, MySQL-safe format
+            const generatedAt = new Date(nowMs).toISOString().slice(0, 19).replace('T', ' ');
+            console.log(`[OTP-GEN] email=${normalizedEmail} otp=${otp} generated_at=${generatedAt} expires_at=${expires_at} now_ms=${nowMs}`);
 
             // Clean up any existing OTP for this email
             await pool.query('DELETE FROM activation_otps WHERE email = ? AND role = ?', [normalizedEmail, 'user']);
@@ -371,16 +384,19 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
             res.status(200).json({
                 message: 'Pendaftaran berjaya! Sila semak e-mel anda untuk kod OTP pengesahan.',
-                user: stripPasswordHash(user),
                 requires_otp: true,
                 email: user.email
             });
         } else {
             // Notify user in their bell
-            await pool.query(
-                'INSERT INTO notifications (recipient_id, recipient_role, title, message, type, is_read) VALUES (?, ?, ?, ?, ?, ?)',
-                [user.id, 'user', 'Akaun Berjaya Didaftarkan', 'Akaun anda telah berjaya didaftarkan. Selamat Datang ke E-CARE!', 'NEW_USER_REGISTERED', false]
-            );
+            try {
+                await pool.query(
+                    'INSERT INTO notifications (recipient_id, recipient_role, title, message, type, is_read) VALUES (?, ?, ?, ?, ?, ?)',
+                    [user.id, 'user', 'Akaun Berjaya Didaftarkan', 'Akaun anda telah berjaya didaftarkan. Selamat Datang ke E-CARE!', 'NEW_USER_REGISTERED', false]
+                );
+            } catch (notifErr) {
+                console.error('[REGISTER] Failed to notify user:', notifErr);
+            }
 
             // Notify Admin in their bell (with NEW_USER_REGISTERED type to prevent email)
             try {
@@ -400,16 +416,15 @@ export const register = async (req: Request, res: Response): Promise<void> => {
             // Auto-login since no email OTP is needed
             const tokenPayload = {
                 id: user.id,
-                role: 'user',
-                ic_number: user.ic_number
+                role: 'user'
             };
             const token = jwt.sign(tokenPayload, process.env.JWT_SECRET as string, { expiresIn: '24h' });
 
             res.status(200).json({
                 message: 'Pendaftaran berjaya! Akaun anda telah diaktifkan.',
-                user: stripPasswordHash(user),
                 requires_otp: false,
-                token
+                token,
+                user: formatUserResponse(user)
             });
         }
     } catch (error: any) {
@@ -422,16 +437,36 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
     try {
         const { email, otp } = req.body;
         const normalizedEmail = email.trim().toLowerCase();
+        const trimmedOtp = otp.trim();
 
-        // 1. Verify OTP with custom activation_otps table
-        const [otpRecords]: any = await pool.query('SELECT * FROM activation_otps WHERE email = ? AND role = ? AND otp = ? AND expires_at >= ? ORDER BY created_at DESC LIMIT 1', [normalizedEmail, 'user', otp.trim(), new Date().toISOString()]);
+        // 1. First, check if ANY record exists for this email+role (without otp/expiry filter) for diagnostics
+        const [allRecords]: any = await pool.query('SELECT id, otp, expires_at, created_at FROM activation_otps WHERE email = ? AND role = ?', [normalizedEmail, 'user']);
+        const nowMs = Date.now();
+        const now = new Date(nowMs).toISOString().slice(0, 19).replace('T', ' ');
+        console.log(`[OTP-VERIFY] email=${normalizedEmail} input_otp=${trimmedOtp} now=${now} now_ms=${nowMs}`);
+        console.log(`[OTP-VERIFY] db_records_found=${allRecords.length}`, allRecords.map((r: any) => ({
+            id: r.id,
+            stored_otp: r.otp,
+            expires_at: r.expires_at,
+            created_at: r.created_at,
+            otp_match: r.otp === trimmedOtp,
+            not_expired: new Date(r.expires_at).getTime() > nowMs,
+            expires_at_ms: new Date(r.expires_at).getTime(),
+            remaining_sec: Math.round((new Date(r.expires_at).getTime() - nowMs) / 1000)
+        })));
+
+        // 2. Verify OTP with custom activation_otps table
+        const [otpRecords]: any = await pool.query('SELECT * FROM activation_otps WHERE email = ? AND role = ? AND otp = ? AND expires_at >= ? ORDER BY created_at DESC LIMIT 1', [normalizedEmail, 'user', trimmedOtp, now]);
+        console.log(`[OTP-VERIFY] query_result=${otpRecords.length > 0 ? 'MATCH' : 'NO_MATCH'}`);
 
         if (!otpRecords || otpRecords.length === 0) {
+            console.warn(`[OTP-VERIFY] FAILED — email=${normalizedEmail} otp=${trimmedOtp} now=${now}`);
             res.status(400).json({ error: 'Kod OTP tidak sah atau telah tamat tempoh' });
             return;
         }
 
         // 2. Activate user in public users table
+        console.log(`[OTP-VERIFY] SUCCESS — activating user email=${normalizedEmail} otp_id=${otpRecords[0].id}`);
         await pool.query('UPDATE users SET status = ?, email_verified = ?, updated_at = ? WHERE email = ?', ['Active', true, new Date().toISOString(), normalizedEmail]);
         const [updatedUsers]: any = await pool.query('SELECT * FROM users WHERE email = ?', [normalizedEmail]);
 
@@ -475,9 +510,9 @@ export const verifySignupOtp = async (req: Request, res: Response): Promise<void
 
         res.json({
             message: 'Akaun berjaya disahkan dan diaktifkan!',
-            user: stripPasswordHash(user),
             token,
-            role: 'user'
+            role: 'user',
+            user: formatUserResponse(user)
         });
     } catch (error: any) {
         console.error('Verify signup OTP error:', error);
@@ -500,7 +535,7 @@ export const resendSignupOtp = async (req: Request, res: Response): Promise<void
 
         // 2. Generate new OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const expires_at = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+        const expires_at = new Date(Date.now() + 10 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' '); // 10 mins, MySQL-safe format
 
         // 3. Insert into activation_otps
         const [otpInsertResult]: any = await pool.query('INSERT INTO activation_otps (email, otp, role, expires_at) VALUES (?, ?, ?, ?)', [normalizedEmail, otp, 'user', expires_at]);
@@ -546,7 +581,8 @@ export const verifyActivationOtp = async (req: Request, res: Response): Promise<
         const email = profile.email;
 
         // 2. Look up code in activation_otps
-        const [otpRecords]: any = await pool.query('SELECT * FROM activation_otps WHERE email = ? AND role = ? AND otp = ? AND expires_at >= ? ORDER BY created_at DESC LIMIT 1', [email, role, otp, new Date().toISOString()]);
+        const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+        const [otpRecords]: any = await pool.query('SELECT * FROM activation_otps WHERE email = ? AND role = ? AND otp = ? AND expires_at >= ? ORDER BY created_at DESC LIMIT 1', [email, role, otp, now]);
 
         if (!otpRecords || otpRecords.length === 0) {
             res.status(400).json({ error: 'Kod OTP tidak sah atau telah tamat tempoh' });
@@ -597,7 +633,7 @@ export const resendActivationOtp = async (req: Request, res: Response): Promise<
 
         // Generate new OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' '); // 24 hours, MySQL-safe format
 
         // Delete previous OTPs for this email and role
         await pool.query('DELETE FROM activation_otps WHERE email = ? AND role = ?', [email, role]);
@@ -711,7 +747,6 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
                 const token = createUserToken(newUser);
                 res.status(201).json({
                     message: 'Google registration successful',
-                    user: stripPasswordHash(newUser),
                     token,
                     role: 'user',
                     is_new_user: true,
@@ -734,7 +769,7 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
 
             // Generate OTP
             const otp = Math.floor(100000 + Math.random() * 900000).toString();
-            const expires_at = new Date(Date.now() + 15 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+            const expires_at = new Date(Date.now() + 10 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' '); // 10 mins, MySQL-safe format
 
             await pool.query('DELETE FROM activation_otps WHERE email = ? AND role = ?', [googleEmail, 'user']);
             await pool.query('INSERT INTO activation_otps (email, role, otp, expires_at) VALUES (?, ?, ?, ?)', [googleEmail, 'user', otp, expires_at]);
@@ -750,7 +785,6 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
 
             res.status(201).json({
                 message: 'Google registration successful — OTP sent to your email',
-                user: stripPasswordHash(newUser),
                 requires_otp: true,
                 email: googleEmail,
                 role: 'user',
@@ -803,9 +837,9 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
 
             res.json({
                 message: 'Google login successful',
-                user: stripPasswordHash(activeUser),
                 token,
                 role: 'user',
+                user: formatUserResponse(activeUser),
                 is_new_user: false,
                 profile_complete: profileComplete,
                 redirect_to_profile: !profileComplete
@@ -843,9 +877,9 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
             const token = createUserToken(activeUser);
             res.json({
                 message: 'Google login successful',
-                user: stripPasswordHash(activeUser),
                 token,
                 role: 'user',
+                user: formatUserResponse(activeUser),
                 is_new_user: false
             });
             return;
@@ -888,7 +922,6 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
         const token = createUserToken(newUser);
         res.status(201).json({
             message: 'Google registration successful',
-            user: stripPasswordHash(newUser),
             token,
             role: 'user',
             is_new_user: true
@@ -915,20 +948,20 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             console.log(`[LOGIN] User query result: found=${data?.length}, error=none`);
             if (!data || data.length === 0) {
                 try { await pool.query('INSERT INTO user_logs (username, user_ip, success) VALUES (?, ?, ?)', [ic_number, clientIp, false]); } catch (e) { console.log('[LOGIN] user_logs insert error (ignored):', e); }
-                res.status(401).json({ error: 'Invalid IC number or password' }); return;
+                res.status(401).json({ error: 'Invalid credentials' }); return;
             }
             user = data[0];
-            tokenPayload = { id: user.id, role: 'user', ic_number: user.ic_number };
+            tokenPayload = { id: user.id, role: 'user' };
         } else if (role === 'admin') {
             if (!username) { res.status(400).json({ error: 'Username is required' }); return; }
             const [data]: any = await pool.query('SELECT * FROM admins WHERE LOWER(username) = LOWER(?)', [username]);
-            if (!data || data.length === 0) { res.status(401).json({ error: 'Invalid username or password' }); return; }
+            if (!data || data.length === 0) { res.status(401).json({ error: 'Invalid credentials' }); return; }
             user = data[0];
             tokenPayload = { id: user.id, role: 'admin', username: user.username };
         } else if (role === 'technician') {
             if (!username) { res.status(400).json({ error: 'Username is required' }); return; }
             const [data]: any = await pool.query('SELECT * FROM technicians WHERE LOWER(username) = LOWER(?)', [username]);
-            if (!data || data.length === 0) { res.status(401).json({ error: 'Invalid username or password' }); return; }
+            if (!data || data.length === 0) { res.status(401).json({ error: 'Invalid credentials' }); return; }
             user = data[0];
             tokenPayload = { id: user.id, role: 'technician', username: user.username };
         } else if (role === 'main_technician') {
@@ -1003,7 +1036,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             // MySQL uses 0 for false in TINYINT(1). Null shouldn't block.
             if (user.status === 'Inactive' || user.status === 'Suspended') {
                 // Check if there's a pending activation OTP for this admin/technician
-                const [otpRecords]: any = await pool.query('SELECT * FROM activation_otps WHERE email = ? AND role = ? AND expires_at >= ? ORDER BY created_at DESC LIMIT 1', [user.email, role, new Date().toISOString()]);
+                const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+                const [otpRecords]: any = await pool.query('SELECT * FROM activation_otps WHERE email = ? AND role = ? AND expires_at >= ? ORDER BY created_at DESC LIMIT 1', [user.email, role, now]);
 
                 if (otpRecords && otpRecords.length > 0) {
                     res.status(403).json({
@@ -1046,11 +1080,11 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
         }
         const user = data && data[0] ? data[0] : null;
 
-        if (!user) { res.status(404).json({ error: 'User not found' }); return; }
+        if (!user) { res.json({ message: 'If your account exists, an OTP has been sent to your registered email.' }); return; }
         if (!user.email) { res.status(400).json({ error: 'No email associated with this account' }); return; }
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' '); // 10 mins, MySQL-safe format
 
         await pool.query('DELETE FROM password_resets WHERE user_id = ?', [user.id]);
         await pool.query('INSERT INTO password_resets (user_id, otp, expires_at) VALUES (?, ?, ?)', [user.id, otp, expiresAt]);
@@ -1069,7 +1103,7 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
         }
 
         console.log(`OTP email sent to ${user.email}`);
-        res.json({ message: 'OTP sent to your email', email: user.email.replace(/(.{2})(.*)(@.*)/, '$1***$3') });
+        res.json({ message: 'If your account exists, an OTP has been sent to your registered email.' });
     } catch (error) {
         console.error('Forgot password error:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -1096,7 +1130,8 @@ export const verifyOtp = async (req: Request, res: Response): Promise<void> => {
         const [resetRows]: any = await pool.query('SELECT * FROM password_resets WHERE user_id = ? AND otp = ?', [userId, otp]);
         if (!resetRows || resetRows.length === 0) { res.status(400).json({ error: 'Invalid OTP' }); return; }
 
-        if (new Date(resetRows[0].expires_at) < new Date()) { res.status(400).json({ error: 'OTP has expired' }); return; }
+        const expiresAtMs = new Date(resetRows[0].expires_at).getTime();
+        if (Date.now() > expiresAtMs) { res.status(400).json({ error: 'OTP has expired' }); return; }
         res.json({ message: 'OTP verified', valid: true });
     } catch (error) {
         console.error('Verify OTP error:', error);
@@ -1122,7 +1157,7 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
         if (!userId) { res.status(404).json({ error: 'User not found' }); return; }
 
         const [resetRows]: any = await pool.query('SELECT * FROM password_resets WHERE user_id = ? AND otp = ?', [userId, otp]);
-        if (!resetRows || resetRows.length === 0 || new Date(resetRows[0].expires_at) < new Date()) {
+        if (!resetRows || resetRows.length === 0 || Date.now() > new Date(resetRows[0].expires_at).getTime()) {
             res.status(400).json({ error: 'Invalid or expired OTP' }); return;
         }
 
@@ -1152,8 +1187,21 @@ export const getProfile = async (req: Request, res: Response): Promise<void> => 
 
         if (!data || data.length === 0) { res.status(404).json({ error: 'User not found' }); return; }
 
-        const { password_hash, ...userWithoutPassword } = data[0];
-        res.json({ user: userWithoutPassword, role });
+        if (role === 'user') {
+            const safeUser = {
+                id: data[0].id,
+                full_name: data[0].full_name,
+                email: data[0].email,
+                state: data[0].state,
+                status: data[0].status,
+                created_at: data[0].created_at,
+                updated_at: data[0].updated_at
+            };
+            res.json({ user: safeUser, role });
+        } else {
+            const { password_hash, ...userWithoutPassword } = data[0];
+            res.json({ user: userWithoutPassword, role });
+        }
     } catch (error) {
         console.error('Get profile error:', error);
         res.status(500).json({ error: 'Internal server error' });

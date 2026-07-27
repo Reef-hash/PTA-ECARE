@@ -1,6 +1,0 @@
-open 145.79.9.27
-u134652667
-k5;FY3WxT
-cd domains/api.ptas.my/nodejs/tmp
-put restart.txt
-quit
