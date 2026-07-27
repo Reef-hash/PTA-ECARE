@@ -21,6 +21,7 @@ import pool from './config/mysql.js';
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = Number(process.env.PORT) || 3005;
 
 // Run auto-migration for ENUMs safely
@@ -69,7 +70,9 @@ app.use(cors({
         'https://zszonetechnology.top',
         'https://api.zszonetechnology.top',
         'https://ptas.my',
-        'https://www.ptas.my'
+        'https://www.ptas.my',
+        'https://development.ptas.my',
+        'https://www.development.ptas.my'
     ],
     credentials: true,
 }));
@@ -77,13 +80,18 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.disable('x-powered-by');
-app.use(helmet({ contentSecurityPolicy: false }));
+app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginEmbedderPolicy: false,
+}));
 app.use((req, res, next) => {
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   next();
 });
 
@@ -94,7 +102,7 @@ const uploadsDir = process.env.UPLOAD_DIR
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
-// app.use('/uploads', express.static(uploadsDir)); // REMOVED — uploads now served via authenticated /api/uploads/:type/:filename
+app.use('/uploads', express.static(uploadsDir)); // Served directly to prevent 404 / NotSameOrigin errors on legacy and direct file preview URLs
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -104,6 +112,11 @@ app.get('/api/health', (req, res) => {
 // Download endpoint to bypass CORS/Nginx issues for static files
 app.get('/api/download', (req, res) => {
     try {
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.removeHeader('X-Frame-Options');
+        res.setHeader('Content-Security-Policy', "frame-ancestors 'self' https://ptas.my https://www.ptas.my https://development.ptas.my http://localhost:5173 http://localhost:5174;");
+
         const fileUrl = req.query.url as string;
         const filename = req.query.filename as string;
         if (!fileUrl) {
@@ -111,18 +124,40 @@ app.get('/api/download', (req, res) => {
             return;
         }
         
-        const uploadIndex = fileUrl.indexOf('/uploads/');
+        const cleanUrl = fileUrl.split('?')[0].split('#')[0];
+        const uploadIndex = cleanUrl.indexOf('/uploads/');
         if (uploadIndex === -1) {
             res.status(400).send('Invalid file URL');
             return;
         }
         
-        const relativePath = fileUrl.substring(uploadIndex + 9);
+        const relativePath = cleanUrl.substring(uploadIndex + 9);
         const normalizedPath = path.normalize(relativePath).replace(/^(\.\.(\/|\\|$))+/, '');
-        const absolutePath = path.join(uploadsDir, normalizedPath);
         
-        if (fs.existsSync(absolutePath)) {
-            res.download(absolutePath, filename || path.basename(absolutePath));
+        const possibleRoots = [
+            uploadsDir,
+            process.env.UPLOAD_DIR ? path.resolve(process.env.UPLOAD_DIR) : null,
+            path.resolve(process.cwd(), 'uploads'),
+            path.resolve(process.cwd(), '../uploads'),
+            path.resolve(process.cwd(), '../../uploads'),
+            '/home/u134652667/uploads'
+        ].filter(Boolean) as string[];
+        
+        let absolutePath = '';
+        for (const root of possibleRoots) {
+            const candidate = path.join(root, normalizedPath);
+            if (fs.existsSync(candidate)) {
+                absolutePath = candidate;
+                break;
+            }
+        }
+        
+        if (absolutePath && fs.existsSync(absolutePath)) {
+            if (req.query.inline === 'true') {
+                res.sendFile(absolutePath);
+            } else {
+                res.download(absolutePath, filename || path.basename(absolutePath));
+            }
         } else {
             res.status(404).send('File not found');
         }
